@@ -1,9 +1,10 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
-use Grav\Common\Utils;
+use Grav\Common\Grav;
+use League\OAuth2\Client\Provider\AbstractProvider;
 
-class BaseProvider
+abstract class BaseProvider implements ProviderInterface
 {
     protected $config;
     protected $name;
@@ -23,7 +24,7 @@ class BaseProvider
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getName()
     {
@@ -31,12 +32,29 @@ class BaseProvider
     }
 
     /**
-     * @return mixed
+     * @return string
+     */
+    public function getState()
+    {
+        return $this->state;
+    }
+
+    /**
+     * @param string $state
+     * @return $this
+     */
+    public function setState($state)
+    {
+        $this->state = $state;
+
+        return $this;
+    }
+
+    /**
+     * @return AbstractProvider
      */
     public function getProvider()
     {
         return $this->provider;
     }
-
-
 }

@@ -6,12 +6,13 @@ use League\OAuth2\Client\Provider\Instagram;
 class InstagramProvider extends BaseProvider
 {
     protected $name = 'Instagram';
+
     /** @var Instagram */
     protected $provider;
 
-    public function __construct()
+    public function __construct(array $options)
     {
-        $options = [
+        $options += [
             'clientId'      => $this->config->get('plugins.login-oauth2.providers.instagram.client_id'),
             'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.instagram.client_secret'),
             'redirectUri'   => $this->config->get('plugins.login-oauth2.callback_uri'),

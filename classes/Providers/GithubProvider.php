@@ -6,12 +6,13 @@ use League\OAuth2\Client\Provider\Github;
 class GithubProvider extends BaseProvider
 {
     protected $name = 'Github';
+
     /** @var Github */
     protected $provider;
 
-    public function __construct()
+    public function __construct(array $options)
     {
-        $options = [
+        $options += [
             'clientId'      => $this->config->get('plugins.login-oauth2.providers.github.client_id'),
             'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.github.client_secret'),
             'redirectUri'   => $this->config->get('plugins.login-oauth2.callback_uri'),
