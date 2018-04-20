@@ -1,2 +1,26 @@
 enabled: true
-text_var: Custom Text added by the **Grav Plugin Login Oauth2** plugin (disable plugin to remove)
+callback_uri: ''
+providers:
+  github:
+    enabled: true
+    client_id: ''
+    client_secret: ''
+    options:
+      scope: ['user', 'user:email', 'repo']
+
+
+  instagram:
+    enabled: true
+    client_id: ''
+    client_secret: ''
+    options:
+      scope: ['basic', 'likes', 'comments']
+      host: 'https://api.instagram.com'
+
+  facebook:
+    enabled: true
+    client_id: ''
+    client_secret: ''
+    options:
+      scope: ['email', 'public_profile']
+      graph_api_version: 'v2.10'
