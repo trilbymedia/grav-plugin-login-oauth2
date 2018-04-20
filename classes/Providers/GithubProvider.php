@@ -1,9 +1,13 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
+use League\OAuth2\Client\Provider\Github;
+
 class GithubProvider extends BaseProvider
 {
     protected $name = 'Github';
+    /** @var Github */
+    protected $provider;
 
     public function __construct()
     {
@@ -21,6 +25,6 @@ class GithubProvider extends BaseProvider
         $options = ['state' => $this->state];
         $options['scope'] = $this->config->get('plugins.login-oauth2.providers.github.options.scope');
 
-        return $this->provider->getAuthroizationUrl($options);
+        return $this->provider->getAuthorizationUrl($options);
     }
 }

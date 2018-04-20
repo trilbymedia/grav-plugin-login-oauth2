@@ -1,9 +1,13 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
+use League\OAuth2\Client\Provider\Instagram;
+
 class InstagramProvider extends BaseProvider
 {
     protected $name = 'Instagram';
+    /** @var Instagram */
+    protected $provider;
 
     public function __construct()
     {
@@ -22,6 +26,6 @@ class InstagramProvider extends BaseProvider
         $options = ['state' => $this->state];
         $options['scope'] = $this->config->get('plugins.login-oauth2.providers.instagram.options.scope');
 
-        return $this->provider->getAuthroizationUrl($options);
+        return $this->provider->getAuthorizationUrl($options);
     }
 }
