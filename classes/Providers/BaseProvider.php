@@ -1,12 +1,11 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
-use Grav\Common\Grav;
+use Grav\Common\Utils;
 use League\OAuth2\Client\Provider\AbstractProvider;
 
 abstract class BaseProvider implements ProviderInterface
 {
-    protected $config;
     protected $name;
     protected $provider;
     protected $state;
@@ -17,10 +16,9 @@ abstract class BaseProvider implements ProviderInterface
      */
     public function __construct(array $options)
     {
-        $this->config = Grav::instance()['config'];
         $provider_classname = 'League\\OAuth2\\Client\\Provider\\' . $this->name;
-        $this->provider = $provider_classname($options);
-        $this->state = 'LOGIN_OAUTH2';
+        $this->provider = new $provider_classname($options);
+        $this->state = 'LOGIN_OAUTH2_' . Utils::generateRandomString(15);
     }
 
     /**
@@ -56,5 +54,15 @@ abstract class BaseProvider implements ProviderInterface
     public function getProvider()
     {
         return $this->provider;
+    }
+
+    public function getAccessToken($code, $options)
+    {
+        return $this->provider->getAccessToken($code, $options);
+    }
+
+    public function getResourceOwner($token)
+    {
+        return $this->provider->getResourceOwner($token);
     }
 }

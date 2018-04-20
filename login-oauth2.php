@@ -4,6 +4,7 @@ namespace Grav\Plugin;
 use Composer\Autoload\ClassLoader;
 use Grav\Common\Plugin;
 use Grav\Common\Session;
+use Grav\Common\User\User;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
@@ -14,6 +15,9 @@ use Grav\Plugin\Login\OAuth2\ProviderFactory;
  */
 class LoginOauth2Plugin extends Plugin
 {
+
+    protected $valid_providers = ['github', 'instagram', 'facebook' ];
+
     /**
      * @return array
      *
@@ -90,25 +94,33 @@ class LoginOauth2Plugin extends Plugin
      */
     public function loginRedirect()
     {
+
         $user = isset($this->grav['user']) ? $this->grav['user'] : null;
         if ($user && $user->authorized) {
             throw new \RuntimeException('You have already been logged in', 403);
         }
 
-        $post = !empty($_POST) ? $_POST : [];
-        if (!isset($post['oauth2'])) {
+        $provider_name = filter_input(INPUT_POST,'oauth2',FILTER_SANITIZE_STRING,!FILTER_FLAG_STRIP_LOW);
+
+        if (!isset($provider_name)) {
             throw new \RuntimeException('Bad Request', 400);
         }
 
-        $provider = ProviderFactory::create($post['oauth2']);
+        if (in_array($provider_name, $this->valid_providers, true)) {
 
-        /** @var Session $session */
-        $session = $this->grav['session'];
-        $session->oauth2 = $provider->getState();
+            $provider = ProviderFactory::create($provider_name);
 
-        $authorizationUrl = $provider->getAuthorizationUrl();
+            /** @var Session $session */
+            $session = $this->grav['session'];
+            $session->oauth2_state = $provider->getState();
+            $session->oauth2_provider = $provider_name;
 
-        $this->grav->redirect($authorizationUrl);
+            $authorizationUrl = $provider->getAuthorizationUrl();
+
+            $this->grav->redirect($authorizationUrl);
+        }
+
+
     }
 
     /**
@@ -118,33 +130,66 @@ class LoginOauth2Plugin extends Plugin
     {
         /** @var Login $login */
         $login = $this->grav['login'];
-        $login->login($_GET, ['oauth2' => true]);
 
-        // ...
+        /** @var Session $session */
+        $session = $this->grav['session'];
+        $provider_name = $session->oauth2_provider;
+
+        if (in_array($provider_name, $this->valid_providers, true)) {
+
+
+
+            $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
+
+
+            if (empty($state) || ($state !== $session->oauth2_state)) {
+                unset($session->oauth2_state);
+                // how do we indicate the error?
+
+            } else {
+
+                $login->login([], ['oauth2' => true, 'provider' => $provider_name]);
+
+            }
+        }
+        return false;
     }
 
     public function userLoginAuthenticate(UserLoginEvent $event)
     {
-        // Usually consists of GET or POST variables.
-        $credentials = $event->getCredentials();
 
         // Second parameter of Login::login() call.
         $options = $event->getOptions();
 
         if (isset($options['oauth2'])) {
-            /** @var Session $session */
-            $session = $this->grav['session'];
-            $state = $session->oauth2;
 
-            // Do something...
+            $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
+            $provider_name = $options['provider'];
+            $provider = ProviderFactory::create($provider_name);
 
-            $event->setStatus($event::AUTHENTICATION_SUCCESS);
-            $event->stopPropagation();
+            try {
 
-            return;
+                // Try to get an access token (using the authorization code grant)
+                $token = $provider->getAccessToken('authorization_code', ['code' => $code]);
+
+                // We got an access token, let's now get the user's details
+                $user = $provider->getResourceOwner($token);
+
+                $username = $provider_name . '.' . $user->getId();
+                $grav_user = User::load($username);
+
+                $event->setUser($grav_user);
+                $event->oauth2_provider = $provider;
+                $event->oauth2_user = $user;
+
+                // Do something...
+                $event->setStatus($event::AUTHENTICATION_SUCCESS);
+                $event->stopPropagation();
+            } catch (\Exception $e) {
+                $this->grav['messages']->add('OAuth2 ' . ucfirst($provider_name) . ' Login Failed: ' . $e->getMessage(), 'error');
+                $event->setStatus($event::AUTHENTICATION_FAILURE);
+            }
         }
-
-        // If authentication status is undefined, lower level event handlers may still be able to authenticate user.
     }
 
     public function userLoginFailure(UserLoginEvent $event)
@@ -155,6 +200,23 @@ class LoginOauth2Plugin extends Plugin
     public function userLogin(UserLoginEvent $event)
     {
         // This gets fired when the user has successfully logged in.
+        $provider = $event->oauth2_provider;
+        $user = $event->oauth2_user;
+        $grav_user = $event->getUser();
+
+        $user_data = $provider->getUserData($user);
+
+        $current_access = $grav_user->get('access');
+        if (!$current_access) {
+            $access = $this->config->get('plugins.login.user_registration.access.site', []);
+            if (count($access) > 0) {
+                $data['access']['site'] = $access;
+                $grav_user->merge($data);
+            }
+        }
+
+        $grav_user->merge($user_data);
+        $grav_user->save();
     }
 
     public function userLogout(UserLoginEvent $event)

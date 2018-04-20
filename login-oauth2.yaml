@@ -1,13 +1,12 @@
 enabled: true
-callback_uri: ''
+callback_uri: http://grav.rhuk.net/dashboard/task:callback.oauth2
 providers:
   github:
     enabled: true
-    client_id: ''
-    client_secret: ''
+    client_id: '3518b4a316af805fe094'
+    client_secret: 'a42a025c1912ba470aa84d5176797d59c403d128'
     options:
       scope: ['user', 'user:email', 'repo']
-
 
   instagram:
     enabled: true

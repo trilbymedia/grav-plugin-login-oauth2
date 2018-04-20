@@ -8,7 +8,7 @@
 
     "autoload": {
         "psr-4": {
-            "Grav\\Plugin\\Login\\Oauth2\\": "classes/"
+            "Grav\\Plugin\\Login\\OAuth2\\": "classes/"
         }
     }
 }
