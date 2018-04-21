@@ -8,6 +8,7 @@ use Grav\Common\User\User;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
+use RocketTheme\Toolbox\Event\Event;
 
 /**
  * Class GravPluginLoginOauth2Plugin
@@ -43,6 +44,7 @@ class LoginOauth2Plugin extends Plugin
             'onUserLoginFailure'        => ['userLoginFailure', 0],
             'onUserLogin'               => ['userLogin', 0],
             'onUserLogout'              => ['userLogout', 0],
+            'onOAuth2Username'          => ['onOAuth2Username', 0],
         ];
     }
 
@@ -167,7 +169,8 @@ class LoginOauth2Plugin extends Plugin
                 // We got an access token, let's now get the user's details
                 $user = $provider->getResourceOwner($token);
 
-                $username = $provider_name . '.' . $user->getId();
+                $username_event = $this->grav->fireEvent('onOAuth2Username', new Event(['user'=>$user, 'provider'=>$provider_name]));
+                $username = $username_event['username'];
                 $grav_user = User::load($username);
 
                 $event->setUser($grav_user);
@@ -198,6 +201,15 @@ class LoginOauth2Plugin extends Plugin
                 $event->setStatus($event::AUTHENTICATION_FAILURE);
             }
         }
+    }
+
+    public function onOAuth2Username(Event $event)
+    {
+        $provider_name = $event['provider'];
+        $user = $event['user'];
+
+        $event['username'] = $provider_name . '.' . $user->getId();
+        $event->stopPropagation();
     }
 
     public function userLoginFailure(UserLoginEvent $event)
