@@ -88,7 +88,7 @@ class LoginOauth2Plugin extends Plugin
      */
     public function onLoginPage()
     {
-        $this->grav['twig']->plugins_hooked_loginPage['LoginOauth2'] = 'partials/login-oauth2.html.twig';
+        $this->grav['login']->addProviderLoginTemplate('partials/login-oauth2.html.twig');
     }
 
     /**
