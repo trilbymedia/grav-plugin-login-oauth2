@@ -41,12 +41,9 @@ class InstagramProvider extends BaseProvider
         $data_user = [
             'id'         => $user->getId(),
             'fullname'   => $user->getName(),
-            'email'      => $user->getEmail(),
-            'github'     => [
-                'login'      => $data['login'],
-                'location'   => $data['location'],
-                'company'    => $data['company'],
-                'avatar_url' => $data['avatar_url'],
+            'instagram'  => [
+                'login'      => $user->getNickname(),
+                'avatar_url' => $data['profile_picture'],
             ]
         ];
 
