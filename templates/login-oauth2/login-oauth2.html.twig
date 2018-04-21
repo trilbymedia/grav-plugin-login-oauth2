@@ -1,9 +1,11 @@
+{% set providers = attribute(config.plugins, 'login-oauth2').providers %}
 <div class="form-oauth2">
     <form method="post">
         <input type="hidden" name="task" value="login.oauth2" />
 
-        <button name="oauth2" type="submit" value="github" class="button button-outline button-fancy github">GitHub</button>
-        <button name="oauth2" type="submit" value="instagram" class="button button-outline button-fancy instagram">Instagram</button>
+        {% for name,provider in providers if provider.enabled %}
+            {% include 'login-oauth2/providers/' ~ name ~ '.html.twig' %}
+        {% endfor %}
     </form>
 </div>
 

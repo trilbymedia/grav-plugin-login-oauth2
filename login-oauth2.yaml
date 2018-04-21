@@ -9,7 +9,7 @@ providers:
       scope: ['user', 'user:email', 'repo']
 
   instagram:
-    enabled: true
+    enabled: false
     client_id: ''
     client_secret: ''
     options:
@@ -17,7 +17,7 @@ providers:
       host: 'https://api.instagram.com'
 
   facebook:
-    enabled: true
+    enabled: false
     client_id: ''
     client_secret: ''
     options:
