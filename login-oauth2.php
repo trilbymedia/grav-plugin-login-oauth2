@@ -215,12 +215,7 @@ class LoginOauth2Plugin extends Plugin
 
     public function userLogin(UserLoginEvent $event)
     {
-        $options = $event->getOptions();
 
-        if (isset($options['oauth2'])) {
-
-
-        }
     }
 
     public function userLogout(UserLoginEvent $event)

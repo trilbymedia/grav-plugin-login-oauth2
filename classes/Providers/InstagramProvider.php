@@ -33,4 +33,23 @@ class InstagramProvider extends BaseProvider
 
         return $this->provider->getAuthorizationUrl($options);
     }
+
+    public function getUserData($user)
+    {
+        $data = $user->toArray();
+
+        $data_user = [
+            'id'         => $user->getId(),
+            'fullname'   => $user->getName(),
+            'email'      => $user->getEmail(),
+            'github'     => [
+                'login'      => $data['login'],
+                'location'   => $data['location'],
+                'company'    => $data['company'],
+                'avatar_url' => $data['avatar_url'],
+            ]
+        ];
+
+        return $data_user;
+    }
 }

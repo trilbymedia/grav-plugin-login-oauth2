@@ -41,11 +41,11 @@ class GithubProvider extends BaseProvider
             'id'         => $user->getId(),
             'fullname'   => $user->getName(),
             'email'      => $user->getEmail(),
-            'avatar'     => $data['avatar_url'],
             'github'     => [
                 'login'      => $data['login'],
                 'location'   => $data['location'],
                 'company'    => $data['company'],
+                'avatar_url' => $data['avatar_url'],
             ]
         ];
 
