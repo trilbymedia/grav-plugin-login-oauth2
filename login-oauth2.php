@@ -199,24 +199,29 @@ class LoginOauth2Plugin extends Plugin
 
     public function userLogin(UserLoginEvent $event)
     {
-        // This gets fired when the user has successfully logged in.
-        $provider = $event->oauth2_provider;
-        $user = $event->oauth2_user;
-        $grav_user = $event->getUser();
+        $options = $event->getOptions();
 
-        $user_data = $provider->getUserData($user);
+        if (isset($options['oauth2'])) {
 
-        $current_access = $grav_user->get('access');
-        if (!$current_access) {
-            $access = $this->config->get('plugins.login.user_registration.access.site', []);
-            if (count($access) > 0) {
-                $data['access']['site'] = $access;
-                $grav_user->merge($data);
+            // This gets fired when the user has successfully logged in.
+            $provider = $event->oauth2_provider;
+            $user = $event->oauth2_user;
+            $grav_user = $event->getUser();
+
+            $user_data = $provider->getUserData($user);
+
+            $current_access = $grav_user->get('access');
+            if (!$current_access) {
+                $access = $this->config->get('plugins.login.user_registration.access.site', []);
+                if (count($access) > 0) {
+                    $data['access']['site'] = $access;
+                    $grav_user->merge($data);
+                }
             }
-        }
 
-        $grav_user->merge($user_data);
-        $grav_user->save();
+            $grav_user->merge($user_data);
+            $grav_user->save();
+        }
     }
 
     public function userLogout(UserLoginEvent $event)
