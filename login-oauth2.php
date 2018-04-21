@@ -119,8 +119,6 @@ class LoginOauth2Plugin extends Plugin
 
             $this->grav->redirect($authorizationUrl);
         }
-
-
     }
 
     /**
@@ -137,19 +135,13 @@ class LoginOauth2Plugin extends Plugin
 
         if (in_array($provider_name, $this->valid_providers, true)) {
 
-
-
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
-
 
             if (empty($state) || ($state !== $session->oauth2_state)) {
                 unset($session->oauth2_state);
                 // how do we indicate the error?
-
             } else {
-
                 $login->login([], ['oauth2' => true, 'provider' => $provider_name]);
-
             }
         }
         return false;
