@@ -1,12 +1,12 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
-use League\OAuth2\Client\Provider\Github;
 use Grav\Common\Grav;
 
 class GithubProvider extends BaseProvider
 {
     protected $name = 'Github';
+    protected $classname = 'League\\OAuth2\\Client\\Provider\\Github';
     protected $config;
 
     /** @var Github */
@@ -39,10 +39,10 @@ class GithubProvider extends BaseProvider
 
         $data_user = [
             'id'         => $user->getId(),
+            'login'      => $data['login'],
             'fullname'   => $user->getName(),
             'email'      => $user->getEmail(),
             'github'     => [
-                'login'      => $data['login'],
                 'location'   => $data['location'],
                 'company'    => $data['company'],
                 'avatar_url' => $data['avatar_url'],

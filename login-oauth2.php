@@ -2,11 +2,13 @@
 namespace Grav\Plugin;
 
 use Composer\Autoload\ClassLoader;
+use Grav\Common\Inflector;
 use Grav\Common\Plugin;
 use Grav\Common\Session;
 use Grav\Common\User\User;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
+use Grav\Plugin\Login\OAuth2\OAuth2;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
 use RocketTheme\Toolbox\Event\Event;
 
@@ -16,8 +18,6 @@ use RocketTheme\Toolbox\Event\Event;
  */
 class LoginOauth2Plugin extends Plugin
 {
-
-    protected $valid_providers = ['github', 'instagram', 'facebook' ];
 
     /**
      * @return array
@@ -81,6 +81,13 @@ class LoginOauth2Plugin extends Plugin
         if (!$this->grav['config']->get('plugins.login.enabled')) {
             throw new \RuntimeException('The Login plugin needs to be installed and enabled');
         }
+
+        // Add OAuth2 object to Grav
+        $oauth2 = new OAuth2();
+        $oauth2->addEnabledProviders();
+
+
+        $this->grav['oauth2'] = $oauth2;
     }
 
     /**
@@ -108,7 +115,7 @@ class LoginOauth2Plugin extends Plugin
             throw new \RuntimeException('Bad Request', 400);
         }
 
-        if (in_array($provider_name, $this->valid_providers, true)) {
+        if ($this->isValidProvider($provider_name)) {
 
             $provider = ProviderFactory::create($provider_name);
 
@@ -135,7 +142,7 @@ class LoginOauth2Plugin extends Plugin
         $session = $this->grav['session'];
         $provider_name = $session->oauth2_provider;
 
-        if (in_array($provider_name, $this->valid_providers, true)) {
+        if ($this->isValidProvider($provider_name)) {
 
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
 
@@ -168,8 +175,9 @@ class LoginOauth2Plugin extends Plugin
 
                 // We got an access token, let's now get the user's details
                 $user = $provider->getResourceOwner($token);
+                $user_data = $provider->getUserData($user);
 
-                $username_event = $this->grav->fireEvent('onOAuth2Username', new Event(['user'=>$user, 'provider'=>$provider_name]));
+                $username_event = $this->grav->fireEvent('onOAuth2Username', new Event(['user'=>$user_data, 'provider'=>$provider_name]));
                 $username = $username_event['username'];
                 $grav_user = User::load($username);
 
@@ -191,8 +199,6 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
-                $user_data = $provider->getUserData($user);
-
                 $grav_user->merge($user_data);
                 $grav_user->save();
 
@@ -211,9 +217,9 @@ class LoginOauth2Plugin extends Plugin
     public function onOAuth2Username(Event $event)
     {
         $provider_name = $event['provider'];
-        $user = $event['user'];
+        $user_data = $event['user'];
 
-        $username_parts = [$provider_name, $user->getId(), $user->getNickname()];
+        $username_parts = [$provider_name, $user_data['id'], $user_data['login']];
         $event['username'] = implode('.', $username_parts);
 
         $event->stopPropagation();
@@ -232,5 +238,10 @@ class LoginOauth2Plugin extends Plugin
     public function userLogout(UserLoginEvent $event)
     {
         // This gets fired on user logout.
+    }
+
+    protected function isValidProvider($provider)
+    {
+        return $this->grav['oauth2']->isValidProvider($provider);
     }
 }

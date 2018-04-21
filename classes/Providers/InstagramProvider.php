@@ -1,12 +1,12 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
-use League\OAuth2\Client\Provider\Instagram;
 use Grav\Common\Grav;
 
 class InstagramProvider extends BaseProvider
 {
     protected $name = 'Instagram';
+    protected $classname = 'League\\OAuth2\\Client\\Provider\\Instagram';
     protected $config;
 
     /** @var Instagram */
@@ -40,9 +40,9 @@ class InstagramProvider extends BaseProvider
 
         $data_user = [
             'id'         => $user->getId(),
+            'login'      => $user->getNickname(),
             'fullname'   => $user->getName(),
             'instagram'  => [
-                'login'      => $user->getNickname(),
                 'avatar_url' => $data['profile_picture'],
             ]
         ];

@@ -1,10 +1,10 @@
-{% set providers = attribute(config.plugins, 'login-oauth2').providers %}
+{% set providers = grav.oauth2.providers %}
 <div class="form-oauth2">
     <form method="post">
         <input type="hidden" name="task" value="login.oauth2" />
 
-        {% for name,provider in providers if provider.enabled %}
-            {% include 'login-oauth2/providers/' ~ name ~ '.html.twig' %}
+        {% for provider in providers %}
+            {% include 'login-oauth2/providers/' ~ provider ~ '.html.twig' %}
         {% endfor %}
     </form>
 </div>

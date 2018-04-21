@@ -7,6 +7,7 @@ use League\OAuth2\Client\Provider\AbstractProvider;
 abstract class BaseProvider implements ProviderInterface
 {
     protected $name;
+    protected $classname;
     protected $provider;
     protected $state;
 
@@ -16,8 +17,7 @@ abstract class BaseProvider implements ProviderInterface
      */
     public function __construct(array $options)
     {
-        $provider_classname = 'League\\OAuth2\\Client\\Provider\\' . $this->name;
-        $this->provider = new $provider_classname($options);
+        $this->provider = new $this->classname($options);
         $this->state = 'LOGIN_OAUTH2_' . Utils::generateRandomString(15);
     }
 
