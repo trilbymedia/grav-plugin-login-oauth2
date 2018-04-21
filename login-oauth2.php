@@ -179,8 +179,24 @@ class LoginOauth2Plugin extends Plugin
                 $grav_user = User::load($username);
 
                 $event->setUser($grav_user);
+
+                // This gets fired when the user has successfully logged in.
                 $event->oauth2_provider = $provider;
-                $event->oauth2_user = $user;
+                $event->oauth2_new_user = !$grav_user->exists();
+
+                $user_data = $provider->getUserData($user);
+
+                $current_access = $grav_user->get('access');
+                if (!$current_access) {
+                    $access = $this->config->get('plugins.login.user_registration.access.site', []);
+                    if (count($access) > 0) {
+                        $data['access']['site'] = $access;
+                        $grav_user->merge($data);
+                    }
+                }
+
+                $grav_user->merge($user_data);
+                $grav_user->save();
 
                 // Do something...
                 $event->setStatus($event::AUTHENTICATION_SUCCESS);
@@ -203,24 +219,7 @@ class LoginOauth2Plugin extends Plugin
 
         if (isset($options['oauth2'])) {
 
-            // This gets fired when the user has successfully logged in.
-            $provider = $event->oauth2_provider;
-            $user = $event->oauth2_user;
-            $grav_user = $event->getUser();
 
-            $user_data = $provider->getUserData($user);
-
-            $current_access = $grav_user->get('access');
-            if (!$current_access) {
-                $access = $this->config->get('plugins.login.user_registration.access.site', []);
-                if (count($access) > 0) {
-                    $data['access']['site'] = $access;
-                    $grav_user->merge($data);
-                }
-            }
-
-            $grav_user->merge($user_data);
-            $grav_user->save();
         }
     }
 
