@@ -173,13 +173,14 @@ class LoginOauth2Plugin extends Plugin
                 $username = $username_event['username'];
                 $grav_user = User::load($username);
 
-                $event->setUser($grav_user);
+                // Add token to user
+                $grav_user->set('token', json_encode($token));
+
+                // Set provider
+                $grav_user->set('provider', $provider_name);
 
                 // This gets fired when the user has successfully logged in.
-                $event->oauth2_provider = $provider;
-                $event->oauth2_new_user = !$grav_user->exists();
-
-                $user_data = $provider->getUserData($user);
+                $event->oauth2_provider = $provider;;
 
                 $current_access = $grav_user->get('access');
                 if (!$current_access) {
@@ -190,8 +191,12 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
+                $user_data = $provider->getUserData($user);
+
                 $grav_user->merge($user_data);
                 $grav_user->save();
+
+                $event->setUser($grav_user);
 
                 // Do something...
                 $event->setStatus($event::AUTHENTICATION_SUCCESS);
@@ -208,7 +213,9 @@ class LoginOauth2Plugin extends Plugin
         $provider_name = $event['provider'];
         $user = $event['user'];
 
-        $event['username'] = $provider_name . '.' . $user->getId();
+        $username_parts = [$provider_name, $user->getId(), $user->getNickname()];
+        $event['username'] = implode('.', $username_parts);
+
         $event->stopPropagation();
     }
 

@@ -47,3 +47,9 @@ $options = [
 ];
 
 https://developers.facebook.com/docs/facebook-login/permissions
+
+## Rebuild token from data:
+
+use League\OAuth2\Client\Token\AccessToken
+
+$rebuilt_token = new AccessToken(json_decode($grav_user->get('token'), true));
