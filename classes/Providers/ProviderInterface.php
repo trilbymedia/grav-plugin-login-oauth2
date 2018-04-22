@@ -51,4 +51,10 @@ interface ProviderInterface
      * @return ResourceOwnerInterface
      */
     public function getResourceOwner(AccessToken $token);
+
+    /**
+     * @param ResourceOwnerInterface $user
+     * @return array
+     */
+    public function getUserData($user);
 }
