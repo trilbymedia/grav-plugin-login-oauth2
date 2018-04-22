@@ -5,22 +5,13 @@
   background: none;
   color: #fff;
   border: 0;
-  padding: 10px;
   font-family: inherit;
   cursor: pointer;
   outline: inherit;
   text-align: center;
-  min-width: 100px;
   margin-bottom: 4px; }
   .form-oauth2 button svg {
-    fill: #fff;
-    width: 48px;
-    height: 48px; }
-  .form-oauth2 button span {
-    display: block;
-    font-size: 110%;
-    font-weight: 100;
-    margin: 0.5rem 0 0; }
+    fill: #fff; }
 
 .form-oauth2 .button.facebook {
   background: #3B5998; }
@@ -30,7 +21,7 @@
 .form-oauth2 .button.github {
   background: #181717; }
   .form-oauth2 .button.github:hover {
-    background: black; }
+    background: #323030; }
 
 .form-oauth2 .button.google {
   background: #4285F4; }
@@ -46,6 +37,41 @@
   background: #0077B5; }
   .form-oauth2 .button.linkedin:hover {
     background: #005582; }
+
+.form-oauth2.square-style button {
+  padding: 10px;
+  min-width: 100px; }
+
+.form-oauth2.square-style svg {
+  width: 48px;
+  height: 48px; }
+
+.form-oauth2.square-style span {
+  display: block;
+  font-size: 110%;
+  font-weight: 100;
+  margin: 0.5rem 0 0; }
+
+.form-oauth2.button-style button, .form-oauth2.row-style button {
+  min-width: 150px;
+  padding: 10px; }
+
+.form-oauth2.button-style svg, .form-oauth2.row-style svg {
+  width: 32px;
+  height: 32px;
+  vertical-align: middle; }
+
+.form-oauth2.button-style span, .form-oauth2.row-style span {
+  display: inline-block;
+  font-size: 110%;
+  font-weight: 100;
+  margin: 0 0 0 10px;
+  vertical-align: middle;
+  min-width: 100px;
+  text-align: left; }
+
+.form-oauth2.row-style button {
+  min-width: 350px; }
 
 .form-oauth2 .oauth2-or {
   display: flex;

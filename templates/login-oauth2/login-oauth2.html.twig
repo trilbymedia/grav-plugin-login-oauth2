@@ -1,5 +1,6 @@
 {% set providers = grav.oauth2.providers %}
-<div class="form-oauth2">
+{% set style_class = grav.oauth2.config.button_style == 'row' ? 'row-style' : 'square-style' %}
+<div class="form-oauth2 {{ style_class }}">
     <p>Login with one of these available social accounts...</p>
     <form method="post">
 
