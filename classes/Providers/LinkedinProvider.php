@@ -2,6 +2,8 @@
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
 use Grav\Common\Grav;
+use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\Linkedin;
 
 class LinkedinProvider extends BaseProvider
 {
@@ -9,7 +11,7 @@ class LinkedinProvider extends BaseProvider
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Linkedin';
     protected $config;
 
-    /** @var Linkedin */
+    /** @var AbstractProvider|Linkedin */
     protected $provider;
 
     public function __construct(array $options)

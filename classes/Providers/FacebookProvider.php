@@ -2,6 +2,8 @@
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
 use Grav\Common\Grav;
+use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\Facebook;
 
 class FacebookProvider extends BaseProvider
 {
@@ -9,7 +11,7 @@ class FacebookProvider extends BaseProvider
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Facebook';
     protected $config;
 
-    /** @var Facebook */
+    /** @var AbstractProvider|Facebook */
     protected $provider;
 
     public function __construct(array $options)

@@ -2,6 +2,8 @@
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
 use Grav\Common\Grav;
+use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\Instagram;
 
 class InstagramProvider extends BaseProvider
 {
@@ -9,7 +11,7 @@ class InstagramProvider extends BaseProvider
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Instagram';
     protected $config;
 
-    /** @var Instagram */
+    /** @var AbstractProvider|Instagram */
     protected $provider;
 
     public function __construct(array $options)

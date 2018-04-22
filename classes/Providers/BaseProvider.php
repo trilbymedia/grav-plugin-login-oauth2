@@ -3,12 +3,18 @@ namespace Grav\Plugin\Login\OAuth2\Providers;
 
 use Grav\Common\Utils;
 use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use League\OAuth2\Client\Token\AccessToken;
 
 abstract class BaseProvider implements ProviderInterface
 {
+    /** @var string */
     protected $name;
+    /** @var string */
     protected $classname;
+    /** @var AbstractProvider */
     protected $provider;
+    /** @var string */
     protected $state;
 
     /**
@@ -56,12 +62,25 @@ abstract class BaseProvider implements ProviderInterface
         return $this->provider;
     }
 
-    public function getAccessToken($code, $options)
+    /**
+     * Requests an access token using a specified grant and option set.
+     *
+     * @param  mixed $grant
+     * @param  array $options
+     * @return AccessToken
+     */
+    public function getAccessToken($grant, array $options = [])
     {
-        return $this->provider->getAccessToken($code, $options);
+        return $this->provider->getAccessToken($grant, $options);
     }
 
-    public function getResourceOwner($token)
+    /**
+     * Requests and returns the resource owner of given access token.
+     *
+     * @param  AccessToken $token
+     * @return ResourceOwnerInterface
+     */
+    public function getResourceOwner(AccessToken $token)
     {
         return $this->provider->getResourceOwner($token);
     }

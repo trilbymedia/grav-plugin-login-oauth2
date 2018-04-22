@@ -2,15 +2,17 @@
 namespace Grav\Plugin;
 
 use Composer\Autoload\ClassLoader;
-use Grav\Common\Inflector;
+use Grav\Common\Language\Language;
 use Grav\Common\Plugin;
 use Grav\Common\Session;
+use Grav\Common\Uri;
 use Grav\Common\User\User;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\OAuth2;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
 use RocketTheme\Toolbox\Event\Event;
+use RocketTheme\Toolbox\Session\Message;
 
 /**
  * Class GravPluginLoginOauth2Plugin
@@ -160,18 +162,62 @@ class LoginOauth2Plugin extends Plugin
         $session = $this->grav['session'];
         $provider_name = $session->oauth2_provider;
 
+        /** @var Language $t */
+        $t = $this->grav['language'];
+        /** @var Message $messages */
+        $messages = $this->grav['messages'];
+
         if ($this->isValidProvider($provider_name)) {
 
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
 
             if (empty($state) || ($state !== $session->oauth2_state)) {
                 unset($session->oauth2_state);
-                // how do we indicate the error?
+                // TODO: better error message?
+                $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
             } else {
-                $login->login([], ['oauth2' => true, 'provider' => $provider_name]);
+                // Fire Login process.
+                $event = $login->login([], ['remember_me' => true, 'oauth2' => true, 'provider' => $provider_name], ['return_event' => true]);
+                $user = $event->getUser();
+
+                if ($user->authenticated) {
+                    $event->defMessage('PLUGIN_LOGIN.LOGIN_SUCCESSFUL', 'info');
+
+                    $event->defRedirect(
+                        $this->grav['session']->redirect_after_login
+                            ?: $this->grav['config']->get('plugins.login.redirect_after_login')
+                            ?: $this->grav['uri']->referrer('/')
+                    );
+                } else {
+                    if ($user->username) {
+                        $event->defMessage('PLUGIN_LOGIN.ACCESS_DENIED', 'error');
+
+                        $event->defRedirect($this->grav['config']->get('plugins.login.route_unauthorized', '/'));
+                    } else {
+                        $event->defMessage('PLUGIN_LOGIN.LOGIN_FAILED', 'error');
+                    }
+                }
+
+                $message = $event->getMessage();
+                if ($message) {
+                    $messages->add($t->translate($message), $event->getMessageType());
+                }
+
+                $redirect = $event->getRedirect();
+                if ($redirect) {
+                    $this->grav->redirect($redirect, $event->getRedirectCode());
+                }
             }
+        } else {
+            // TODO: better error message?
+            $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
         }
-        return false;
+
+        $route = Uri::getCurrentRoute();
+
+        // We need to redirect as reloading this task will cause error.
+        $redirect = $route->withGravParam('task', null);
+        $this->grav->redirect((string) $redirect, 302);
     }
 
     public function userLoginAuthenticate(UserLoginEvent $event)
@@ -226,7 +272,7 @@ class LoginOauth2Plugin extends Plugin
                 $event->setStatus($event::AUTHENTICATION_SUCCESS);
                 $event->stopPropagation();
             } catch (\Exception $e) {
-                $this->grav['messages']->add('OAuth2 ' . ucfirst($provider_name) . ' Login Failed: ' . $e->getMessage(), 'error');
+                $event->setMessage('OAuth2 ' . ucfirst($provider_name) . ' Login Failed: ' . $e->getMessage(), 'error');
                 $event->setStatus($event::AUTHENTICATION_FAILURE);
             }
         }

@@ -2,6 +2,8 @@
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
 use Grav\Common\Grav;
+use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\Github;
 
 class GithubProvider extends BaseProvider
 {
@@ -9,7 +11,7 @@ class GithubProvider extends BaseProvider
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Github';
     protected $config;
 
-    /** @var Github */
+    /** @var AbstractProvider|Github */
     protected $provider;
 
     public function __construct(array $options)
