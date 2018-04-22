@@ -37,7 +37,7 @@ $label_color: #fff;
   .button.github {
     background: $github_color;
     &:hover {
-      background: darken($github_color, 10%);
+      background: lighten($github_color, 10%);
     }
   }
 
