@@ -272,7 +272,7 @@ class LoginOauth2Plugin extends Plugin
                 $event->setStatus($event::AUTHENTICATION_SUCCESS);
                 $event->stopPropagation();
             } catch (\Exception $e) {
-                $this->grav['messages']->add('OAuth2 ' . ucfirst($provider_name) . ' Login Failed: ' . $e->getMessage(), 'error');
+                $event->setMessage('OAuth2 ' . ucfirst($provider_name) . ' Login Failed: ' . $e->getMessage(), 'error');
                 $event->setStatus($event::AUTHENTICATION_FAILURE);
             }
         }
