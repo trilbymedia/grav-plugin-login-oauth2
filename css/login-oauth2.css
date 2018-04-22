@@ -13,29 +13,29 @@
   .form-oauth2 button svg {
     fill: #fff; }
 
-.form-oauth2 .button.facebook {
+.form-oauth2 button.facebook {
   background: #3B5998; }
-  .form-oauth2 .button.facebook:hover {
+  .form-oauth2 button.facebook:hover {
     background: #2d4373; }
 
-.form-oauth2 .button.github {
+.form-oauth2 button.github {
   background: #181717; }
-  .form-oauth2 .button.github:hover {
+  .form-oauth2 button.github:hover {
     background: #323030; }
 
-.form-oauth2 .button.google {
+.form-oauth2 button.google {
   background: #4285F4; }
-  .form-oauth2 .button.google:hover {
+  .form-oauth2 button.google:hover {
     background: #1266f1; }
 
-.form-oauth2 .button.instagram {
+.form-oauth2 button.instagram {
   background: #E4405F; }
-  .form-oauth2 .button.instagram:hover {
+  .form-oauth2 button.instagram:hover {
     background: #d31e40; }
 
-.form-oauth2 .button.linkedin {
+.form-oauth2 button.linkedin {
   background: #0077B5; }
-  .form-oauth2 .button.linkedin:hover {
+  .form-oauth2 button.linkedin:hover {
     background: #005582; }
 
 .form-oauth2.square-style button {

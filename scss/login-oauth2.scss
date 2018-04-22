@@ -27,35 +27,35 @@ $label_color: #fff;
 
   }
 
-  .button.facebook {
+  button.facebook {
     background: $facebook_color;
     &:hover {
       background: darken($facebook_color, 10%);
     }
   }
 
-  .button.github {
+  button.github {
     background: $github_color;
     &:hover {
       background: lighten($github_color, 10%);
     }
   }
 
-  .button.google {
+  button.google {
     background: $google_color;
     &:hover {
       background: darken($google_color, 10%);
     }
   }
 
-  .button.instagram {
+  button.instagram {
     background: $instagram_color;
     &:hover {
       background: darken($instagram_color, 10%);
     }
   }
 
-  .button.linkedin {
+  button.linkedin {
     background: $linkedin_color;
     &:hover {
       background: darken($linkedin_color, 10%);
