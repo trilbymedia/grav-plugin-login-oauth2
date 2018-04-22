@@ -15,26 +15,16 @@ $label_color: #fff;
     background: none;
     color: $label_color;
     border: 0;
-    padding: 10px;
     font-family: inherit;
     cursor: pointer;
     outline: inherit;
     text-align: center;
-    min-width: 100px;
     margin-bottom: 4px;
 
     svg {
       fill: $label_color;
-      width: 48px;
-      height: 48px;
     }
 
-    span {
-      display: block;
-      font-size: 110%;
-      font-weight: 100;
-      margin: 0.5rem 0 0;
-    }
   }
 
   .button.facebook {
@@ -69,6 +59,53 @@ $label_color: #fff;
     background: $linkedin_color;
     &:hover {
       background: darken($linkedin_color, 10%);
+    }
+  }
+
+  &.square-style {
+    button {
+      padding: 10px;
+      min-width: 100px;
+    }
+
+    svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    span {
+      display: block;
+      font-size: 110%;
+      font-weight: 100;
+      margin: 0.5rem 0 0;
+    }
+  }
+
+  &.button-style, &.row-style {
+    button {
+      min-width: 150px;
+      padding: 10px;
+    }
+    svg {
+      width: 32px;
+      height: 32px;
+      vertical-align: middle;
+    }
+
+    span {
+      display: inline-block;
+      font-size: 110%;
+      font-weight: 100;
+      margin: 0 0 0 10px;
+      vertical-align: middle;
+      min-width: 100px;
+      text-align: left;
+    }
+  }
+
+  &.row-style {
+    button {
+      min-width: 350px;
     }
   }
 

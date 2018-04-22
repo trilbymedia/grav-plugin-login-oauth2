@@ -1,5 +1,6 @@
 enabled: true
 built_in_css: true
+button_style: row
 callback_uri: http://grav.rhuk.net/dashboard/task:callback.oauth2
 providers:
   github:

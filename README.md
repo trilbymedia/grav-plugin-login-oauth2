@@ -1,6 +1,12 @@
 # grav-plugin-login-oauth2
 OAuth2 Client Plugin to integrate with Grav's Login
 
+# Supported button styles for `button_style:`:
+
+* square
+* button
+* row
+
 # GitHub
 'clientId'          => '{github-client-id}',
 'clientSecret'      => '{github-client-secret}',
