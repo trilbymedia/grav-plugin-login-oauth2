@@ -20,7 +20,9 @@ class OAuth2
 
     public function addEnabledProviders()
     {
-        foreach ($this->config['providers'] as $provider => $options) {
+        $providers = isset($this->config['providers']) ? (array)$this->config['providers'] : [];
+
+        foreach ($providers as $provider => $options) {
             if ($options['enabled']) {
                 $this->addProvider($provider);
             }
