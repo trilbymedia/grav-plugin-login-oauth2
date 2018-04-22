@@ -7,6 +7,8 @@ OAuth2 Client Plugin to integrate with Grav's Login
 * button
 * row
 
+SVG Icons and Colors found here: `https://simpleicons.org/`
+
 # GitHub
 'clientId'          => '{github-client-id}',
 'clientSecret'      => '{github-client-secret}',
