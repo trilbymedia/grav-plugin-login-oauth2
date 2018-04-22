@@ -39,6 +39,7 @@ class LoginOauth2Plugin extends Plugin
             'onTask.login.oauth2'       => ['loginRedirect', 0],
             'onTask.callback.oauth2'    => ['loginCallback', 0],
             'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
+            'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
             'onLoginPage'               => ['onLoginPage', 10],
             'onUserLoginAuthenticate'   => ['userLoginAuthenticate', 1000],
             'onUserLoginFailure'        => ['userLoginFailure', 0],
@@ -65,6 +66,14 @@ class LoginOauth2Plugin extends Plugin
     {
         $twig = $this->grav['twig'];
         $twig->twig_paths[] = __DIR__ . '/templates';
+    }
+
+    public function onTwigSiteVariables()
+    {
+        // add CSS for frontend if required
+        if (!$this->isAdmin() && $this->config->get('plugins.login-oauth2.built_in_css')) {
+            $this->grav['assets']->add('plugin://login-oauth2/css/login-oauth2.css');
+        }
     }
 
     /**
