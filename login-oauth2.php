@@ -38,6 +38,7 @@ class LoginOauth2Plugin extends Plugin
             ],
             'onTask.login.oauth2'       => ['loginRedirect', 0],
             'onTask.callback.oauth2'    => ['loginCallback', 0],
+            'onTwigLoader'              => ['onTwigLoader', 0],
             'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
             'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
             'onLoginPage'               => ['onLoginPage', 10],
@@ -57,6 +58,14 @@ class LoginOauth2Plugin extends Plugin
     public function autoload()
     {
         return require __DIR__ . '/vendor/autoload.php';
+    }
+
+    public function onTwigLoader()
+    {
+        $media_paths = $this->grav['locator']->findResources('plugins://login-oauth2/media');
+        foreach(array_reverse($media_paths) as $images_path) {
+            $this->grav['twig']->addPath($images_path, 'oauth2-media');
+        }
     }
 
     /**

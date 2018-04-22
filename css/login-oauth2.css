@@ -1,0 +1,62 @@
+.form-oauth2 p {
+  font-size: inherit !important; }
+
+.form-oauth2 button {
+  background: none;
+  color: #fff;
+  border: 0;
+  padding: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: inherit;
+  text-align: center;
+  min-width: 100px;
+  margin-bottom: 4px; }
+  .form-oauth2 button svg {
+    fill: #fff;
+    width: 48px;
+    height: 48px; }
+  .form-oauth2 button span {
+    display: block;
+    font-size: 110%;
+    font-weight: 100;
+    margin: 0.5rem 0 0; }
+
+.form-oauth2 .button.facebook {
+  background: #3B5998; }
+  .form-oauth2 .button.facebook:hover {
+    background: #2d4373; }
+
+.form-oauth2 .button.github {
+  background: #181717; }
+  .form-oauth2 .button.github:hover {
+    background: black; }
+
+.form-oauth2 .button.google {
+  background: #4285F4; }
+  .form-oauth2 .button.google:hover {
+    background: #1266f1; }
+
+.form-oauth2 .button.instagram {
+  background: #E4405F; }
+  .form-oauth2 .button.instagram:hover {
+    background: #d31e40; }
+
+.form-oauth2 .button.linkedin {
+  background: #0077B5; }
+  .form-oauth2 .button.linkedin:hover {
+    background: #005582; }
+
+.form-oauth2 .oauth2-or {
+  display: flex;
+  margin: 1rem 0; }
+  .form-oauth2 .oauth2-or span {
+    display: block; }
+    .form-oauth2 .oauth2-or span.line {
+      border-bottom: 2px solid #eee;
+      flex-grow: 1; }
+    .form-oauth2 .oauth2-or span.or {
+      padding: 0 15px;
+      margin-bottom: -15px;
+      font-size: 150%;
+      color: #999; }

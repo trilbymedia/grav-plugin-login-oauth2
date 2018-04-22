@@ -1,46 +1,16 @@
 {% set providers = grav.oauth2.providers %}
 <div class="form-oauth2">
+    <p>Login with one of these available social accounts...</p>
     <form method="post">
-        <input type="hidden" name="task" value="login.oauth2" />
 
         {% for provider in providers %}
             {% include 'login-oauth2/providers/' ~ provider ~ '.html.twig' %}
         {% endfor %}
+        <input type="hidden" name="task" value="login.oauth2" />
     </form>
+    <div class="oauth2-or">
+        <span class="line"></span>
+        <span class="or">or</span>
+        <span class="line"></span>
+    </div>
 </div>
-
-{#{% if oauth.enabled %}#}
-    {#<div class="form-oauth button-group">#}
-        {# Create hidden duplicate of submit button to designate it as default #}
-        {#<input type="submit" name="task" value="login.login" tabindex="-1" />#}
-
-        {# Show OAuth authentication providers #}
-        {#<p>{{ 'PLUGIN_LOGIN_OAUTH.OAUTH_CONNECT_MESSAGE'|t }}#}
-
-        {#{% if oauth.providers is empty %}#}
-            {#<p>{{ 'PLUGIN_LOGIN_OAUTH.ENABLE_A_PROVIDER'|t }}</p>#}
-        {#{% endif %}#}
-
-        {#{% if oauth.providers|count > 4 %}#}
-            {#{{ 'PLUGIN_LOGIN_OAUTH.OR'|t }} <label for="oauth-input">{{ 'PLUGIN_LOGIN_OAUTH.OAUTH_CONNECT_MESSAGE_EXTRA'|t }}</label></p>#}
-            {#<input type="checkbox" id="oauth-input" />#}
-            {#<ul class="oauth-provider-extra">#}
-                {#{% for provider,credentials in oauth.providers[4:] %}#}
-                    {#{% set icon = icons[provider]|default(provider|lower) %}#}
-                    {#<li><button name="oauth" value="{{ provider }}" type="submit" class="button {{ provider|lower }}" href="{{ base_url_relative }}/login/oauth{{ config.system.param_sep }}{{ provider }}" title="{{ 'PLUGIN_LOGIN_OAUTH.OAUTH_LOGIN'|t(provider|ucwords) }}"><i class="fa fa-{{ icon }}"></i> {{ provider|ucwords }}</button></li>#}
-                {#{% endfor %}#}
-            {#</ul>#}
-        {#{% else %}#}
-            {#</p>#}
-        {#{% endif %}#}
-
-        {#<ul class="oauth-provider">#}
-            {#{% for provider,credentials in oauth.providers[:4] %}#}
-                {#{% set icon = icons[provider]|default(provider|lower) %}#}
-                {#<li><button name="oauth" value="{{ provider }}" type="submit" class="button {{ provider|lower }}" href="{{ base_url_relative }}/login/oauth{{ config.system.param_sep }}{{ provider }}" title="{{ 'PLUGIN_LOGIN_OAUTH.OAUTH_LOGIN'|t(provider|ucwords) }}"><i class="fa fa-{{ icon }}"></i> {{ provider|ucwords }}</button></li>#}
-            {#{% endfor %}#}
-        {#</ul>#}
-    {#</div>#}
-    {#<span class="delimiter">{{ 'PLUGIN_LOGIN_OAUTH.OR'|t }}</span>#}
-    {#<p>{{ 'PLUGIN_LOGIN_OAUTH.OAUTH_SIGNIN'|t }}</p>#}
-{#{% endif %}#}
