@@ -42,7 +42,8 @@ class ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3
             0 => __DIR__ . '/..' . '/league/oauth2-client/src',
             1 => __DIR__ . '/..' . '/league/oauth2-facebook/src',
             2 => __DIR__ . '/..' . '/league/oauth2-github/src',
-            3 => __DIR__ . '/..' . '/league/oauth2-instagram/src',
+            3 => __DIR__ . '/..' . '/league/oauth2-google/src',
+            4 => __DIR__ . '/..' . '/league/oauth2-instagram/src',
         ),
         'GuzzleHttp\\Psr7\\' => 
         array (

@@ -22,7 +22,6 @@ class GoogleProvider extends BaseProvider
             'clientId'      => $this->config->get('plugins.login-oauth2.providers.google.client_id'),
             'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.google.client_secret'),
             'redirectUri'   => $this->getCallbackUri(),
-            'host'          => $this->config->get('plugins.login-oauth2.providers.google.options.host')
         ];
 
         parent::__construct($options);
@@ -38,14 +37,13 @@ class GoogleProvider extends BaseProvider
 
     public function getUserData($user)
     {
-        $data = $user->toArray();
-
         $data_user = [
             'id'         => $user->getId(),
-            'login'      => $user->getNickname(),
+            'login'      => $user->getEmail(),
             'fullname'   => $user->getName(),
+            'email'      => $user->getEmail(),
             'google'  => [
-                'avatar_url' => $data['profile_picture'],
+                'avatar_url' => $user->getAvatar(),
             ]
         ];
 
