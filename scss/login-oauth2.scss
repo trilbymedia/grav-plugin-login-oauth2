@@ -115,6 +115,7 @@ $label_color: #fff;
 
     span {
       display: block;
+      margin: 0;
 
 
       &.line {
@@ -127,6 +128,7 @@ $label_color: #fff;
         margin-bottom: -15px;
         font-size: 150%;
         color: #999;
+        text-align: center;
       }
     }
   }

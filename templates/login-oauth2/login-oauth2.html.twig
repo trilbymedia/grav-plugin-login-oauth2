@@ -3,7 +3,6 @@
 <div class="form-oauth2 {{ style_class }}">
     <p>Login with one of these available social accounts...</p>
     <form method="post">
-
         {% for provider in providers %}
             {% include 'login-oauth2/providers/' ~ provider ~ '.html.twig' %}
         {% endfor %}
