@@ -31,13 +31,11 @@ providers:
     client_id: ''
     client_secret: ''
     options:
-      scope: ['email', 'public_profile']
-      graph_api_version: 'v2.10'
+      scope: ['email', 'profile']
 
   linkedin:
     enabled: true
     client_id: ''
     client_secret: ''
     options:
-      scope: ['email', 'public_profile']
-      graph_api_version: 'v2.10'
+      scope: ['r_basicprofile','r_emailaddress']

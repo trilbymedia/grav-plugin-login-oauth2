@@ -22,7 +22,6 @@ class LinkedinProvider extends BaseProvider
             'clientId'      => $this->config->get('plugins.login-oauth2.providers.linkedin.client_id'),
             'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.linkedin.client_secret'),
             'redirectUri'   => $this->getCallbackUri(),
-            'host'          => $this->config->get('plugins.login-oauth2.providers.linkedin.options.host')
         ];
 
         parent::__construct($options);
@@ -38,14 +37,15 @@ class LinkedinProvider extends BaseProvider
 
     public function getUserData($user)
     {
-        $data = $user->toArray();
-
         $data_user = [
             'id'         => $user->getId(),
-            'login'      => $user->getNickname(),
-            'fullname'   => $user->getName(),
+            'login'      => $user->getEmail(),
+            'fullname'   => $user->getFirstName() . ' ' . $user->getLastName(),
+            'email'      => $user->getEmail(),
             'linkedin'  => [
-                'avatar_url' => $data['profile_picture'],
+                'avatar_url' => $user->getImageurl(),
+                'headline' => $user->getDescription(),
+                'location' => $user->getLocation(),
             ]
         ];
 
