@@ -21,7 +21,7 @@ class LinkedinProvider extends BaseProvider
         $options += [
             'clientId'      => $this->config->get('plugins.login-oauth2.providers.linkedin.client_id'),
             'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.linkedin.client_secret'),
-            'redirectUri'   => $this->config->get('plugins.login-oauth2.callback_uri'),
+            'redirectUri'   => $this->getCallbackUri(),
             'host'          => $this->config->get('plugins.login-oauth2.providers.linkedin.options.host')
         ];
 

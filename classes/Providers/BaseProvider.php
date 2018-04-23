@@ -1,6 +1,7 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
+use Grav\Common\Grav;
 use Grav\Common\Utils;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -60,6 +61,14 @@ abstract class BaseProvider implements ProviderInterface
     public function getProvider()
     {
         return $this->provider;
+    }
+
+    public function getCallbackUri()
+    {
+        $callback_uri = Grav::instance()['config']->get('plugins.login-oauth2.callback_uri');
+        $base_url = Grav::instance()['base_url_absolute'];
+
+        return $base_url . '/' . ltrim($callback_uri, '/');
     }
 
     /**

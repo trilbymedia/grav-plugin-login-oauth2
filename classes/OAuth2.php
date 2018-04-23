@@ -39,7 +39,8 @@ class OAuth2
         return $this->providers;
     }
 
-    public function isValidProvider($provider) {
+    public function isValidProvider($provider)
+    {
         if (in_array($provider, $this->providers,true)) {
             return true;
         }

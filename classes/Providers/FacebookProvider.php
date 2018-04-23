@@ -19,10 +19,10 @@ class FacebookProvider extends BaseProvider
         $this->config = Grav::instance()['config'];
 
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.facebook.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.facebook.client_secret'),
-            'redirectUri'   => $this->config->get('plugins.login-oauth2.callback_uri'),
-            'host'          => $this->config->get('plugins.login-oauth2.providers.facebook.options.host')
+            'clientId'          => $this->config->get('plugins.login-oauth2.providers.facebook.app_id'),
+            'clientSecret'      => $this->config->get('plugins.login-oauth2.providers.facebook.app_secret'),
+            'redirectUri'       => $this->getCallbackUri(),
+            'graphApiVersion'   => $this->config->get('plugins.login-oauth2.providers.facebook.options.graph_api_version')
         ];
 
         parent::__construct($options);
@@ -38,14 +38,14 @@ class FacebookProvider extends BaseProvider
 
     public function getUserData($user)
     {
-        $data = $user->toArray();
-
         $data_user = [
             'id'         => $user->getId(),
-            'login'      => $user->getNickname(),
+            'login'      => $user->getEmail(),
             'fullname'   => $user->getName(),
+            'email'      => $user->getEmail(),
             'facebook'  => [
-                'avatar_url' => $data['profile_picture'],
+                'avatar_url' => $user->getPictureUrl(),
+                'location' => $user->getHometown(),
             ]
         ];
 
