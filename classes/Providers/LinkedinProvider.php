@@ -35,7 +35,7 @@ class LinkedinProvider extends BaseProvider
         return $this->provider->getAuthorizationUrl($options);
     }
 
-    public function getUserData($user)
+    public function getUserData($user, $token = null)
     {
         $data_user = [
             'id'         => $user->getId(),

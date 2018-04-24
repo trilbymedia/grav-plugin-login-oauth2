@@ -35,7 +35,7 @@ class GithubProvider extends BaseProvider
         return $this->provider->getAuthorizationUrl($options);
     }
 
-    public function getUserData($user)
+    public function getUserData($user, $token = null)
     {
         $data = $user->toArray();
 
@@ -43,7 +43,7 @@ class GithubProvider extends BaseProvider
             'id'         => $user->getId(),
             'login'      => $data['login'],
             'fullname'   => $user->getName(),
-            'email'      => $user->getEmail(),
+            'email'      => $user->getEmail() ?: $this->getEmail($token),
             'github'     => [
                 'location'   => $data['location'],
                 'company'    => $data['company'],
@@ -52,5 +52,24 @@ class GithubProvider extends BaseProvider
         ];
 
         return $data_user;
+    }
+
+    public function getEmail($token)
+    {
+        $url = $this->provider->getResourceOwnerDetailsUrl($token);
+        $request = $this->provider->getAuthenticatedRequest(
+            'GET',
+            $url . '/emails',
+            $token
+        );
+
+        $response = $this->provider->getResponse($request);
+        $emails = json_decode($response->getBody()->getContents());
+
+        $filtered = array_filter($emails, function($email) {
+            return $email->primary && $email->verified;
+        });
+
+        return $filtered ? array_shift($filtered)->email : null;
     }
 }
