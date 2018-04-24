@@ -57,5 +57,5 @@ interface ProviderInterface
      * @param AccessToken $token
      * @return array
      */
-    public function getUserData($user, $token = null);
+    public function getUserData($user);
 }

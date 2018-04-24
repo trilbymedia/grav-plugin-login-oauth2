@@ -17,6 +17,8 @@ abstract class BaseProvider implements ProviderInterface
     protected $provider;
     /** @var string */
     protected $state;
+    /** @var stdClass */
+    protected $token;
 
     /**
      * BaseProvider constructor.
@@ -80,7 +82,8 @@ abstract class BaseProvider implements ProviderInterface
      */
     public function getAccessToken($grant, array $options = [])
     {
-        return $this->provider->getAccessToken($grant, $options);
+        $this->token = $this->provider->getAccessToken($grant, $options);
+        return $this->token;
     }
 
     /**

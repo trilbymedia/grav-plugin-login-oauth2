@@ -35,7 +35,7 @@ class GoogleProvider extends BaseProvider
         return $this->provider->getAuthorizationUrl($options);
     }
 
-    public function getUserData($user, $token = null)
+    public function getUserData($user)
     {
         $data_user = [
             'id'         => $user->getId(),

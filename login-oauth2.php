@@ -239,7 +239,7 @@ class LoginOauth2Plugin extends Plugin
 
                 // We got an access token, let's now get the user's details
                 $user = $provider->getResourceOwner($token);
-                $user_data = $provider->getUserData($user, $token);
+                $user_data = $provider->getUserData($user);
 
                 $username_event = $this->grav->fireEvent('onOAuth2Username', new Event(['user'=>$user_data, 'provider'=>$provider_name]));
                 $username = $username_event['username'];

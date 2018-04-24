@@ -35,7 +35,7 @@ class GithubProvider extends BaseProvider
         return $this->provider->getAuthorizationUrl($options);
     }
 
-    public function getUserData($user, $token = null)
+    public function getUserData($user)
     {
         $data = $user->toArray();
 
@@ -43,7 +43,7 @@ class GithubProvider extends BaseProvider
             'id'         => $user->getId(),
             'login'      => $data['login'],
             'fullname'   => $user->getName(),
-            'email'      => $user->getEmail() ?: $this->getEmail($token),
+            'email'      => $this->getEmail($user),
             'github'     => [
                 'location'   => $data['location'],
                 'company'    => $data['company'],
@@ -54,22 +54,36 @@ class GithubProvider extends BaseProvider
         return $data_user;
     }
 
-    public function getEmail($token)
+    /**
+     * Handle regular email
+     *
+     * @param $user
+     * @return null
+     */
+    public function getEmail($user)
     {
-        $url = $this->provider->getResourceOwnerDetailsUrl($token);
-        $request = $this->provider->getAuthenticatedRequest(
-            'GET',
-            $url . '/emails',
-            $token
-        );
+        $email = $user->getEmail();
 
-        $response = $this->provider->getResponse($request);
-        $emails = json_decode($response->getBody()->getContents());
+        if (is_null($email)) {
+            $url = $this->provider->getResourceOwnerDetailsUrl($this->token);
+            $request = $this->provider->getAuthenticatedRequest(
+                'GET',
+                $url . '/emails',
+                $this->token
+            );
 
-        $filtered = array_filter($emails, function($email) {
-            return $email->primary && $email->verified;
-        });
+            $response = $this->provider->getResponse($request);
+            $emails = json_decode($response->getBody()->getContents());
 
-        return $filtered ? array_shift($filtered)->email : null;
+            $filtered = array_filter($emails, function($email) {
+                return $email->primary && $email->verified;
+            });
+
+            $email = $filtered ? array_shift($filtered)->email : null;
+        }
+
+
+
+        return $email;
     }
 }
