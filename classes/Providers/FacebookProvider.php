@@ -45,7 +45,7 @@ class FacebookProvider extends BaseProvider
             'email'      => $user->getEmail(),
             'facebook'  => [
                 'avatar_url' => $user->getPictureUrl(),
-                'location' => $user->getHometown(),
+                'location' => $user->getHometown() ? $user->getHometown()['name'] : ''
             ]
         ];
 

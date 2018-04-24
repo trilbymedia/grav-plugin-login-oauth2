@@ -20,10 +20,10 @@ providers:
 
   facebook:
     enabled: true
-    client_id: ''
-    client_secret: ''
+    app_id: ''
+    app_secret: ''
     options:
-      scope: ['email', 'public_profile']
+      scope: ['email', 'public_profile', 'user_hometown']
       graph_api_version: 'v2.10'
 
   google:
