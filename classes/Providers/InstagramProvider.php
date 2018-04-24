@@ -45,7 +45,7 @@ class InstagramProvider extends BaseProvider
             'login'      => $user->getNickname(),
             'fullname'   => $user->getName(),
             'instagram'  => [
-                'avatar_url' => $data['profile_picture'],
+                'avatar_url' => $user->getImageurl(),
             ]
         ];
 
