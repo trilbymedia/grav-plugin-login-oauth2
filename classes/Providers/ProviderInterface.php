@@ -54,7 +54,6 @@ interface ProviderInterface
 
     /**
      * @param ResourceOwnerInterface $user
-     * @param AccessToken $token
      * @return array
      */
     public function getUserData($user);
