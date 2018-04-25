@@ -32,6 +32,7 @@ providers:
     client_secret: ''
     options:
       scope: ['email', 'profile']
+      avatar_size: 200
 
   linkedin:
     enabled: true

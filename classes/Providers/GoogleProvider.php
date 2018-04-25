@@ -43,10 +43,19 @@ class GoogleProvider extends BaseProvider
             'fullname'   => $user->getName(),
             'email'      => $user->getEmail(),
             'google'  => [
-                'avatar_url' => $user->getAvatar(),
+                'avatar_url' => $this->getAvatar($user),
             ]
         ];
 
         return $data_user;
+    }
+
+    public function getAvatar($user)
+    {
+        $avatar = $user->getAvatar();
+        $avatarSize = $this->config->get('plugins.login-oauth2.providers.google.options.avatar_size', 200);
+        $avatar = preg_replace("/\?sz=\d{1,}$/", '?sz=' . $avatarSize, $avatar);
+
+        return $avatar;
     }
 }
