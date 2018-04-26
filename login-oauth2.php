@@ -239,9 +239,15 @@ class LoginOauth2Plugin extends Plugin
 
                 // We got an access token, let's now get the user's details
                 $user = $provider->getResourceOwner($token);
-                $user_data = $provider->getUserData($user);
+                $userdata = $provider->getUserData($user);
 
-                $username_event = $this->grav->fireEvent('onOAuth2Username', new Event(['user'=>$user_data, 'provider'=>$provider_name]));
+                $userdata_event = $this->grav->fireEvent('onOAuth2Userdata', new Event(['userdata'=>$userdata, 'oauth2user'=>$user, 'provider'=>$provider, 'token'=>$token]));
+                // Set again with any event-based modifications
+                $userdata = $userdata_event['userdata'];
+
+                // Get username from an event to allow you to modify oauth2 filename
+                $username_event = $this->grav->fireEvent('onOAuth2Username', new Event(['userdata'=>$userdata, 'oauth2user'=>$user, 'provider'=>$provider, 'token'=>$token]));
+
                 $username = $username_event['username'];
                 $grav_user = User::load($username);
 
@@ -250,9 +256,6 @@ class LoginOauth2Plugin extends Plugin
 
                 // Set provider
                 $grav_user->set('provider', $provider_name);
-
-                // This gets fired when the user has successfully logged in.
-                $event->oauth2_provider = $provider;;
 
                 $current_access = $grav_user->get('access');
                 if (!$current_access) {
@@ -263,7 +266,7 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
-                $grav_user->merge($user_data);
+                $grav_user->merge($userdata);
                 $grav_user->save();
 
                 $event->setUser($grav_user);
@@ -280,10 +283,11 @@ class LoginOauth2Plugin extends Plugin
 
     public function onOAuth2Username(Event $event)
     {
-        $provider_name = $event['provider'];
-        $user_data = $event['user'];
+        $userdata = $event['userdata'];
+        $provider = $event['provider'];
+        $provider_name = strtolower($provider->getName());
 
-        $username_parts = [$provider_name, $user_data['id'], $user_data['login']];
+        $username_parts = [$provider_name, $userdata['id'], $userdata['login']];
         $event['username'] = implode('.', $username_parts);
 
         $event->stopPropagation();
