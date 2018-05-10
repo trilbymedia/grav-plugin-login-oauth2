@@ -38,17 +38,6 @@ class LoginOauth2Plugin extends Plugin
                 ['autoload', 100000],
                 ['onPluginsInitialized', 0]
             ],
-            'onTask.login.oauth2'       => ['loginRedirect', 0],
-            'onTask.callback.oauth2'    => ['loginCallback', 0],
-            'onTwigLoader'              => ['onTwigLoader', 0],
-            'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
-            'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
-            'onLoginPage'               => ['onLoginPage', 10],
-            'onUserLoginAuthenticate'   => ['userLoginAuthenticate', 1000],
-            'onUserLoginFailure'        => ['userLoginFailure', 0],
-            'onUserLogin'               => ['userLogin', 0],
-            'onUserLogout'              => ['userLogout', 0],
-            'onOAuth2Username'          => ['onOAuth2Username', 0],
         ];
     }
 
@@ -96,6 +85,21 @@ class LoginOauth2Plugin extends Plugin
         if ($this->isAdmin()) {
             return;
         }
+
+        $this->enable([
+                'onTask.login.oauth2'       => ['loginRedirect', 0],
+                'onTask.callback.oauth2'    => ['loginCallback', 0],
+                'onTwigLoader'              => ['onTwigLoader', 0],
+                'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
+                'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
+                'onLoginPage'               => ['onLoginPage', 10],
+                'onUserLoginAuthenticate'   => ['userLoginAuthenticate', 1000],
+                'onUserLoginFailure'        => ['userLoginFailure', 0],
+                'onUserLogin'               => ['userLogin', 0],
+                'onUserLogout'              => ['userLogout', 0],
+                'onOAuth2Username'          => ['onOAuth2Username', 0],
+            ]
+        );
 
         // Check to ensure login plugin is enabled.
         if (!$this->grav['config']->get('plugins.login.enabled')) {
