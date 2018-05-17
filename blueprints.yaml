@@ -26,7 +26,105 @@ form:
         0: Disabled
       validate:
         type: bool
-    text_var:
+
+    built_in_css:
+      type: toggle
+      label: PLUGIN_LOGIN_OAUTH2.BUILTIN_CSS
+      highlight: 1
+      default: 1
+      help: PLUGIN_LOGIN_OAUTH2.BUILTIN_CSS_HELP
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+
+    button_style:
+      type: select
+      label: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE
+      default: row
+      size: medium
+      help: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE_HELP
+      options:
+        row: Horizontal Row
+        square: Square Block
+
+    save_grav_user:
+      type: toggle
+      label: PLUGIN_LOGIN_OAUTH2.SAVE_GRAV_USER
+      help: Get up shitSAVE_GRAV_USER_DESC
+      highlight: 0
+      default: 0
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+
+
+    github:
+      type: fieldset
+      title: Github
+
+      fields:
+
+        providers.github.enabled:
+          type: toggle
+          label: Enabled
+          highlight: 1
+          default: 0
+          options:
+            1: Enabled
+            0: Disabled
+          validate:
+            type: bool
+
+        providers.github.client_id:
+          type: text
+          label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
+
+        providers.github.client_secret:
+          type: text
+          label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
+
+        providers.github.options.scope:
+          type: selectize
+          size: large
+          label: PLUGIN_LOGIN_OAUTH2.SCOPE
+          classes: fancy
+          validate:
+            type: commalist
+
+
+
+    store_provider_data:
+      type: toggle
+      label: PLUGIN_LOGIN_OAUTH2.STORE_OAUTH2_USER
+      help: PLUGIN_LOGIN_OAUTH2.STORE_OAUTH2_USER_DESC
+      highlight: 0
+      default: 0
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+
+    default_access_levels:
+      type: textarea
+      label: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS
+      yaml: true
+      markdown: true
+      validate:
+        required: true
+      description: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS_DESC
+
+    callback_uri:
       type: text
-      label: Text Variable
-      help: Text to add to the top of a page
+      label: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI
+      placeholder: '/task:callback.oauth2'
+      help: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI_HELP
+      size: medium
+      validate:
+        required: true
+
+
