@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
     "content-hash": "fc5196fc3e9460d7ccba123aff600680",
@@ -502,16 +502,16 @@
         },
         {
             "name": "league/oauth2-linkedin",
-            "version": "3.0.0",
+            "version": "3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/oauth2-linkedin.git",
-                "reference": "2f26dac99faf48350e7b3ddc1fba179cc62e8a05"
+                "reference": "7a84f248de6ea3324740269c44aa98e4abcc42f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/oauth2-linkedin/zipball/2f26dac99faf48350e7b3ddc1fba179cc62e8a05",
-                "reference": "2f26dac99faf48350e7b3ddc1fba179cc62e8a05",
+                "url": "https://api.github.com/repos/thephpleague/oauth2-linkedin/zipball/7a84f248de6ea3324740269c44aa98e4abcc42f0",
+                "reference": "7a84f248de6ea3324740269c44aa98e4abcc42f0",
                 "shasum": ""
             },
             "require": {
@@ -553,7 +553,7 @@
                 "oauth",
                 "oauth2"
             ],
-            "time": "2018-03-07T20:52:19+00:00"
+            "time": "2018-05-04T13:48:28+00:00"
         },
         {
             "name": "paragonie/random_compat",
