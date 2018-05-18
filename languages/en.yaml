@@ -1,4 +1,6 @@
 PLUGIN_LOGIN_OAUTH2:
+  CONFIGURATION: "Configuration"
+  DOCUMENTATION: "Instructions"
   BUILTIN_CSS: "Enable built-in CSS"
   BUILTIN_CSS_HELP: "If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin"
   BUTTON_STYLE: "Button Style"
@@ -14,3 +16,8 @@ PLUGIN_LOGIN_OAUTH2:
   CLIENT_ID: "Client ID"
   CLIENT_SECRET: "Client Secret"
   SCOPE: "Scope"
+  HOST: "Host"
+  APP_ID: "App ID"
+  APP_SECRET: "App Secret"
+  GRAPH_API_VERSION: "Graph API Version"
+  AVATAR_SIZE: "Avatar Size"

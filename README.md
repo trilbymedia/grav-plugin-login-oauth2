@@ -4,7 +4,6 @@ OAuth2 Client Plugin to integrate with Grav's Login
 # Supported button styles for `button_style:`:
 
 * square
-* button
 * row
 
 SVG Icons and Colors found here: `https://simpleicons.org/`
