@@ -263,15 +263,24 @@ class LoginOauth2Plugin extends Plugin
 
                 $current_access = $grav_user->get('access');
                 if (!$current_access) {
-                    $access = $this->config->get('plugins.login.user_registration.access.site', []);
+                    $access = $this->config->get('plugins.login-oauth2.default_access_levels.access', []);
                     if (count($access) > 0) {
-                        $data['access']['site'] = $access;
+                        $data['access'] = $access;
                         $grav_user->merge($data);
                     }
                 }
 
+                // Remove Provider Userdata if configured
+                if (!$this->config->get('plugins.login-oauth2.store_provider_data', false)) {
+                    unset($userdata[$provider_name]);
+                }
+
                 $grav_user->merge($userdata);
-                $grav_user->save();
+
+                // Save Grav user if so configured
+                if ($this->config->get('plugins.login-oauth2.save_grav_user', false)) {
+                    $grav_user->save();
+                }
 
                 $event->setUser($grav_user);
 

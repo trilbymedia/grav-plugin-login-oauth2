@@ -71,10 +71,42 @@ form:
               validate:
                 type: bool
 
-            provider_section:
-              type: section
-              title: OAuth2 Providers
-              underline: true
+            store_provider_data:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.STORE_OAUTH2_USER
+              help: PLUGIN_LOGIN_OAUTH2.STORE_OAUTH2_USER_DESC
+              highlight: 1
+              default: 1
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
+            default_access_levels.access:
+              type: textarea
+              label: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS
+              yaml: true
+              size: large
+              markdown: true
+              validate:
+                required: true
+              description: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS_DESC
+
+            callback_uri:
+              type: text
+              label: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI
+              placeholder: '/task:callback.oauth2'
+              help: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI_HELP
+              size: large
+              validate:
+                required: true
+
+        tab_2:
+          type: tab
+          title: PLUGIN_LOGIN_OAUTH2.PROVIDERS
+
+          fields:
 
             github:
               type: fieldset
@@ -194,6 +226,7 @@ form:
 
                 providers.facebook.options.graph_api_version:
                   type: text
+                  size: x-small
                   label: PLUGIN_LOGIN_OAUTH2.GRAPH_API_VERSION
 
                 providers.facebook.description:
@@ -236,7 +269,9 @@ form:
                     type: commalist
 
                 providers.google.options.avatar_size:
-                  type: text
+                  type: number
+                  size: x-small
+                  append: px
                   label: PLUGIN_LOGIN_OAUTH2.AVATAR_SIZE
 
                 providers.google.description:
@@ -283,42 +318,7 @@ form:
                   content: '[<i class="fa fa-book"></i> LinkedIn OAuth2 from the official documentation](https://developer.linkedin.com/docs/oauth2?target=_blank)'
                   markdown: true
 
-            advanced_section:
-              type: section
-              title: Advanced Options
-              underline: true
-
-            store_provider_data:
-              type: toggle
-              label: PLUGIN_LOGIN_OAUTH2.STORE_OAUTH2_USER
-              help: PLUGIN_LOGIN_OAUTH2.STORE_OAUTH2_USER_DESC
-              highlight: 0
-              default: 0
-              options:
-                1: Enabled
-                0: Disabled
-              validate:
-                type: bool
-
-            default_access_levels:
-              type: textarea
-              label: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS
-              yaml: true
-              markdown: true
-              validate:
-                required: true
-              description: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS_DESC
-
-            callback_uri:
-              type: text
-              label: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI
-              placeholder: '/task:callback.oauth2'
-              help: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI_HELP
-              size: medium
-              validate:
-                required: true
-
-        tab_2:
+        tab_3:
           type: tab
           title: PLUGIN_LOGIN_OAUTH2.DOCUMENTATION
 

@@ -1,6 +1,7 @@
 PLUGIN_LOGIN_OAUTH2:
   CONFIGURATION: "Configuration"
   DOCUMENTATION: "Instructions"
+  PROVIDERS: "OAuth2 Providers"
   BUILTIN_CSS: "Enable built-in CSS"
   BUILTIN_CSS_HELP: "If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin"
   BUTTON_STYLE: "Button Style"
@@ -9,7 +10,7 @@ PLUGIN_LOGIN_OAUTH2:
   CALLBACK_URI_HELP: "This is the URI that the provider will call when it has authenticated the user remotely. You shouldn't need to change this"
   SAVE_GRAV_USER: "Save Grav user"
   SAVE_GRAV_USER_DESC: "Saves the logged in user as a local Grav account"
-  STORE_OAUTH2_USER: "Store LDAP data"
+  STORE_OAUTH2_USER: "Store Provider data"
   STORE_OAUTH2_USER_DESC: "You can also store Provider data on the logged in user object to use in Grav"
   DEFAULT_ACCESS_LEVELS: "Default Access Levels"
   DEFAULT_ACCESS_LEVELS_DESC: "You can find more information on access levels in the [Grav Groups & Permissions](https://learn.getgrav.org/advanced/groups-and-permissions#permissions) documentation"

@@ -1,13 +1,14 @@
 enabled: true
 built_in_css: true
 button_style: row
-callback_uri: /task:callback.oauth2
+save_grav_user: false
+store_provider_data: true
 default_access_levels:
   access:
     site:
       login: 'true'
-save_grav_user: false
-store_provider_data: false
+callback_uri: '/task:callback.oauth2'
+
 providers:
   github:
     enabled: true
