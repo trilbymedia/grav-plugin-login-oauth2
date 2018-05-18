@@ -79,6 +79,7 @@ form:
             github:
               type: fieldset
               title: Github
+              collapsible: true
 
               fields:
 
@@ -117,6 +118,7 @@ form:
             instagram:
               type: fieldset
               title: Instagram
+              collapsible: true
 
               fields:
 
@@ -159,6 +161,7 @@ form:
             facebook:
               type: fieldset
               title: Facebook
+              collapsible: true
 
               fields:
 
@@ -201,6 +204,7 @@ form:
             google:
               type: fieldset
               title: Google
+              collapsible: true
 
               fields:
 
@@ -243,6 +247,7 @@ form:
             linkedin:
               type: fieldset
               title: LinkedIn
+              collapsible: true
 
               fields:
 
