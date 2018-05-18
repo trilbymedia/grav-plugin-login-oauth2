@@ -171,7 +171,7 @@ Once properly configured, the functionality of the OAuth2 plugin is simple for t
 
 Any user data available via the `scope` provider options will be retrieved.  Core fields like `username`, and `email` will be stored on the Grav user object, and anything else that is provider-specific can be optionally stored as well.  By default, the Grav user object **is not** persisted to a physical Grav account YAML file, instead it's just kept in session temporarily.
 
-### Storing Grav User
+#### Storing Grav User
 
 By default the OAuth2 plugin does not store any local user information.  Upon successfully authenticating against the OAuth2 user, a user is created and is available during the session.  However, upon returning, the user must re-authenticate and the OAuth2 data is retrieved again.
 
@@ -181,7 +181,7 @@ If you want to be able to set user data (extra fields, or specific user access) 
 >  
 > Also note that the password will never be stored in the Grav user under `accounts/`.
 
-### OAuth2 to Grav Access Mapping
+#### OAuth2 to Grav Access Mapping
 
 The OAuth2 plugin provides a flexible way to map your OAuth2 users into Grav.  
 
