@@ -37,6 +37,7 @@ providers:
     enabled: true
     client_id: ''
     client_secret: ''
+    hd: '*'
     options:
       scope: ['email', 'profile']
       avatar_size: 200

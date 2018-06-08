@@ -22,6 +22,7 @@ class GoogleProvider extends BaseProvider
             'clientId'      => $this->config->get('plugins.login-oauth2.providers.google.client_id'),
             'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.google.client_secret'),
             'redirectUri'   => $this->getCallbackUri(),
+            'hostedDomain'  => $this->config->get('plugins.login-oauth2.providers.google.options.hd', '*')
         ];
 
         parent::__construct($options);
