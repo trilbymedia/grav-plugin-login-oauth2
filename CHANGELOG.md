@@ -1,3 +1,9 @@
+# v1.0.2
+## mm/dd/2018
+
+1. [](#new)
+    * Implemented built-in support for GitLab Provider [#3](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/3)
+
 # v1.0.1
 ## 06/07/2018
 
