@@ -1,5 +1,5 @@
 name: Login OAuth2
-version: 1.0.1
+version: 1.0.2
 description: OAuth2 Client Plugin to integrate with Grav's Login
 icon: plug
 author:
@@ -110,7 +110,7 @@ form:
 
             github:
               type: fieldset
-              title: Github
+              title: GitHub
               collapsible: true
 
               fields:
@@ -144,7 +144,7 @@ form:
 
                 providers.github.description:
                   type: display
-                  content: '[<i class="fa fa-book"></i> Github OAuth2 from the official documentation](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/?target=_blank)'
+                  content: '[<i class="fa fa-book"></i> GitHub OAuth2 from the official documentation](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/?target=_blank)'
                   markdown: true
 
             instagram:
@@ -321,6 +321,50 @@ form:
                 providers.linkedin.description:
                   type: display
                   content: '[<i class="fa fa-book"></i> LinkedIn OAuth2 from the official documentation](https://developer.linkedin.com/docs/oauth2?target=_blank)'
+                  markdown: true
+
+            gitlab:
+              type: fieldset
+              title: GitLab
+              collapsible: true
+
+              fields:
+
+                providers.gitlab.enabled:
+                  type: toggle
+                  label: Enabled
+                  highlight: 1
+                  default: 0
+                  options:
+                    1: Enabled
+                    0: Disabled
+                  validate:
+                    type: bool
+
+                providers.gitlab.client_id:
+                  type: text
+                  label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
+
+                providers.gitlab.client_secret:
+                  type: text
+                  label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
+
+                providers.gitlab.options.scope:
+                  type: selectize
+                  size: large
+                  label: PLUGIN_LOGIN_OAUTH2.SCOPE
+                  classes: fancy
+                  validate:
+                    type: commalist
+
+                providers.gitlab.domain:
+                  type: text
+                  label: PLUGIN_LOGIN_OAUTH2.RESTRICT_DOMAIN
+                  placeholder: https://my.gitlab.example
+
+                providers.gitlab.description:
+                  type: display
+                  content: '[<i class="fa fa-book"></i> GitLab OAuth2 from the official documentation](https://docs.gitlab.com/ee/integration/oauth_provider.html?target=_blank)'
                   markdown: true
 
         tab_3:

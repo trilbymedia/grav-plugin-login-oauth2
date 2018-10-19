@@ -19,6 +19,10 @@ class ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3
         array (
             'Psr\\Http\\Message\\' => 17,
         ),
+        'O' => 
+        array (
+            'Omines\\OAuth2\\Client\\' => 21,
+        ),
         'L' => 
         array (
             'League\\OAuth2\\Client\\' => 21,
@@ -36,6 +40,10 @@ class ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Omines\\OAuth2\\Client\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/omines/oauth2-gitlab/src',
         ),
         'League\\OAuth2\\Client\\' => 
         array (
