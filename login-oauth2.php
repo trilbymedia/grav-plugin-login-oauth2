@@ -220,8 +220,8 @@ class LoginOauth2Plugin extends Plugin
         $route = Uri::getCurrentRoute();
 
         // We need to redirect as reloading this task will cause error.
-        $redirect = $route->withGravParam('task', null);
-        $this->grav->redirect((string) $redirect, 302);
+        $redirect = (string) $route->withGravParam('task', null);
+        $event->setRedirect($redirect);
     }
 
     public function userLoginAuthenticate(UserLoginEvent $event)

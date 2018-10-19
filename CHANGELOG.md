@@ -1,3 +1,9 @@
+# v1.0.2
+## mm/dd/2018
+
+1. [](#bugfix)
+    * Fix bad redirect on login error
+
 # v1.0.1
 ## 06/07/2018
 
