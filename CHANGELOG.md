@@ -3,6 +3,8 @@
 
 1. [](#new)
     * Implemented built-in support for GitLab Provider [#3](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/3)
+1. [](#improved)
+    * Updated vendor libraries
 1. [](#bugfix)
     * Fix bad redirect on login error
 
