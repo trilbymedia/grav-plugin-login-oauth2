@@ -48,3 +48,10 @@ providers:
     client_secret: ''
     options:
       scope: ['r_basicprofile','r_emailaddress']
+
+  gitlab:
+    enabled: true
+    client_id: ''
+    client_secret: ''
+    options:
+      scope: ['read_user', 'openid']
