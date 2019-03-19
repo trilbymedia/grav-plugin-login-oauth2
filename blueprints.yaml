@@ -37,6 +37,17 @@ form:
           title: PLUGIN_LOGIN_OAUTH2.CONFIGURATION
           fields:
 
+            enable_in_admin:
+              type: toggle
+              label: Enable in admin
+              highlight: 1
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
             built_in_css:
               type: toggle
               label: PLUGIN_LOGIN_OAUTH2.BUILTIN_CSS
