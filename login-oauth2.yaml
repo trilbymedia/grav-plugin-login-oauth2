@@ -1,4 +1,5 @@
 enabled: true
+enable_in_admin: false
 built_in_css: true
 button_style: row
 save_grav_user: false
