@@ -93,3 +93,6 @@
       font-size: 150%;
       color: #999;
       text-align: center; }
+
+#admin-login .form-oauth2 {
+  text-align: center; }
