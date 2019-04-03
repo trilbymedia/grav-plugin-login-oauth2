@@ -1,5 +1,5 @@
 name: Login OAuth2
-version: 1.0.1
+version: 1.1.0
 description: OAuth2 Client Plugin to integrate with Grav's Login
 icon: plug
 author:
@@ -118,6 +118,49 @@ form:
           title: PLUGIN_LOGIN_OAUTH2.PROVIDERS
 
           fields:
+
+            jira:
+              type: fieldset
+              title: Jira
+              collapsible: true
+
+              fields:
+
+                providers.jira.enabled:
+                  type: toggle
+                  label: Enabled
+                  highlight: 1
+                  default: 0
+                  options:
+                    1: Enabled
+                    0: Disabled
+                  validate:
+                    type: bool
+
+                providers.jira.client_id:
+                  type: text
+                  label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
+
+                providers.jira.client_secret:
+                  type: text
+                  label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
+
+                providers.jira.domain:
+                  type: text
+                  label: PLUGIN_LOGIN_OAUTH2.DOMAIN
+
+                providers.jira.options.scope:
+                  type: selectize
+                  size: large
+                  label: PLUGIN_LOGIN_OAUTH2.SCOPE
+                  classes: fancy
+                  validate:
+                    type: commalist
+
+                providers.jira.description:
+                  type: display
+                  content: '[<i class="fa fa-book"></i> Jira OAuth2 from the official documentation](https://developer.atlassian.com/server/jira/platform/oauth/?target=_blank)'
+                  markdown: true
 
             github:
               type: fieldset

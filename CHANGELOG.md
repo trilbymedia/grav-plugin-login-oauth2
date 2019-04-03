@@ -1,3 +1,9 @@
+# v1.1.0
+## mm/dd/2019
+
+1. [](#new)
+   * Implemented built-in support for Jira Provider
+
 # v1.0.2
 ## mm/dd/2019
 

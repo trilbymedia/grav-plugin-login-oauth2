@@ -58,6 +58,14 @@ default_access_levels:
 callback_uri: '/task:callback.oauth2'
 
 providers:
+  jira:
+    enabled: true
+    client_id: ''
+    client_secret: ''
+    domain: ''
+    options:
+      scope: ['read:jira-user']
+      
   github:
     enabled: true
     client_id: ''
@@ -111,6 +119,16 @@ providers:
 
 
 ### OAuth2 Providers
+
+#### Jira
+
+|Key                   |Description                 | Values |
+|:---------------------|:---------------------------|:-------|
+|enabled|Enable or disable this specific provider. This stops its showing as an valid login option| [default: `true`] \| `false` |
+|client_id|The **Client ID** Provided by GitHub when you register an application for OAuth2 authentication | `<string>` |
+|client_secret|The **Client Secret** Provided by GitHub when you register an application for OAuth2 authentication | `<string>` |
+|domain|The **Domain** Provided by Jira to access to your dashboard | `<string>` |
+|scope|An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['user', 'user:email', 'repo']` |
 
 #### GitHub
 
@@ -221,3 +239,6 @@ access:
 ```
 
 
+## Contributors
+
+- [Wizaplace](https://github.com/wizaplace/)

@@ -23,3 +23,4 @@ PLUGIN_LOGIN_OAUTH2:
   GRAPH_API_VERSION: "Graph API Version"
   AVATAR_SIZE: "Avatar Size"
   RESTRICT_DOMAIN: "Hosted Domain"
+  DOMAIN: "Domain"

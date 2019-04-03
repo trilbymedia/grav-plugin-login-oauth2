@@ -11,6 +11,14 @@ default_access_levels:
 callback_uri: '/task:callback.oauth2'
 
 providers:
+  jira:
+    enabled: true
+    client_id: ''
+    client_secret: ''
+    domain: ''
+    options:
+      scope: ['read:jira-user']
+
   github:
     enabled: true
     client_id: ''

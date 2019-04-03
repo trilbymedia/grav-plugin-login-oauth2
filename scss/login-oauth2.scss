@@ -1,3 +1,4 @@
+$jira_color: #0747A6;
 $facebook_color: #3B5998;
 $github_color: #181717;
 $google_color: #4285F4;
@@ -26,6 +27,13 @@ $label_color: #fff;
       fill: $label_color;
     }
 
+  }
+
+  button.jira {
+    background: $jira_color;
+    &:hover {
+      background: lighten($jira_color, 10%);
+    }
   }
 
   button.facebook {

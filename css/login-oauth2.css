@@ -13,6 +13,11 @@
   .form-oauth2 button svg {
     fill: #fff; }
 
+.form-oauth2 button.jira {
+  background: #0747A6; }
+  .form-oauth2 button.jira:hover {
+    background: #095cd7; }
+
 .form-oauth2 button.facebook {
   background: #3B5998; }
   .form-oauth2 button.facebook:hover {
