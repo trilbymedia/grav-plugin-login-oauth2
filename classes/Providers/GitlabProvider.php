@@ -18,8 +18,8 @@ class GitlabProvider extends BaseProvider
         $domain = $this->config->get('plugins.login-oauth2.providers.gitlab.domain', false);
 
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.gitlab.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.gitlab.client_secret'),
+            'clientId'      => $this->config->get('providers.gitlab.client_id'),
+            'clientSecret'  => $this->config->get('providers.gitlab.client_secret'),
         ];
 
         if ($domain) {
@@ -32,7 +32,7 @@ class GitlabProvider extends BaseProvider
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.gitlab.options.scope');
+        $options['scope'] = $this->config->get('providers.gitlab.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }

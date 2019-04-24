@@ -16,9 +16,9 @@ class InstagramProvider extends BaseProvider
     public function initProvider(array $options)
     {
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.instagram.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.instagram.client_secret'),
-            'host'          => $this->config->get('plugins.login-oauth2.providers.instagram.options.host')
+            'clientId'      => $this->config->get('providers.instagram.client_id'),
+            'clientSecret'  => $this->config->get('providers.instagram.client_secret'),
+            'host'          => $this->config->get('providers.instagram.options.host')
         ];
 
         parent::initProvider($options);
@@ -27,7 +27,7 @@ class InstagramProvider extends BaseProvider
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.instagram.options.scope');
+        $options['scope'] = $this->config->get('providers.instagram.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }

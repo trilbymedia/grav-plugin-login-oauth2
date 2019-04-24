@@ -17,9 +17,9 @@ class FacebookProvider extends BaseProvider
     public function initProvider(array $options)
     {
         $options += [
-            'clientId'          => $this->config->get('plugins.login-oauth2.providers.facebook.app_id'),
-            'clientSecret'      => $this->config->get('plugins.login-oauth2.providers.facebook.app_secret'),
-            'graphApiVersion'   => $this->config->get('plugins.login-oauth2.providers.facebook.options.graph_api_version')
+            'clientId'          => $this->config->get('providers.facebook.app_id'),
+            'clientSecret'      => $this->config->get('providers.facebook.app_secret'),
+            'graphApiVersion'   => $this->config->get('providers.facebook.options.graph_api_version')
         ];
 
         parent::initProvider($options);
@@ -28,7 +28,7 @@ class FacebookProvider extends BaseProvider
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.facebook.options.scope');
+        $options['scope'] = $this->config->get('providers.facebook.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }

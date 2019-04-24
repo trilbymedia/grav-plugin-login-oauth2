@@ -16,8 +16,8 @@ class LinkedinProvider extends BaseProvider
     public function initProvider(array $options)
     {
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.linkedin.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.linkedin.client_secret'),
+            'clientId'      => $this->config->get('providers.linkedin.client_id'),
+            'clientSecret'  => $this->config->get('providers.linkedin.client_secret'),
         ];
 
         parent::initProvider($options);
@@ -26,7 +26,7 @@ class LinkedinProvider extends BaseProvider
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.linkedin.options.scope');
+        $options['scope'] = $this->config->get('providers.linkedin.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }
