@@ -121,34 +121,35 @@
     },
     {
         "name": "guzzlehttp/psr7",
-        "version": "1.4.2",
-        "version_normalized": "1.4.2.0",
+        "version": "1.5.2",
+        "version_normalized": "1.5.2.0",
         "source": {
             "type": "git",
             "url": "https://github.com/guzzle/psr7.git",
-            "reference": "f5b8a8512e2b58b0071a7280e39f14f72e05d87c"
+            "reference": "9f83dded91781a01c63574e387eaa769be769115"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/guzzle/psr7/zipball/f5b8a8512e2b58b0071a7280e39f14f72e05d87c",
-            "reference": "f5b8a8512e2b58b0071a7280e39f14f72e05d87c",
+            "url": "https://api.github.com/repos/guzzle/psr7/zipball/9f83dded91781a01c63574e387eaa769be769115",
+            "reference": "9f83dded91781a01c63574e387eaa769be769115",
             "shasum": ""
         },
         "require": {
             "php": ">=5.4.0",
-            "psr/http-message": "~1.0"
+            "psr/http-message": "~1.0",
+            "ralouphie/getallheaders": "^2.0.5"
         },
         "provide": {
             "psr/http-message-implementation": "1.0"
         },
         "require-dev": {
-            "phpunit/phpunit": "~4.0"
+            "phpunit/phpunit": "~4.8.36 || ^5.7.27 || ^6.5.8"
         },
-        "time": "2017-03-20T17:10:46+00:00",
+        "time": "2018-12-04T20:46:45+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "1.4-dev"
+                "dev-master": "1.5-dev"
             }
         },
         "installation-source": "dist",
@@ -179,6 +180,7 @@
         "keywords": [
             "http",
             "message",
+            "psr-7",
             "request",
             "response",
             "stream",
@@ -223,22 +225,22 @@
     },
     {
         "name": "league/oauth2-client",
-        "version": "2.3.0",
-        "version_normalized": "2.3.0.0",
+        "version": "2.4.1",
+        "version_normalized": "2.4.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/thephpleague/oauth2-client.git",
-            "reference": "aa2e3df188f0bfd87f7880cc880e906e99923580"
+            "reference": "cc114abc622a53af969e8664722e84ca36257530"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/thephpleague/oauth2-client/zipball/aa2e3df188f0bfd87f7880cc880e906e99923580",
-            "reference": "aa2e3df188f0bfd87f7880cc880e906e99923580",
+            "url": "https://api.github.com/repos/thephpleague/oauth2-client/zipball/cc114abc622a53af969e8664722e84ca36257530",
+            "reference": "cc114abc622a53af969e8664722e84ca36257530",
             "shasum": ""
         },
         "require": {
             "guzzlehttp/guzzle": "^6.0",
-            "paragonie/random_compat": "^1|^2",
+            "paragonie/random_compat": "^1|^2|^9.99",
             "php": "^5.6|^7.0"
         },
         "require-dev": {
@@ -248,7 +250,7 @@
             "phpunit/phpunit": "^5.7|^6.0",
             "squizlabs/php_codesniffer": "^2.3|^3.0"
         },
-        "time": "2018-01-13T05:27:58+00:00",
+        "time": "2018-11-22T18:33:57+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -569,37 +571,99 @@
         ]
     },
     {
-        "name": "paragonie/random_compat",
-        "version": "v2.0.12",
-        "version_normalized": "2.0.12.0",
+        "name": "omines/oauth2-gitlab",
+        "version": "3.1.2",
+        "version_normalized": "3.1.2.0",
         "source": {
             "type": "git",
-            "url": "https://github.com/paragonie/random_compat.git",
-            "reference": "258c89a6b97de7dfaf5b8c7607d0478e236b04fb"
+            "url": "https://github.com/omines/oauth2-gitlab.git",
+            "reference": "606f271f4000c0a671715207ee8280440e8a88fc"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/paragonie/random_compat/zipball/258c89a6b97de7dfaf5b8c7607d0478e236b04fb",
-            "reference": "258c89a6b97de7dfaf5b8c7607d0478e236b04fb",
+            "url": "https://api.github.com/repos/omines/oauth2-gitlab/zipball/606f271f4000c0a671715207ee8280440e8a88fc",
+            "reference": "606f271f4000c0a671715207ee8280440e8a88fc",
             "shasum": ""
         },
         "require": {
-            "php": ">=5.2.0"
+            "league/oauth2-client": "^2.2",
+            "php": ">=5.6"
+        },
+        "conflict": {
+            "league/oauth2-client": "2.4.0"
         },
         "require-dev": {
-            "phpunit/phpunit": "4.*|5.*"
+            "friendsofphp/php-cs-fixer": "^2.0",
+            "m4tthumphrey/php-gitlab-api": "^9.0.0",
+            "mockery/mockery": "^1.0",
+            "php-http/guzzle6-adapter": "^1.1.1",
+            "phpunit/phpunit": "^5.7 || ^7.3"
+        },
+        "suggest": {
+            "m4tthumphrey/php-gitlab-api": "For further API usage using the acquired OAuth2 token"
+        },
+        "time": "2018-11-23T08:35:39+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "3.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Omines\\OAuth2\\Client\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Niels Keurentjes",
+                "email": "niels.keurentjes@omines.com",
+                "homepage": "https://www.omines.nl/"
+            }
+        ],
+        "description": "GitLab OAuth 2.0 Client Provider for The PHP League OAuth2-Client",
+        "keywords": [
+            "authorisation",
+            "authorization",
+            "client",
+            "gitlab",
+            "oauth",
+            "oauth2"
+        ]
+    },
+    {
+        "name": "paragonie/random_compat",
+        "version": "v9.99.99",
+        "version_normalized": "9.99.99.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/paragonie/random_compat.git",
+            "reference": "84b4dfb120c6f9b4ff7b3685f9b8f1aa365a0c95"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/paragonie/random_compat/zipball/84b4dfb120c6f9b4ff7b3685f9b8f1aa365a0c95",
+            "reference": "84b4dfb120c6f9b4ff7b3685f9b8f1aa365a0c95",
+            "shasum": ""
+        },
+        "require": {
+            "php": "^7"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "4.*|5.*",
+            "vimeo/psalm": "^1"
         },
         "suggest": {
             "ext-libsodium": "Provides a modern crypto API that can be used to generate random bytes."
         },
-        "time": "2018-04-04T21:24:14+00:00",
+        "time": "2018-07-02T15:55:56+00:00",
         "type": "library",
         "installation-source": "dist",
-        "autoload": {
-            "files": [
-                "lib/random.php"
-            ]
-        },
         "notification-url": "https://packagist.org/downloads/",
         "license": [
             "MIT"
@@ -614,6 +678,7 @@
         "description": "PHP 5.x polyfill for random_bytes() and random_int() from PHP 7",
         "keywords": [
             "csprng",
+            "polyfill",
             "pseudorandom",
             "random"
         ]
@@ -671,46 +736,34 @@
         ]
     },
     {
-        "name": "omines/oauth2-gitlab",
-        "version": "3.1.0",
-        "version_normalized": "3.1.0.0",
+        "name": "ralouphie/getallheaders",
+        "version": "2.0.5",
+        "version_normalized": "2.0.5.0",
         "source": {
             "type": "git",
-            "url": "https://github.com/omines/oauth2-gitlab.git",
-            "reference": "e9cf370897b42edeffc6946123a1bd22d6006c33"
+            "url": "https://github.com/ralouphie/getallheaders.git",
+            "reference": "5601c8a83fbba7ef674a7369456d12f1e0d0eafa"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/omines/oauth2-gitlab/zipball/e9cf370897b42edeffc6946123a1bd22d6006c33",
-            "reference": "e9cf370897b42edeffc6946123a1bd22d6006c33",
+            "url": "https://api.github.com/repos/ralouphie/getallheaders/zipball/5601c8a83fbba7ef674a7369456d12f1e0d0eafa",
+            "reference": "5601c8a83fbba7ef674a7369456d12f1e0d0eafa",
             "shasum": ""
         },
         "require": {
-            "league/oauth2-client": "^2.2",
-            "php": ">=5.6"
+            "php": ">=5.3"
         },
         "require-dev": {
-            "friendsofphp/php-cs-fixer": "^2.0",
-            "m4tthumphrey/php-gitlab-api": "^9.0.0",
-            "mockery/mockery": "^1.0",
-            "php-http/guzzle6-adapter": "^1.1.1",
-            "phpunit/phpunit": "^5.7 || ^6.0"
+            "phpunit/phpunit": "~3.7.0",
+            "satooshi/php-coveralls": ">=1.0"
         },
-        "suggest": {
-            "m4tthumphrey/php-gitlab-api": "For further API usage using the acquired OAuth2 token"
-        },
-        "time": "2017-11-01T21:46:33+00:00",
+        "time": "2016-02-11T07:05:27+00:00",
         "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "2.x-dev"
-            }
-        },
         "installation-source": "dist",
         "autoload": {
-            "psr-4": {
-                "Omines\\OAuth2\\Client\\": "src/"
-            }
+            "files": [
+                "src/getallheaders.php"
+            ]
         },
         "notification-url": "https://packagist.org/downloads/",
         "license": [
@@ -718,19 +771,10 @@
         ],
         "authors": [
             {
-                "name": "Niels Keurentjes",
-                "email": "niels.keurentjes@omines.com",
-                "homepage": "https://www.omines.nl/"
+                "name": "Ralph Khattar",
+                "email": "ralph.khattar@gmail.com"
             }
         ],
-        "description": "GitLab OAuth 2.0 Client Provider for The PHP League OAuth2-Client",
-        "keywords": [
-            "authorisation",
-            "authorization",
-            "client",
-            "gitlab",
-            "oauth",
-            "oauth2"
-        ]
+        "description": "A polyfill for getallheaders."
     }
 ]

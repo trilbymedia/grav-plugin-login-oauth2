@@ -9,28 +9,24 @@ class GithubProvider extends BaseProvider
 {
     protected $name = 'Github';
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Github';
-    protected $config;
 
     /** @var AbstractProvider|Github */
     protected $provider;
 
-    public function __construct(array $options)
+    public function initProvider(array $options)
     {
-        $this->config = Grav::instance()['config'];
-
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.github.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.github.client_secret'),
-            'redirectUri'   => $this->getCallbackUri(),
+            'clientId'      => $this->config->get('providers.github.client_id'),
+            'clientSecret'  => $this->config->get('providers.github.client_secret'),
         ];
 
-        parent::__construct($options);
+        parent::initProvider($options);
     }
 
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.github.options.scope');
+        $options['scope'] = $this->config->get('providers.github.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }

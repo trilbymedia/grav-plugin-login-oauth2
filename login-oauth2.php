@@ -21,6 +21,8 @@ use RocketTheme\Toolbox\Session\Message;
 class LoginOauth2Plugin extends Plugin
 {
 
+    protected $admin = false;
+
     /**
      * @return array
      *
@@ -71,7 +73,7 @@ class LoginOauth2Plugin extends Plugin
     public function onTwigSiteVariables()
     {
         // add CSS for frontend if required
-        if ((!$this->isAdmin() || $this->grav['config']->get('plugins.login-oauth2.enable_in_admin')) && $this->config->get('plugins.login-oauth2.built_in_css')) {
+        if ((!$this->isAdmin() || $this->admin) && $this->config->get('plugins.login-oauth2.built_in_css')) {
             $this->grav['assets']->add('plugin://login-oauth2/css/login-oauth2.css');
         }
     }
@@ -81,8 +83,12 @@ class LoginOauth2Plugin extends Plugin
      */
     public function onPluginsInitialized()
     {
+        if ($this->isAdmin() && $this->grav['config']->get('plugins.login-oauth2.admin.enabled')) {
+            $this->admin = true;
+        }
+
         // Don't proceed if we are in the admin plugin
-        if ( $this->isAdmin() && ! $this->grav['config']->get('plugins.login-oauth2.enable_in_admin') ) {
+        if ( $this->isAdmin() && !$this->admin) {
             return;
         }
 
@@ -107,9 +113,8 @@ class LoginOauth2Plugin extends Plugin
         }
 
         // Add OAuth2 object to Grav
-        $oauth2 = new OAuth2();
+        $oauth2 = new OAuth2($this->admin);
         $oauth2->addEnabledProviders();
-
 
         $this->grav['oauth2'] = $oauth2;
     }
@@ -127,6 +132,8 @@ class LoginOauth2Plugin extends Plugin
      */
     public function loginRedirect()
     {
+        /** @var OAuth2 $oauth2 */
+        $oauth2 = $this->grav['oauth2'];
 
         $user = isset($this->grav['user']) ? $this->grav['user'] : null;
         if ($user && $user->authorized) {
@@ -139,7 +146,7 @@ class LoginOauth2Plugin extends Plugin
             throw new \RuntimeException('Bad Request', 400);
         }
 
-        if ($this->isValidProvider($provider_name)) {
+        if ($oauth2->isValidProvider($provider_name)) {
 
             $provider = ProviderFactory::create($provider_name);
 
@@ -162,6 +169,9 @@ class LoginOauth2Plugin extends Plugin
         /** @var Login $login */
         $login = $this->grav['login'];
 
+        /** @var OAuth2 $oauth2 */
+        $oauth2 = $this->grav['oauth2'];
+
         /** @var Session $session */
         $session = $this->grav['session'];
         $provider_name = $session->oauth2_provider;
@@ -171,7 +181,7 @@ class LoginOauth2Plugin extends Plugin
         /** @var Message $messages */
         $messages = $this->grav['messages'];
 
-        if ($this->isValidProvider($provider_name)) {
+        if ($oauth2->isValidProvider($provider_name)) {
 
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
 
@@ -217,11 +227,11 @@ class LoginOauth2Plugin extends Plugin
             $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
         }
 
-        $route = Uri::getCurrentRoute();
+        $route = Uri::getCurrentRoute()->withRoot('');
 
         // We need to redirect as reloading this task will cause error.
         $redirect = (string) $route->withGravParam('task', null);
-        $event->setRedirect($redirect);
+        $this->grav->redirect($redirect);
     }
 
     public function userLoginAuthenticate(UserLoginEvent $event)
@@ -234,7 +244,7 @@ class LoginOauth2Plugin extends Plugin
 
             $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
             $provider_name = $options['provider'];
-            $provider = ProviderFactory::create($provider_name);
+            $provider = ProviderFactory::create($provider_name, $options);
 
             try {
 
@@ -319,10 +329,5 @@ class LoginOauth2Plugin extends Plugin
     public function userLogout(UserLoginEvent $event)
     {
         // This gets fired on user logout.
-    }
-
-    protected function isValidProvider($provider)
-    {
-        return $this->grav['oauth2']->isValidProvider($provider);
     }
 }
