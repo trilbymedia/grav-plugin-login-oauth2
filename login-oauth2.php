@@ -73,7 +73,8 @@ class LoginOauth2Plugin extends Plugin
     public function onTwigSiteVariables()
     {
         // add CSS for frontend if required
-        if ((!$this->isAdmin() || $this->admin) && $this->config->get('plugins.login-oauth2.built_in_css')) {
+        if ((!$this->isAdmin() && $this->config->get('plugins.login-oauth2.built_in_css')) ||
+            ($this->admin && $this->config->get('plugins.login-oauth2.admin.built_in_css'))) {
             $this->grav['assets']->add('plugin://login-oauth2/css/login-oauth2.css');
         }
     }

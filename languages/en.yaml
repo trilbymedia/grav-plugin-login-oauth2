@@ -23,3 +23,7 @@ PLUGIN_LOGIN_OAUTH2:
   GRAPH_API_VERSION: "Graph API Version"
   AVATAR_SIZE: "Avatar Size"
   RESTRICT_DOMAIN: "Hosted Domain"
+  ADMIN: "Admin"
+  ADMIN_ENABLED: "Enabled in Admin"
+  ADMIN_CALLBACK_URI: "Admin Callback URI"
+  ADMIN_CALLBACK_URI_HELP: "This is the admin callback URI.  It should be prefixed with your current admin path"

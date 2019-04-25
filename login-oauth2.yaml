@@ -59,6 +59,8 @@ providers:
 
 admin:
   enabled: false
+  built_in_css: true
+  button_style: row
   callback_uri: '/task:callback.oauth2'
 
   providers:

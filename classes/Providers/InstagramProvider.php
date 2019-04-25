@@ -34,8 +34,6 @@ class InstagramProvider extends BaseProvider
 
     public function getUserData($user)
     {
-        $data = $user->toArray();
-
         $data_user = [
             'id'         => $user->getId(),
             'login'      => $user->getNickname(),
