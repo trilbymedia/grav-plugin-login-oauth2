@@ -84,7 +84,6 @@ $label_color: #fff;
     span {
       display: block;
       font-size: 110%;
-      font-weight: 100;
       margin: 0.5rem 0 0;
     }
   }
@@ -103,7 +102,6 @@ $label_color: #fff;
     span {
       display: inline-block;
       font-size: 110%;
-      font-weight: 100;
       margin: 0 0 0 10px;
       vertical-align: middle;
       min-width: 100px;
@@ -147,17 +145,12 @@ $label_color: #fff;
 #admin-login .form-oauth2 {
   text-align: center;
 
-  &.row-style {
-    padding-top: 1rem;
-    
-    > p:first-child {
-      display: none;
-    }
-    span {
-      font-weight:normal;
-    }
+  padding-top: 1rem;
 
+  > p:first-child {
+    display: none;
   }
+
   .oauth2-or {
     opacity: 0.6;
     margin-bottom: -0.5rem;

@@ -54,7 +54,6 @@
 .form-oauth2.square-style span {
   display: block;
   font-size: 110%;
-  font-weight: 100;
   margin: 0.5rem 0 0; }
 
 .form-oauth2.button-style button, .form-oauth2.row-style button {
@@ -69,7 +68,6 @@
 .form-oauth2.button-style span, .form-oauth2.row-style span {
   display: inline-block;
   font-size: 110%;
-  font-weight: 100;
   margin: 0 0 0 10px;
   vertical-align: middle;
   min-width: 100px;
@@ -95,13 +93,10 @@
       text-align: center; }
 
 #admin-login .form-oauth2 {
-  text-align: center; }
-  #admin-login .form-oauth2.row-style {
-    padding-top: 1rem; }
-    #admin-login .form-oauth2.row-style > p:first-child {
-      display: none; }
-    #admin-login .form-oauth2.row-style span {
-      font-weight: normal; }
+  text-align: center;
+  padding-top: 1rem; }
+  #admin-login .form-oauth2 > p:first-child {
+    display: none; }
   #admin-login .form-oauth2 .oauth2-or {
     opacity: 0.6;
     margin-bottom: -0.5rem; }
