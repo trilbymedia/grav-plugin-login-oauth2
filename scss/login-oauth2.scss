@@ -144,6 +144,27 @@ $label_color: #fff;
 
 }
 
-#admin-login .form-oauth2{
+#admin-login .form-oauth2 {
   text-align: center;
+
+  &.row-style {
+    padding-top: 1rem;
+    
+    > p:first-child {
+      display: none;
+    }
+    span {
+      font-weight:normal;
+    }
+
+  }
+  .oauth2-or {
+    opacity: 0.6;
+    margin-bottom: -0.5rem;
+
+    span.line {
+      opacity: 0.2;
+      border-bottom-width: 1px;
+    }
+  }
 }

@@ -96,3 +96,15 @@
 
 #admin-login .form-oauth2 {
   text-align: center; }
+  #admin-login .form-oauth2.row-style {
+    padding-top: 1rem; }
+    #admin-login .form-oauth2.row-style > p:first-child {
+      display: none; }
+    #admin-login .form-oauth2.row-style span {
+      font-weight: normal; }
+  #admin-login .form-oauth2 .oauth2-or {
+    opacity: 0.6;
+    margin-bottom: -0.5rem; }
+    #admin-login .form-oauth2 .oauth2-or span.line {
+      opacity: 0.2;
+      border-bottom-width: 1px; }
