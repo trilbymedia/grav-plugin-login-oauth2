@@ -10,9 +10,6 @@ class InstagramProvider extends BaseProvider
     protected $name = 'Instagram';
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Instagram';
 
-    /** @var AbstractProvider|Instagram */
-    protected $provider;
-
     public function initProvider(array $options)
     {
         $options += [

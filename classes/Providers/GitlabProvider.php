@@ -10,9 +10,6 @@ class GitlabProvider extends BaseProvider
     protected $name = 'Gitlab';
     protected $classname = 'Omines\\OAuth2\\Client\\Provider\\Gitlab';
 
-    /** @var AbstractProvider|Gitlab */
-    protected $provider;
-
     public function initProvider(array $options)
     {
         $domain = $this->config->get('plugins.login-oauth2.providers.gitlab.domain', false);

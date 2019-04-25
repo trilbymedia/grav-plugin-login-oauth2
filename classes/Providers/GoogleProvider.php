@@ -10,9 +10,6 @@ class GoogleProvider extends BaseProvider
     protected $name = 'Google';
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Google';
 
-    /** @var AbstractProvider|Google */
-    protected $provider;
-
     public function initProvider(array $options)
     {
         $options += [

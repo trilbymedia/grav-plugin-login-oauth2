@@ -11,9 +11,6 @@ class FacebookProvider extends BaseProvider
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Facebook';
     protected $config;
 
-    /** @var AbstractProvider|Facebook */
-    protected $provider;
-
     public function initProvider(array $options)
     {
         $options += [

@@ -10,9 +10,6 @@ class GithubProvider extends BaseProvider
     protected $name = 'Github';
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Github';
 
-    /** @var AbstractProvider|Github */
-    protected $provider;
-
     public function initProvider(array $options)
     {
         $options += [

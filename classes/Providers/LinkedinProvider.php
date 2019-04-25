@@ -10,9 +10,6 @@ class LinkedInProvider extends BaseProvider
     protected $name = 'LinkedIn';
     protected $classname = 'League\\OAuth2\\Client\\Provider\\LinkedIn';
 
-    /** @var AbstractProvider|LinkedIn */
-    protected $provider;
-
     public function initProvider(array $options)
     {
         $options += [
