@@ -3,7 +3,6 @@ $github_color: #181717;
 $google_color: #4285F4;
 $instagram_color: #E4405F;
 $linkedin_color: #0077B5;
-$gitlab_color: #fc6c26;
 $label_color: #fff;
 
 .form-oauth2 {
@@ -60,13 +59,6 @@ $label_color: #fff;
     background: $linkedin_color;
     &:hover {
       background: darken($linkedin_color, 10%);
-    }
-  }
-
-  button.gitlab {
-    background: $gitlab_color;
-    &:hover {
-      background: darken($gitlab_color, 10%);
     }
   }
 

@@ -18,7 +18,7 @@ form:
   fields:
     enabled:
       type: toggle
-      label: Plugin status
+      label: Plugin Status
       highlight: 1
       default: 0
       options:
@@ -658,109 +658,6 @@ form:
                   type: display
                   style: vertical
                   content: '[<i class="fa fa-book"></i> LinkedIn OAuth2 from the official documentation](https://developer.linkedin.com/docs/oauth2?target=_blank)'
-                  markdown: true
-
-            gitlab:
-              type: fieldset
-              title: GitLab
-              collapsible: true
-
-              fields:
-
-                gitlab_columns:
-                  type: columns
-
-                  fields:
-
-                    gitlab_column_left:
-                      type: column
-
-                      fields:
-
-                        gitlab.site:
-                          type: display
-                          style: vertical
-                          content: '<h3>Site</h3>'
-
-                        providers.gitlab.enabled:
-                          type: toggle
-                          label: Enabled
-                          highlight: 1
-                          default: 0
-                          options:
-                            1: Enabled
-                            0: Disabled
-                          validate:
-                            type: bool
-
-                        providers.gitlab.client_id:
-                          type: text
-                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
-
-                        providers.gitlab.client_secret:
-                          type: text
-                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
-
-                        providers.gitlab.options.scope:
-                          type: selectize
-                          size: large
-                          label: PLUGIN_LOGIN_OAUTH2.SCOPE
-                          classes: fancy
-                          validate:
-                            type: commalist
-
-                        providers.gitlab.domain:
-                          type: text
-                          label: PLUGIN_LOGIN_OAUTH2.RESTRICT_DOMAIN
-                          placeholder: https://my.gitlab.example
-
-
-                    gitlab_column_right:
-                      type: column
-
-                      fields:
-
-                        gitlab.admin:
-                          type: display
-                          style: vertical
-                          content: '<h3>Admin</h3>'
-
-                        admin.providers.gitlab.enabled:
-                          type: toggle
-                          label: Enabled
-                          highlight: 1
-                          default: 0
-                          options:
-                            1: Enabled
-                            0: Disabled
-                          validate:
-                            type: bool
-
-                        admin.providers.gitlab.client_id:
-                          type: text
-                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
-
-                        admin.providers.gitlab.client_secret:
-                          type: text
-                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
-
-                        admin.providers.gitlab.options.scope:
-                          type: selectize
-                          size: large
-                          label: PLUGIN_LOGIN_OAUTH2.SCOPE
-                          classes: fancy
-                          validate:
-                            type: commalist
-
-                        admin.providers.gitlab.domain:
-                          type: text
-                          label: PLUGIN_LOGIN_OAUTH2.RESTRICT_DOMAIN
-                          placeholder: https://my.gitlab.example
-
-                providers.gitlab.description:
-                  type: display
-                  style: vertical
-                  content: '[<i class="fa fa-book"></i> GitLab OAuth2 from the official documentation](https://docs.gitlab.com/ee/integration/oauth_provider.html?target=_blank)'
                   markdown: true
 
         tab_3:

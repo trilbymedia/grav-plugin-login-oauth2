@@ -50,12 +50,7 @@ providers:
     options:
       scope: ['r_basicprofile','r_emailaddress']
 
-  gitlab:
-    enabled: true
-    client_id: ''
-    client_secret: ''
-    options:
-      scope: ['read_user', 'openid']
+
 
 admin:
   enabled: false
@@ -102,10 +97,3 @@ admin:
       client_secret: ''
       options:
         scope: ['r_basicprofile','r_emailaddress']
-
-    gitlab:
-      enabled: false
-      client_id: ''
-      client_secret: ''
-      options:
-        scope: ['read_user', 'openid']

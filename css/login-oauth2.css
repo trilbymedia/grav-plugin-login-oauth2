@@ -38,11 +38,6 @@
   .form-oauth2 button.linkedin:hover {
     background: #005582; }
 
-.form-oauth2 button.gitlab {
-  background: #fc6c26; }
-  .form-oauth2 button.gitlab:hover {
-    background: #ec4f03; }
-
 .form-oauth2.square-style button {
   padding: 10px;
   min-width: 100px; }
