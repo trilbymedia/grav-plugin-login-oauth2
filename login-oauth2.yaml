@@ -56,7 +56,7 @@ admin:
   enabled: false
   built_in_css: true
   button_style: row
-  callback_uri: '/task:callback.oauth2'
+  callback_uri: '/admin/task:callback.oauth2'
 
   providers:
     github:

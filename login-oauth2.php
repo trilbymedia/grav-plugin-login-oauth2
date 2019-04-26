@@ -228,9 +228,8 @@ class LoginOauth2Plugin extends Plugin
             $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
         }
 
-//        $route = Uri::getCurrentRoute()->withRoot('');
-//        $redirect = (string) $route->withGravParam('task', null);
-        $redirect = $this->grav['uri']->url(true);
+        $uri = $this->grav['uri'];
+        $redirect = $uri->url(true);
         $this->grav->redirect($redirect);
     }
 
