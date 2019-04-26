@@ -259,7 +259,7 @@ There are some providers such as **Discord** and **GitLab** that actually allow 
 
 Also, if you have the `system.session.split` option set to `false`, you are effectively sharing the session between `Site` and `Admin`, and again, you can share the `Site` configuration, but they need to be entered into both sets of options.
 
-For admin logins to be useful, you need to ensure you set `store_grav_user: true` (which is not default behavior). This will ensure that when you login, a local accounts `.yaml` file will be create in `user/accounts/` folder.  A this point you can manually add the admin access required to log into the admin:
+For admin logins to be useful, you need to ensure you set `store_grav_user: true` (which is not default behavior). This will ensure that when you login, a local accounts `.yaml` file will be create in `user/accounts/` folder.  A this point you can manually add the admin access required to log into the admin by directly editing the `.yaml` file that was auto-created during the login process:
 
 ```yaml
   access:
