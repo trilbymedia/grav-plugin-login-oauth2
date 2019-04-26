@@ -1,10 +1,11 @@
 # v2.0.0
-## mm/dd/2019
+## 04/26/2019
 
 1. [](#new)
     * Support for OAuth2 Admin login
+    * Support for default groups
 1. [](#improved)
-    * Updated vendor libraries
+    * Updated vendor libraries to use latest Google / LinkedIn providers
 1. [](#bugfix)
     * Fix bad redirect on login error
 
