@@ -11,27 +11,21 @@ class FacebookProvider extends BaseProvider
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Facebook';
     protected $config;
 
-    /** @var AbstractProvider|Facebook */
-    protected $provider;
-
-    public function __construct(array $options)
+    public function initProvider(array $options)
     {
-        $this->config = Grav::instance()['config'];
-
         $options += [
-            'clientId'          => $this->config->get('plugins.login-oauth2.providers.facebook.app_id'),
-            'clientSecret'      => $this->config->get('plugins.login-oauth2.providers.facebook.app_secret'),
-            'redirectUri'       => $this->getCallbackUri(),
-            'graphApiVersion'   => $this->config->get('plugins.login-oauth2.providers.facebook.options.graph_api_version')
+            'clientId'          => $this->config->get('providers.facebook.app_id'),
+            'clientSecret'      => $this->config->get('providers.facebook.app_secret'),
+            'graphApiVersion'   => $this->config->get('providers.facebook.options.graph_api_version')
         ];
 
-        parent::__construct($options);
+        parent::initProvider($options);
     }
 
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.facebook.options.scope');
+        $options['scope'] = $this->config->get('providers.facebook.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }

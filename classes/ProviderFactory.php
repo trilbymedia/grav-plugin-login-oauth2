@@ -14,7 +14,8 @@ class ProviderFactory
     {
         $provider_classname = 'Grav\\Plugin\\Login\\OAuth2\\Providers\\' . ucfirst($provider) . 'Provider';
 
-        $class = new $provider_classname($options);
+        $class = new $provider_classname();
+        $class->initProvider($options);
         return $class;
     }
 }

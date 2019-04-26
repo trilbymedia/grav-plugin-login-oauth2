@@ -9,37 +9,28 @@ class InstagramProvider extends BaseProvider
 {
     protected $name = 'Instagram';
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Instagram';
-    protected $config;
 
-    /** @var AbstractProvider|Instagram */
-    protected $provider;
-
-    public function __construct(array $options)
+    public function initProvider(array $options)
     {
-        $this->config = Grav::instance()['config'];
-
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.instagram.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.instagram.client_secret'),
-            'redirectUri'   => $this->getCallbackUri(),
-            'host'          => $this->config->get('plugins.login-oauth2.providers.instagram.options.host')
+            'clientId'      => $this->config->get('providers.instagram.client_id'),
+            'clientSecret'  => $this->config->get('providers.instagram.client_secret'),
+            'host'          => $this->config->get('providers.instagram.options.host')
         ];
 
-        parent::__construct($options);
+        parent::initProvider($options);
     }
 
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.instagram.options.scope');
+        $options['scope'] = $this->config->get('providers.instagram.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }
 
     public function getUserData($user)
     {
-        $data = $user->toArray();
-
         $data_user = [
             'id'         => $user->getId(),
             'login'      => $user->getNickname(),

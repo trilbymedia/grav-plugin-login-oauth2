@@ -1,10 +1,11 @@
-# v1.0.2
-## 10/19/2018
+# v2.0.0
+## 04/26/2019
 
 1. [](#new)
-    * Implemented built-in support for GitLab Provider [#3](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/3)
+    * Support for OAuth2 Admin login
+    * Support for default groups
 1. [](#improved)
-    * Updated vendor libraries
+    * Updated vendor libraries to use latest Google / LinkedIn providers
 1. [](#bugfix)
     * Fix bad redirect on login error
 

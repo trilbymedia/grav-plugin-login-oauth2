@@ -4,13 +4,13 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3
+class ComposerStaticInita78d4715ebf721c8bb16881516d2701d
 {
     public static $files = array (
+        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
         'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
-        '5255c38a0faeba867671b61dfda6d864' => __DIR__ . '/..' . '/paragonie/random_compat/lib/random.php',
         'b45b351e6b6f7487d819961fef2fda77' => __DIR__ . '/..' . '/jakeasmith/http_build_url/src/http_build_url.php',
     );
 
@@ -18,10 +18,6 @@ class ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3
         'P' => 
         array (
             'Psr\\Http\\Message\\' => 17,
-        ),
-        'O' => 
-        array (
-            'Omines\\OAuth2\\Client\\' => 21,
         ),
         'L' => 
         array (
@@ -40,10 +36,6 @@ class ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
-        ),
-        'Omines\\OAuth2\\Client\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/omines/oauth2-gitlab/src',
         ),
         'League\\OAuth2\\Client\\' => 
         array (
@@ -75,8 +67,8 @@ class ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitcc61c3bf48907c3dd4f2a55c10334eb3::$prefixDirsPsr4;
+            $loader->prefixLengthsPsr4 = ComposerStaticInita78d4715ebf721c8bb16881516d2701d::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInita78d4715ebf721c8bb16881516d2701d::$prefixDirsPsr4;
 
         }, null, ClassLoader::class);
     }

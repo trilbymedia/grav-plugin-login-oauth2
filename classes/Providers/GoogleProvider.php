@@ -9,29 +9,22 @@ class GoogleProvider extends BaseProvider
 {
     protected $name = 'Google';
     protected $classname = 'League\\OAuth2\\Client\\Provider\\Google';
-    protected $config;
 
-    /** @var AbstractProvider|Google */
-    protected $provider;
-
-    public function __construct(array $options)
+    public function initProvider(array $options)
     {
-        $this->config = Grav::instance()['config'];
-
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.google.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.google.client_secret'),
-            'redirectUri'   => $this->getCallbackUri(),
-            'hostedDomain'  => $this->config->get('plugins.login-oauth2.providers.google.options.hd', '*')
+            'clientId'      => $this->config->get('providers.google.client_id'),
+            'clientSecret'  => $this->config->get('providers.google.client_secret'),
+            'hostedDomain'  => $this->config->get('providers.google.options.hd', '*')
         ];
 
-        parent::__construct($options);
+        parent::initProvider($options);
     }
 
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.google.options.scope');
+        $options['scope'] = $this->config->get('providers.google.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }

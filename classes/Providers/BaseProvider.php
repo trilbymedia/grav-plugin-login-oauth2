@@ -1,6 +1,7 @@
 <?php
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
+use Grav\Common\Data\Data;
 use Grav\Common\Grav;
 use Grav\Common\Utils;
 use League\OAuth2\Client\Provider\AbstractProvider;
@@ -20,15 +21,29 @@ abstract class BaseProvider implements ProviderInterface
     /** @var stdClass */
     protected $token;
 
+    protected $config;
+
     /**
      * BaseProvider constructor.
-     * @param array $options
      */
-    public function __construct(array $options)
+    public function __construct()
     {
-        $this->provider = new $this->classname($options);
+        $admin = Grav::instance()['oauth2']->isAdmin();
+        $this->config = new Data(Grav::instance()['config']->get('plugins.login-oauth2' . ($admin ? '.admin' : '')));
         $this->state = 'LOGIN_OAUTH2_' . Utils::generateRandomString(15);
     }
+
+    /**
+     * Initialize Provider
+     *
+     * @param array $options
+     */
+    public function initProvider(array $options)
+    {
+        $options['redirectUri'] = $this->getCallbackUri();
+        $this->provider = new $this->classname($options);
+    }
+
 
     /**
      * @return string
@@ -67,7 +82,9 @@ abstract class BaseProvider implements ProviderInterface
 
     public function getCallbackUri()
     {
-        $callback_uri = Grav::instance()['config']->get('plugins.login-oauth2.callback_uri');
+        $admin = Grav::instance()['oauth2']->isAdmin();
+        $callback_uri = Grav::instance()['config']->get('plugins.login-oauth2.' . ($admin ? 'admin.callback_uri' : 'callback_uri'));
+
         $base_url = Grav::instance()['base_url_absolute'];
 
         return $base_url . '/' . ltrim($callback_uri, '/');

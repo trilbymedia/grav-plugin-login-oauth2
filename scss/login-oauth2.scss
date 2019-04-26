@@ -3,7 +3,6 @@ $github_color: #181717;
 $google_color: #4285F4;
 $instagram_color: #E4405F;
 $linkedin_color: #0077B5;
-$gitlab_color: #fc6c26;
 $label_color: #fff;
 
 .form-oauth2 {
@@ -63,13 +62,6 @@ $label_color: #fff;
     }
   }
 
-  button.gitlab {
-    background: $gitlab_color;
-    &:hover {
-      background: darken($gitlab_color, 10%);
-    }
-  }
-
   &.square-style {
     button {
       padding: 10px;
@@ -84,7 +76,6 @@ $label_color: #fff;
     span {
       display: block;
       font-size: 110%;
-      font-weight: 100;
       margin: 0.5rem 0 0;
     }
   }
@@ -103,7 +94,6 @@ $label_color: #fff;
     span {
       display: inline-block;
       font-size: 110%;
-      font-weight: 100;
       margin: 0 0 0 10px;
       vertical-align: middle;
       min-width: 100px;
@@ -142,4 +132,24 @@ $label_color: #fff;
   }
 
 
+}
+
+#admin-login .form-oauth2 {
+  text-align: center;
+
+  padding-top: 1rem;
+
+  > p:first-child {
+    display: none;
+  }
+
+  .oauth2-or {
+    opacity: 0.6;
+    margin-bottom: -0.5rem;
+
+    span.line {
+      opacity: 0.2;
+      border-bottom-width: 1px;
+    }
+  }
 }

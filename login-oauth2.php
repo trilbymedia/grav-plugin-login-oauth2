@@ -21,6 +21,8 @@ use RocketTheme\Toolbox\Session\Message;
 class LoginOauth2Plugin extends Plugin
 {
 
+    protected $admin = false;
+
     /**
      * @return array
      *
@@ -71,7 +73,8 @@ class LoginOauth2Plugin extends Plugin
     public function onTwigSiteVariables()
     {
         // add CSS for frontend if required
-        if (!$this->isAdmin() && $this->config->get('plugins.login-oauth2.built_in_css')) {
+        if ((!$this->isAdmin() && $this->config->get('plugins.login-oauth2.built_in_css')) ||
+            ($this->admin && $this->config->get('plugins.login-oauth2.admin.built_in_css'))) {
             $this->grav['assets']->add('plugin://login-oauth2/css/login-oauth2.css');
         }
     }
@@ -81,8 +84,12 @@ class LoginOauth2Plugin extends Plugin
      */
     public function onPluginsInitialized()
     {
+        if ($this->isAdmin() && $this->grav['config']->get('plugins.login-oauth2.admin.enabled')) {
+            $this->admin = true;
+        }
+
         // Don't proceed if we are in the admin plugin
-        if ($this->isAdmin()) {
+        if ( $this->isAdmin() && !$this->admin) {
             return;
         }
 
@@ -107,9 +114,8 @@ class LoginOauth2Plugin extends Plugin
         }
 
         // Add OAuth2 object to Grav
-        $oauth2 = new OAuth2();
+        $oauth2 = new OAuth2($this->admin);
         $oauth2->addEnabledProviders();
-
 
         $this->grav['oauth2'] = $oauth2;
     }
@@ -127,6 +133,8 @@ class LoginOauth2Plugin extends Plugin
      */
     public function loginRedirect()
     {
+        /** @var OAuth2 $oauth2 */
+        $oauth2 = $this->grav['oauth2'];
 
         $user = isset($this->grav['user']) ? $this->grav['user'] : null;
         if ($user && $user->authorized) {
@@ -139,7 +147,7 @@ class LoginOauth2Plugin extends Plugin
             throw new \RuntimeException('Bad Request', 400);
         }
 
-        if ($this->isValidProvider($provider_name)) {
+        if ($oauth2->isValidProvider($provider_name)) {
 
             $provider = ProviderFactory::create($provider_name);
 
@@ -162,6 +170,9 @@ class LoginOauth2Plugin extends Plugin
         /** @var Login $login */
         $login = $this->grav['login'];
 
+        /** @var OAuth2 $oauth2 */
+        $oauth2 = $this->grav['oauth2'];
+
         /** @var Session $session */
         $session = $this->grav['session'];
         $provider_name = $session->oauth2_provider;
@@ -171,7 +182,7 @@ class LoginOauth2Plugin extends Plugin
         /** @var Message $messages */
         $messages = $this->grav['messages'];
 
-        if ($this->isValidProvider($provider_name)) {
+        if ($oauth2->isValidProvider($provider_name)) {
 
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
 
@@ -217,11 +228,9 @@ class LoginOauth2Plugin extends Plugin
             $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
         }
 
-        $route = Uri::getCurrentRoute();
-
-        // We need to redirect as reloading this task will cause error.
-        $redirect = (string) $route->withGravParam('task', null);
-        $event->setRedirect($redirect);
+        $uri = $this->grav['uri'];
+        $redirect = $uri->url(true);
+        $this->grav->redirect($redirect);
     }
 
     public function userLoginAuthenticate(UserLoginEvent $event)
@@ -234,7 +243,7 @@ class LoginOauth2Plugin extends Plugin
 
             $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
             $provider_name = $options['provider'];
-            $provider = ProviderFactory::create($provider_name);
+            $provider = ProviderFactory::create($provider_name, $options);
 
             try {
 
@@ -261,11 +270,22 @@ class LoginOauth2Plugin extends Plugin
                 // Set provider
                 $grav_user->set('provider', $provider_name);
 
+                // Default Access levels
                 $current_access = $grav_user->get('access');
                 if (!$current_access) {
                     $access = $this->config->get('plugins.login-oauth2.default_access_levels.access', []);
                     if (count($access) > 0) {
                         $data['access'] = $access;
+                        $grav_user->merge($data);
+                    }
+                }
+
+                // Default Groups
+                $current_groups = $grav_user->get('groups');
+                if (!$current_groups) {
+                    $groups = $this->config->get('plugins.login-oauth2.default_groups', []);
+                    if (count($groups) > 0) {
+                        $data['groups'] = $groups;
                         $grav_user->merge($data);
                     }
                 }
@@ -319,10 +339,5 @@ class LoginOauth2Plugin extends Plugin
     public function userLogout(UserLoginEvent $event)
     {
         // This gets fired on user logout.
-    }
-
-    protected function isValidProvider($provider)
-    {
-        return $this->grav['oauth2']->isValidProvider($provider);
     }
 }

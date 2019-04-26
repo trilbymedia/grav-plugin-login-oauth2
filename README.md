@@ -47,6 +47,8 @@ The default configuration and an explanation of available options:
 
 ```yaml
 enabled: true
+callback_uri: '/task:callback.oauth2'
+
 built_in_css: true
 button_style: row
 save_grav_user: false
@@ -55,7 +57,7 @@ default_access_levels:
   access:
     site:
       login: 'true'
-callback_uri: '/task:callback.oauth2'
+default_groups:
 
 providers:
   github:
@@ -63,7 +65,7 @@ providers:
     client_id: ''
     client_secret: ''
     options:
-      scope: ['user', 'user:email', 'repo']
+      scope: ['user', 'user:email']
 
   instagram:
     enabled: true
@@ -85,6 +87,7 @@ providers:
     enabled: true
     client_id: ''
     client_secret: ''
+    hd: '*'
     options:
       scope: ['email', 'profile']
       avatar_size: 200
@@ -95,6 +98,54 @@ providers:
     client_secret: ''
     options:
       scope: ['r_basicprofile','r_emailaddress']
+
+
+
+admin:
+  enabled: false
+  built_in_css: true
+  button_style: row
+  callback_uri: '/task:callback.oauth2'
+
+  providers:
+    github:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      options:
+        scope: ['user', 'user:email']
+
+    instagram:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      options:
+        scope: ['basic', 'likes', 'comments']
+        host: 'https://api.instagram.com'
+
+    facebook:
+      enabled: false
+      app_id: ''
+      app_secret: ''
+      options:
+        scope: ['email', 'public_profile', 'user_hometown']
+        graph_api_version: 'v2.10'
+
+    google:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      hd: '*'
+      options:
+        scope: ['email', 'profile']
+        avatar_size: 200
+
+    linkedin:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      options:
+        scope: ['r_basicprofile','r_emailaddress']
 ```
 
 ### Server Settings
@@ -107,6 +158,7 @@ providers:
 |save_grav_user|Store the grav user account as a local YAML account | true \| [default: `false`] |
 |store_provider_data|If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav| true \| [default: `false`] |
 |default_access_levels.access|You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `site: { login: 'true' }`]|
+|default_groups| You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `[]`]|
 |callback_uri|This is the URI that the provider will call when it has authenticated the user remotely. You shouldn't need to change this|[default: `/task:callback.oauth2`]|
 
 
@@ -200,6 +252,27 @@ In order for a front-end user to be able to log into a Grav site the minimum of 
 It is not advised to provide any `admin` access via OAuth2 accounts, but if you wish a particular OAuth user to be able to log into the admin, you should enable the `save_grav_user` option, so the userdata is persisted as a Grav Account YAML file, and then manually add the desired permissions.  These **will not** be reset to the default values on each login.
 
 > NOTE: See the [Groups and Permissions Documentation](https://learn.getgrav.org/advanced/groups-and-permissions?target=_blank) for more information about how Grav permissions work in conjunction with access levels and groups.
+
+### Admin Notes
+
+New in version `2.0` is the support for OAuth2 providers to be able to login via the admin.  After careful consideration, we decided to provide configuration options for both `Site` and `Admin` as there are some providers that need to have a unique **OAuth2 Application** setup for each unique callback.  This is important because by default, Grav uses a different session for both `Site` and `Admin`.  Therefore you need a unique callback, one that goes to the frontend site, and one to the admin.  This means we have to provide a way to have unique application settings for both `Site` and `Admin`.  
+
+There are some providers such as **Discord** and **GitLab** that actually allow for multiple callback URLs to be registered.  In this case, simply copy over the same `client_id` and `client_secret` for both `Site` and `Admin`.
+
+Also, if you have the `system.session.split` option set to `false`, you are effectively sharing the session between `Site` and `Admin`, and again, you can share the `Site` configuration, but they need to be entered into both sets of options.
+
+For admin logins to be useful, you need to ensure you set `store_grav_user: true` (which is not default behavior). This will ensure that when you login, a local accounts `.yaml` file will be create in `user/accounts/` folder.  A this point you can manually add the admin access required to log into the admin by directly editing the `.yaml` file that was auto-created during the login process:
+
+```yaml
+  access:
+    admin:
+      login: 'true'
+      super: 'true'
+    site:
+      login: 'true'
+```
+
+Of course adjust this `access.admin:` settings to whatever you need, but **NEVER** set this in the `default_access_levels:` setting for the plugin, or every user will have admin access.  You want to maintain control over who can access and who can't, especially those logging in with OAuth2 providers as there is no control over 'who' can sign in.
 
 ### Troubleshooting
 

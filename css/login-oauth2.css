@@ -38,11 +38,6 @@
   .form-oauth2 button.linkedin:hover {
     background: #005582; }
 
-.form-oauth2 button.gitlab {
-  background: #fc6c26; }
-  .form-oauth2 button.gitlab:hover {
-    background: #ec4f03; }
-
 .form-oauth2.square-style button {
   padding: 10px;
   min-width: 100px; }
@@ -54,7 +49,6 @@
 .form-oauth2.square-style span {
   display: block;
   font-size: 110%;
-  font-weight: 100;
   margin: 0.5rem 0 0; }
 
 .form-oauth2.button-style button, .form-oauth2.row-style button {
@@ -69,7 +63,6 @@
 .form-oauth2.button-style span, .form-oauth2.row-style span {
   display: inline-block;
   font-size: 110%;
-  font-weight: 100;
   margin: 0 0 0 10px;
   vertical-align: middle;
   min-width: 100px;
@@ -93,3 +86,15 @@
       font-size: 150%;
       color: #999;
       text-align: center; }
+
+#admin-login .form-oauth2 {
+  text-align: center;
+  padding-top: 1rem; }
+  #admin-login .form-oauth2 > p:first-child {
+    display: none; }
+  #admin-login .form-oauth2 .oauth2-or {
+    opacity: 0.6;
+    margin-bottom: -0.5rem; }
+    #admin-login .form-oauth2 .oauth2-or span.line {
+      opacity: 0.2;
+      border-bottom-width: 1px; }

@@ -8,6 +8,22 @@
 
 This package provides LinkedIn OAuth 2.0 support for the PHP League's [OAuth 2.0 Client](https://github.com/thephpleague/oauth2-client).
 
+## Before You Begin
+
+> The LinkedIn API has been largely closed off and is only available to approved LinkedIn developers. You can request authorization here - [https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program](https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program)
+
+You may be able to successfully obtain Access Tokens using this package and still not be authorized to access some resources available in the API.
+
+If you encounter the following, or something similar, this policy is being enforced.
+
+```
+{
+    "serviceErrorCode": 100,
+    "message": "Not enough permissions to access: GET /me",
+    "status": 403
+}
+```
+
 ## Installation
 
 To install, use composer:
@@ -127,6 +143,20 @@ $location = $member->getLocation();
 // or
 
 $location = $member->getAttribute('location.name');
+```
+
+#### Resource Owner Endpoint Versions
+
+The LinkedIn API has begun supporting a second version. You can configure the provider to specify which version of the resource owner endpoint you'd like to use.
+
+Version 1 is configured by default.
+
+```php
+// https://api.linkedin.com/v1/people/~
+$member = $provider->withResourceOwnerVersion(1)->getResourceOwner($token);
+
+// https://api.linkedin.com/v2/me
+$member = $provider->withResourceOwnerVersion(2)->getResourceOwner($token);
 ```
 
 ## Testing

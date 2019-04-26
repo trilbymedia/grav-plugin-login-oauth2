@@ -40,6 +40,53 @@ class LinkedinTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull($this->provider->getState());
     }
 
+    public function testDefaultResourceOwnerDetailsUrl()
+    {
+        $accessToken = m::mock('League\OAuth2\Client\Token\AccessToken');
+        $expectedFields = $this->provider->getFields();
+        $url = $this->provider->getResourceOwnerDetailsUrl($accessToken);
+        $uri = parse_url($url);
+
+        parse_str($uri['query'], $query);
+        $path = explode(':', $uri['path']);
+        $actualFields = explode(',', str_replace(array( '(', ')' ), '', $path[1]));
+
+        $this->assertEquals('/v1/people/~', $path[0]);
+        $this->assertArrayHasKey('format', $query);
+        $this->assertEquals('json', $query['format']);
+        $this->assertEquals($expectedFields, $actualFields);
+    }
+
+    public function testResourceOwnerDetailsUrlVersions()
+    {
+        $initialVersion = $this->provider->getResourceOwnerVersion();
+        $accessToken = m::mock('League\OAuth2\Client\Token\AccessToken');
+        $expectedFields = $this->provider->getFields();
+
+        // Version 1
+        $url = $this->provider->getResourceOwnerDetailsUrl($accessToken);
+        $uri = parse_url($url);
+        
+        parse_str($uri['query'], $query);
+        $path = explode(':', $uri['path']);
+        $actualFields = explode(',', str_replace(array( '(', ')' ), '', $path[1]));
+
+        $this->assertEquals('/v1/people/~', $path[0]);
+        $this->assertArrayHasKey('format', $query);
+        $this->assertEquals('json', $query['format']);
+        $this->assertEquals($expectedFields, $actualFields);
+
+        // Version 2
+        $url = $this->provider->withResourceOwnerVersion(2)
+            ->getResourceOwnerDetailsUrl($accessToken);
+        $uri = parse_url($url);
+        parse_str($uri['query'], $query);
+        $actualFields = explode(',', $query['fields']);
+
+        $this->assertEquals('/v2/me', $uri['path']);
+        $this->assertEquals($expectedFields, $actualFields);
+    }
+
 
     public function testScopes()
     {

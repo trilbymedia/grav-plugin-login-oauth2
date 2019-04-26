@@ -7,7 +7,9 @@ use League\OAuth2\Client\Token\AccessToken;
 
 interface ProviderInterface
 {
-    public function __construct(array $options);
+    public function __construct();
+
+    public function initProvider(array $options);
 
     /**
      * @return string

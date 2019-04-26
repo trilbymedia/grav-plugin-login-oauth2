@@ -3,34 +3,27 @@ namespace Grav\Plugin\Login\OAuth2\Providers;
 
 use Grav\Common\Grav;
 use League\OAuth2\Client\Provider\AbstractProvider;
-use League\OAuth2\Client\Provider\Linkedin;
+use League\OAuth2\Client\Provider\LinkedIn;
 
-class LinkedinProvider extends BaseProvider
+class LinkedInProvider extends BaseProvider
 {
-    protected $name = 'Linkedin';
-    protected $classname = 'League\\OAuth2\\Client\\Provider\\Linkedin';
-    protected $config;
+    protected $name = 'LinkedIn';
+    protected $classname = 'League\\OAuth2\\Client\\Provider\\LinkedIn';
 
-    /** @var AbstractProvider|Linkedin */
-    protected $provider;
-
-    public function __construct(array $options)
+    public function initProvider(array $options)
     {
-        $this->config = Grav::instance()['config'];
-
         $options += [
-            'clientId'      => $this->config->get('plugins.login-oauth2.providers.linkedin.client_id'),
-            'clientSecret'  => $this->config->get('plugins.login-oauth2.providers.linkedin.client_secret'),
-            'redirectUri'   => $this->getCallbackUri(),
+            'clientId'      => $this->config->get('providers.linkedin.client_id'),
+            'clientSecret'  => $this->config->get('providers.linkedin.client_secret'),
         ];
 
-        parent::__construct($options);
+        parent::initProvider($options);
     }
 
     public function getAuthorizationUrl()
     {
         $options = ['state' => $this->state];
-        $options['scope'] = $this->config->get('plugins.login-oauth2.providers.linkedin.options.scope');
+        $options['scope'] = $this->config->get('providers.linkedin.options.scope');
 
         return $this->provider->getAuthorizationUrl($options);
     }
