@@ -270,11 +270,22 @@ class LoginOauth2Plugin extends Plugin
                 // Set provider
                 $grav_user->set('provider', $provider_name);
 
+                // Default Access levels
                 $current_access = $grav_user->get('access');
                 if (!$current_access) {
                     $access = $this->config->get('plugins.login-oauth2.default_access_levels.access', []);
                     if (count($access) > 0) {
                         $data['access'] = $access;
+                        $grav_user->merge($data);
+                    }
+                }
+
+                // Default Groups
+                $current_groups = $grav_user->get('groups');
+                if (!$current_groups) {
+                    $groups = $this->config->get('plugins.login-oauth2.default_groups', []);
+                    if (count($groups) > 0) {
+                        $data['groups'] = $groups;
                         $grav_user->merge($data);
                     }
                 }

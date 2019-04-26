@@ -57,6 +57,7 @@ default_access_levels:
   access:
     site:
       login: 'true'
+default_groups:
 
 providers:
   github:
@@ -157,6 +158,7 @@ admin:
 |save_grav_user|Store the grav user account as a local YAML account | true \| [default: `false`] |
 |store_provider_data|If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav| true \| [default: `false`] |
 |default_access_levels.access|You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `site: { login: 'true' }`]|
+|default_groups| You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `[]`]|
 |callback_uri|This is the URI that the provider will call when it has authenticated the user remotely. You shouldn't need to change this|[default: `/task:callback.oauth2`]|
 
 

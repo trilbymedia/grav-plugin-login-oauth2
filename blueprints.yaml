@@ -88,10 +88,20 @@ form:
               label: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS
               yaml: true
               size: large
-              markdown: true
               validate:
                 required: true
+
+            default_groups:
+              type: selectize
+              size: large
+              placeholder: "e.g. administrators, publishers"
+              label: PLUGIN_LOGIN_OAUTH2.DEFAULT_GROUPS
+              help: PLUGIN_LOGIN_OAUTH2.DEFAULT_GROUPS_HELP
+              markdown: true
               description: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS_DESC
+              classes: fancy
+              validate:
+                type: commalist
 
             callback_uri:
               type: text

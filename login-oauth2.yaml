@@ -9,7 +9,7 @@ default_access_levels:
   access:
     site:
       login: 'true'
-
+default_groups:
 providers:
   github:
     enabled: true
