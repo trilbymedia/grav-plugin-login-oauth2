@@ -47,6 +47,8 @@ The default configuration and an explanation of available options:
 
 ```yaml
 enabled: true
+callback_uri: '/task:callback.oauth2'
+
 built_in_css: true
 button_style: row
 save_grav_user: false
@@ -55,7 +57,6 @@ default_access_levels:
   access:
     site:
       login: 'true'
-callback_uri: '/task:callback.oauth2'
 
 providers:
   github:
@@ -63,7 +64,7 @@ providers:
     client_id: ''
     client_secret: ''
     options:
-      scope: ['user', 'user:email', 'repo']
+      scope: ['user', 'user:email']
 
   instagram:
     enabled: true
@@ -85,6 +86,7 @@ providers:
     enabled: true
     client_id: ''
     client_secret: ''
+    hd: '*'
     options:
       scope: ['email', 'profile']
       avatar_size: 200
@@ -95,6 +97,54 @@ providers:
     client_secret: ''
     options:
       scope: ['r_basicprofile','r_emailaddress']
+
+
+
+admin:
+  enabled: false
+  built_in_css: true
+  button_style: row
+  callback_uri: '/task:callback.oauth2'
+
+  providers:
+    github:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      options:
+        scope: ['user', 'user:email']
+
+    instagram:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      options:
+        scope: ['basic', 'likes', 'comments']
+        host: 'https://api.instagram.com'
+
+    facebook:
+      enabled: false
+      app_id: ''
+      app_secret: ''
+      options:
+        scope: ['email', 'public_profile', 'user_hometown']
+        graph_api_version: 'v2.10'
+
+    google:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      hd: '*'
+      options:
+        scope: ['email', 'profile']
+        avatar_size: 200
+
+    linkedin:
+      enabled: false
+      client_id: ''
+      client_secret: ''
+      options:
+        scope: ['r_basicprofile','r_emailaddress']
 ```
 
 ### Server Settings
