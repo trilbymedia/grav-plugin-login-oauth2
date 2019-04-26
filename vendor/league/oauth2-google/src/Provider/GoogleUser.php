@@ -19,10 +19,7 @@ class GoogleUser implements ResourceOwnerInterface
 
     public function getId()
     {
-        if (array_key_exists('sub', $this->response)) {
-            return $this->response['sub'];
-        }
-        return $this->response['id'];
+        return $this->response['sub'];
     }
 
     /**
@@ -32,10 +29,7 @@ class GoogleUser implements ResourceOwnerInterface
      */
     public function getName()
     {
-        if (array_key_exists('name', $this->response) && is_string($this->response['name'])) {
-            return $this->response['name'];
-        }
-        return $this->response['displayName'];
+        return $this->response['name'];
     }
 
     /**
@@ -45,10 +39,7 @@ class GoogleUser implements ResourceOwnerInterface
      */
     public function getFirstName()
     {
-        if (array_key_exists('given_name', $this->response)) {
-            return $this->response['given_name'];
-        }
-        return $this->response['name']['givenName'];
+        return $this->response['given_name'];
     }
 
     /**
@@ -58,10 +49,20 @@ class GoogleUser implements ResourceOwnerInterface
      */
     public function getLastName()
     {
-        if (array_key_exists('family_name', $this->response)) {
-            return $this->response['family_name'];
+        return $this->response['family_name'];
+    }
+
+    /**
+     * Get locale.
+     *
+     * @return string|null
+     */
+    public function getLocale()
+    {
+        if (array_key_exists('locale', $this->response)) {
+            return $this->response['locale'];
         }
-        return $this->response['name']['familyName'];
+        return null;
     }
 
     /**
@@ -73,9 +74,6 @@ class GoogleUser implements ResourceOwnerInterface
     {
         if (array_key_exists('email', $this->response)) {
             return $this->response['email'];
-        }
-        if (!empty($this->response['emails'])) {
-            return $this->response['emails'][0]['value'];
         }
         return null;
     }
@@ -90,10 +88,6 @@ class GoogleUser implements ResourceOwnerInterface
         if (array_key_exists('hd', $this->response)) {
             return $this->response['hd'];
         }
-        if (array_key_exists('domain', $this->response)) {
-            return $this->response['domain'];
-        }
-
         return null;
     }
 
@@ -106,9 +100,6 @@ class GoogleUser implements ResourceOwnerInterface
     {
         if (array_key_exists('picture', $this->response)) {
             return $this->response['picture'];
-        }
-        if (!empty($this->response['image']['url'])) {
-            return $this->response['image']['url'];
         }
         return null;
     }

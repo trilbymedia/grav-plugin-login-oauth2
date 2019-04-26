@@ -404,29 +404,29 @@
     },
     {
         "name": "league/oauth2-google",
-        "version": "2.2.0",
-        "version_normalized": "2.2.0.0",
+        "version": "3.0.1",
+        "version_normalized": "3.0.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/thephpleague/oauth2-google.git",
-            "reference": "c0faed29ec6d665ce3234e01f62029516cee4c02"
+            "reference": "3290273029f7cc2a468aae68bad184479a23b9d2"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/thephpleague/oauth2-google/zipball/c0faed29ec6d665ce3234e01f62029516cee4c02",
-            "reference": "c0faed29ec6d665ce3234e01f62029516cee4c02",
+            "url": "https://api.github.com/repos/thephpleague/oauth2-google/zipball/3290273029f7cc2a468aae68bad184479a23b9d2",
+            "reference": "3290273029f7cc2a468aae68bad184479a23b9d2",
             "shasum": ""
         },
         "require": {
             "league/oauth2-client": "^2.0"
         },
         "require-dev": {
-            "eloquent/phony": "^0.14.6",
-            "phpunit/phpunit": "^5.7",
-            "satooshi/php-coveralls": "^2.0",
+            "eloquent/phony-phpunit": "^2.0",
+            "php-coveralls/php-coveralls": "^2.1",
+            "phpunit/phpunit": "^6.0",
             "squizlabs/php_codesniffer": "^2.0"
         },
-        "time": "2018-03-19T17:28:55+00:00",
+        "time": "2018-12-28T16:18:33+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -515,17 +515,17 @@
     },
     {
         "name": "league/oauth2-linkedin",
-        "version": "3.1.0",
-        "version_normalized": "3.1.0.0",
+        "version": "4.1.1",
+        "version_normalized": "4.1.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/thephpleague/oauth2-linkedin.git",
-            "reference": "7a84f248de6ea3324740269c44aa98e4abcc42f0"
+            "reference": "0dfb338db84cb87c3d24b0205ec7f3e3a9457b81"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/thephpleague/oauth2-linkedin/zipball/7a84f248de6ea3324740269c44aa98e4abcc42f0",
-            "reference": "7a84f248de6ea3324740269c44aa98e4abcc42f0",
+            "url": "https://api.github.com/repos/thephpleague/oauth2-linkedin/zipball/0dfb338db84cb87c3d24b0205ec7f3e3a9457b81",
+            "reference": "0dfb338db84cb87c3d24b0205ec7f3e3a9457b81",
             "shasum": ""
         },
         "require": {
@@ -536,7 +536,7 @@
             "phpunit/phpunit": "~4.0",
             "squizlabs/php_codesniffer": "~2.0"
         },
-        "time": "2018-05-04T13:48:28+00:00",
+        "time": "2018-07-23T15:43:54+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
