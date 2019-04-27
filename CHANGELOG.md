@@ -2,7 +2,7 @@
 ## 04/26/2019
 
 1. [](#new)
-    * Support for OAuth2 Admin login
+    * Support for OAuth2 login via Admin plugin
     * Support for default groups
 1. [](#improved)
     * Updated vendor libraries to use latest Google / LinkedIn providers
