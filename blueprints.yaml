@@ -1,5 +1,5 @@
 name: Login OAuth2
-version: 1.0.1
+version: 2.0.0
 description: OAuth2 Client Plugin to integrate with Grav's Login
 icon: plug
 author:
