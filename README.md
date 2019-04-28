@@ -12,8 +12,30 @@ Currently the core plugin supports the following providers:
 
 It's also possible to extend this plugin an create a new AOauth2 for specific providers. 
 
+## Callback URL
 
-### Installation
+When you setup your OAuth provider application, you will need to provide a Callback URL.  Grav passes this as part of the OAuth2 request process, but it needs to match the configuration on the server side.  Typically, when logging in via the the frontend **site**, the URL will look something like this:
+
+```text
+http://yoursite.com/task:callback.oauth2
+```
+
+Where `http://yoursite.com` is the URL of your Grav-based site.  If you are using SSL, then this URL will be:
+
+```text
+https://yoursite.com/task:callback.oauth2
+```
+
+If you use the OAuth2 plugin to login to the **admin** side of your Grav site, your callback URL will look like this:
+
+```text
+http://yoursite.com/admin/task:callback.oauth2
+```
+
+Where `http://yoursite.com/admin` is the URL you use to log into the admin plugin. Again, if you have this under SSL, you would need to use `https://` rather than `http://`.  Some OAuth2 providers allow you to use provide multiple callback URLs, and in this case you can use the same application setup with multiple URLs, to work with the **site** and the **admin** and potentially `http://` and `https://` URLs.  However, some providers only allow a single callback URL, and in these cases you need to create multiple OAuth2 applications to handle each callback URL.
+
+
+## Installation
 
 Installing the Login OAuth2 plugin can be done in one of two ways. The GPM (Grav Package Manager) installation method enables you to quickly and easily install the plugin with a simple terminal command, while the manual method enables you to do so via a zip file.
 
@@ -47,7 +69,6 @@ The default configuration and an explanation of available options:
 
 ```yaml
 enabled: true
-callback_uri: '/task:callback.oauth2'
 
 built_in_css: true
 button_style: row
@@ -105,7 +126,6 @@ admin:
   enabled: false
   built_in_css: true
   button_style: row
-  callback_uri: '/task:callback.oauth2'
 
   providers:
     github:
@@ -159,7 +179,6 @@ admin:
 |store_provider_data|If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav| true \| [default: `false`] |
 |default_access_levels.access|You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `site: { login: 'true' }`]|
 |default_groups| You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `[]`]|
-|callback_uri|This is the URI that the provider will call when it has authenticated the user remotely. You shouldn't need to change this|[default: `/task:callback.oauth2`]|
 
 
 ### OAuth2 Providers

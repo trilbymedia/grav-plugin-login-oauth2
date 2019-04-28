@@ -10,6 +10,8 @@ use League\OAuth2\Client\Token\AccessToken;
 
 abstract class BaseProvider implements ProviderInterface
 {
+    const CALLBACK_URI = '/task:callback.oauth2';
+
     /** @var string */
     protected $name;
     /** @var string */
@@ -80,10 +82,13 @@ abstract class BaseProvider implements ProviderInterface
         return $this->provider;
     }
 
-    public function getCallbackUri()
+    public static function getCallbackUri($admin = 'auto')
     {
-        $admin = Grav::instance()['oauth2']->isAdmin();
-        $callback_uri = Grav::instance()['config']->get('plugins.login-oauth2.' . ($admin ? 'admin.callback_uri' : 'callback_uri'));
+        if ($admin === 'auto') {
+            $admin = Grav::instance()['oauth2']->isAdmin();
+        }
+
+        $callback_uri = ((bool) $admin ? Grav::instance()['config']->get('plugins.admin.route', '') : '') . static::CALLBACK_URI;
 
         $base_url = Grav::instance()['base_url_absolute'];
 

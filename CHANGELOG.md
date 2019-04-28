@@ -1,3 +1,9 @@
+# v2.0.2
+## 04/28/2019
+
+1. [](#improved)
+    * Removed configurable callback URL.
+
 # v2.0.1
 ## 04/28/2019
 
