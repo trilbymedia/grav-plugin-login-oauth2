@@ -1,3 +1,9 @@
+# v2.0.1
+## 04/28/2019
+
+1. [](#bugfix)
+    * Fixed login verison requirements (`~3.0`) [#17](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/17)
+
 # v2.0.0
 ## 04/26/2019
 
