@@ -27,6 +27,20 @@ form:
       validate:
         type: bool
 
+    site_callback_url:
+      type: text
+      disabled: true
+      label: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI
+      help: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI_HELP
+      data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', false]
+
+    admin_callback_url:
+      type: text
+      disabled: true
+      label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+      help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+      data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', true]
+
     oauth2_tabs:
       type: tabs
 
@@ -103,15 +117,6 @@ form:
               validate:
                 type: commalist
 
-            callback_uri:
-              type: text
-              label: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI
-              placeholder: '/task:callback.oauth2'
-              help: PLUGIN_LOGIN_OAUTH2.CALLBACK_URI_HELP
-              size: large
-              validate:
-                required: true
-
         tab_admin:
           type: tab
           title: PLUGIN_LOGIN_OAUTH2.ADMIN
@@ -150,15 +155,6 @@ form:
               options:
                 row: Horizontal Row
                 square: Square Block
-
-            admin.callback_uri:
-              type: text
-              label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
-              placeholder: '/task:callback.oauth2'
-              help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
-              size: large
-              validate:
-                required: true
 
         tab_2:
           type: tab
