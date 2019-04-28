@@ -11,7 +11,7 @@ bugs: https://github.com/trilbymedia/grav-plugin-login-oauth2/issues
 docs: https://github.com/trilbymedia/grav-plugin-login-oauth2/blob/develop/README.md
 license: MIT
 dependencies:
-  - { name: login, version: '~2.6' }
+  - { name: login, version: '~3.0' }
 
 form:
   validation: strict
