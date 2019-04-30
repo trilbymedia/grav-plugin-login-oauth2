@@ -29,14 +29,14 @@ form:
 
     site_callback_url:
       type: text
-      disabled: true
+      readonly: true
       label: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI
       help: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI_HELP
       data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', false]
 
     admin_callback_url:
       type: text
-      disabled: true
+      readonly: true
       label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
       help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
       data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', true]
