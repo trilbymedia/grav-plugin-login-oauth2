@@ -1,3 +1,9 @@
+# v2.0.3
+## mm/dd/2019
+
+1. [](#improved)
+    * Added `copy-to-clipboard` support for Callback URIs
+
 # v2.0.2
 ## 04/28/2019
 
