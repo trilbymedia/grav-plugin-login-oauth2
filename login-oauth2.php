@@ -125,7 +125,9 @@ class LoginOauth2Plugin extends Plugin
      */
     public function onLoginPage()
     {
-        $this->grav['login']->addProviderLoginTemplate('login-oauth2/login-oauth2.html.twig');
+        if ($this->grav['oauth2']->getProviders()) {
+            $this->grav['login']->addProviderLoginTemplate('login-oauth2/login-oauth2.html.twig');
+        }
     }
 
     /**
