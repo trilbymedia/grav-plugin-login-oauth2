@@ -38,6 +38,11 @@
   .form-oauth2 button.linkedin:hover {
     background: #005582; }
 
+.form-oauth2 button.auth0 {
+  background: #EB5424; }
+.form-oauth2 button.auth0:hover {
+  background: #323030; }
+
 .form-oauth2.square-style button {
   padding: 10px;
   min-width: 100px; }
