@@ -2,7 +2,6 @@
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
 use Grav\Common\Grav;
-use League\OAuth2\Client\Provider\AbstractProvider;
 use Riskio\OAuth2\Client\Provider\Auth0;
 
 class Auth0Provider extends BaseProvider
