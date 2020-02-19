@@ -668,6 +668,106 @@ form:
                   content: '[<i class="fa fa-book"></i> LinkedIn OAuth2 from the official documentation](https://developer.linkedin.com/docs/oauth2?target=_blank)'
                   markdown: true
 
+            auth0:
+              type: fieldset
+              title: Auth0
+              collapsible: true
+
+              fields:
+
+                auth0_columns:
+                  type: columns
+
+                  fields:
+
+                    auth0_column_left:
+                      type: column
+
+                      fields:
+
+                        auth0.site:
+                          type: display
+                          style: vertical
+                          content: '<h3>Site</h3>'
+
+                        providers.auth0.enabled:
+                          type: toggle
+                          label: Enabled
+                          highlight: 1
+                          default: 0
+                          options:
+                            1: Enabled
+                            0: Disabled
+                          validate:
+                            type: bool
+
+                        providers.auth0.domain:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.DOMAIN
+
+                        providers.auth0.client_id:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
+
+                        providers.auth0.client_secret:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
+
+                        providers.auth0.options.scope:
+                          type: selectize
+                          size: large
+                          label: PLUGIN_LOGIN_OAUTH2.SCOPE
+                          classes: fancy
+                          validate:
+                            type: commalist
+
+                    auth0_column_right:
+                      type: column
+
+                      fields:
+
+                        auth0.admin:
+                          type: display
+                          style: vertical
+                          content: '<h3>Admin</h3>'
+
+                        admin.providers.auth0.enabled:
+                          type: toggle
+                          label: Enabled
+                          highlight: 1
+                          default: 0
+                          options:
+                            1: Enabled
+                            0: Disabled
+                          validate:
+                            type: bool
+
+                        admin.providers.auth0.domain:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.DOMAIN
+
+                        admin.providers.auth0.client_id:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
+
+                        admin.providers.auth0.client_secret:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
+
+                        admin.providers.auth0.options.scope:
+                          type: selectize
+                          size: large
+                          label: PLUGIN_LOGIN_OAUTH2.SCOPE
+                          classes: fancy
+                          validate:
+                            type: commalist
+
+                providers.auth0.description:
+                  type: display
+                  style: vertical
+                  content: '[<i class="fa fa-book"></i> Auth0 OAuth2 from the official documentation](https://auth0.com/docs/protocols/oauth2?target=_blank)'
+                  markdown: true
+
         tab_3:
           type: tab
           title: PLUGIN_LOGIN_OAUTH2.DOCUMENTATION
