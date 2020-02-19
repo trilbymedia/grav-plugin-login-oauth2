@@ -49,6 +49,13 @@ providers:
     options:
       scope: ['r_basicprofile','r_emailaddress']
 
+  auth0:
+    enabled: true
+    client_id: ''
+    client_secret: ''
+    options:
+      scope: ['openid','profile','email']
+
 
 
 admin:
@@ -95,3 +102,10 @@ admin:
       client_secret: ''
       options:
         scope: ['r_basicprofile','r_emailaddress']
+
+    auth0:
+      enabled: true
+      client_id: ''
+      client_secret: ''
+      options:
+        scope: ['openid','profile','email']
