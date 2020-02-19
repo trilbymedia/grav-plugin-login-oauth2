@@ -5,7 +5,8 @@
         "league/oauth2-instagram": "^2.0",
         "league/oauth2-facebook": "^2.0",
         "league/oauth2-google": "^3.0",
-        "league/oauth2-linkedin": "^4.0"
+        "league/oauth2-linkedin": "^4.0",
+        "riskio/oauth2-auth0": "^2.2"
     },
     "autoload": {
         "psr-4": {
