@@ -29,3 +29,5 @@ PLUGIN_LOGIN_OAUTH2:
   ADMIN_CALLBACK_URI_HELP: "This is the admin callback URI.  It should be prefixed with your current admin path"
   DEFAULT_GROUPS: "Default Groups"
   DEAFULT_GROUPS_HELP: "Here you can assign default groups to assign users to when logging in"
+  LOGIN_MESSAGE: "Login with one of these available social accounts..."
+  OR: "or"
