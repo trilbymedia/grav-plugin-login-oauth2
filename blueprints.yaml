@@ -1,7 +1,7 @@
 name: Login OAuth2
-slug: form
 type: login-oauth2
-version: 2.0.4
+slug: form
+version: 2.0.5
 description: OAuth2 Client Plugin to integrate with Grav's Login
 icon: plug
 author:
