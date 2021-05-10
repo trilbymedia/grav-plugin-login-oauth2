@@ -13,6 +13,10 @@ class OAuth2
     /** @var bool */
     protected $admin;
 
+    /**
+     * OAuth2 constructor.
+     * @param bool $admin
+     */
     public function __construct($admin = false)
     {
         $this->config = (array)(Grav::instance()['config']->get('plugins.login-oauth2') ?? []);
@@ -44,7 +48,11 @@ class OAuth2
         }
     }
 
-    public function addProvider($provider = null, $options = null): void
+    /**
+     * @param string $provider
+     * @param array|null $options
+     */
+    public function addProvider(string $provider, array $options = null): void
     {
         $this->providers[$provider] = $options;
     }
@@ -54,12 +62,20 @@ class OAuth2
         return $this->providers;
     }
 
-    public function getProviderOptions($provider)
+    /**
+     * @param string $provider
+     * @return mixed|null
+     */
+    public function getProviderOptions(string $provider)
     {
         return $this->providers[$provider] ?? null;
     }
 
-    public function isValidProvider($provider): bool
+    /**
+     * @param string $provider
+     * @return bool
+     */
+    public function isValidProvider(string $provider): bool
     {
         return array_key_exists($provider, $this->providers);
     }

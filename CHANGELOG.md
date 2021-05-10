@@ -4,6 +4,7 @@
 1. [](#new)
    * Require **Grav 1.7.0**
    * Added configuration option to require existing Grav user
+1. [](#improved)
    * Code improvements and updates
 
 # v2.0.5

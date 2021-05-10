@@ -65,9 +65,11 @@ class GoogleProvider extends BaseProvider
     {
         \assert($user instanceof GoogleUser);
 
-        $avatar = $user->getAvatar();
-        $avatarSize = $this->config->get('plugins.login-oauth2.providers.google.options.avatar_size', 200);
-        $avatar = preg_replace("/\?sz=\d{1,}$/", '?sz=' . $avatarSize, $avatar);
+        $avatar = $user->getAvatar() ?? '';
+        if ($avatar) {
+            $avatarSize = (int)$this->config->get('plugins.login-oauth2.providers.google.options.avatar_size', 200);
+            $avatar = preg_replace("/\?sz=\d{1,}$/", '?sz=' . $avatarSize, $avatar);
+        }
 
         return $avatar;
     }

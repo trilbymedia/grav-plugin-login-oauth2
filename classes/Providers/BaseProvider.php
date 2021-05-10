@@ -9,6 +9,7 @@ use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessToken;
+use League\OAuth2\Client\Token\AccessTokenInterface;
 
 abstract class BaseProvider implements ProviderInterface
 {
@@ -23,7 +24,7 @@ abstract class BaseProvider implements ProviderInterface
     protected $provider;
     /** @var string */
     protected $state;
-    /** @var AccessToken */
+    /** @var AccessTokenInterface */
     protected $token;
     /** @var Data */
     protected $config;
@@ -106,10 +107,10 @@ abstract class BaseProvider implements ProviderInterface
      *
      * @param mixed $grant
      * @param array $options
-     * @return AccessToken
+     * @return AccessTokenInterface
      * @throws IdentityProviderException
      */
-    public function getAccessToken($grant, array $options = []): AccessToken
+    public function getAccessToken($grant, array $options = []): AccessTokenInterface
     {
         $this->token = $this->provider->getAccessToken($grant, $options);
 

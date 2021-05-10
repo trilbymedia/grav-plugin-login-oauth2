@@ -46,6 +46,8 @@ class FacebookProvider extends BaseProvider
     {
         \assert($user instanceof FacebookUser);
 
+        $hometown = $user->getHometown();
+
         return [
             'id'         => $user->getId(),
             'login'      => $user->getEmail(),
@@ -53,7 +55,7 @@ class FacebookProvider extends BaseProvider
             'email'      => $user->getEmail(),
             'facebook'  => [
                 'avatar_url' => $user->getPictureUrl(),
-                'location' => $user->getHometown() ? $user->getHometown()['name'] : ''
+                'location' => $hometown ? $hometown['name'] : ''
             ]
         ];
     }

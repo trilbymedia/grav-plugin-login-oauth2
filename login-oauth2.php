@@ -148,7 +148,7 @@ class LoginOauth2Plugin extends Plugin
             throw new RuntimeException('You have already been logged in', 403);
         }
 
-        $provider_name = filter_input(INPUT_POST,'oauth2',FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
+        $provider_name = filter_input(INPUT_POST,'oauth2',FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
         if (!isset($provider_name)) {
             throw new RuntimeException('Bad Request', 400);
         }
@@ -189,9 +189,9 @@ class LoginOauth2Plugin extends Plugin
         $messages = $this->grav['messages'];
 
         if ($oauth2->isValidProvider($provider_name)) {
-            $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
+            $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             if (empty($state)) {
-                $state = filter_input(INPUT_POST, 'state', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
+                $state = filter_input(INPUT_POST, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             }
 
             if (empty($state) || ($state !== $session->oauth2_state)) {
@@ -251,9 +251,9 @@ class LoginOauth2Plugin extends Plugin
         $options = $event->getOptions();
 
         if (isset($options['oauth2'])) {
-            $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
+            $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             if (!$code) {
-                $code = filter_input(INPUT_POST, 'code', FILTER_SANITIZE_STRING, !FILTER_FLAG_STRIP_LOW);
+                $code = filter_input(INPUT_POST, 'code', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             }
 
             $provider_name = $options['provider'];
@@ -268,7 +268,7 @@ class LoginOauth2Plugin extends Plugin
                 $user = $provider->getResourceOwner($token);
                 $userdata = $provider->getUserData($user);
 
-                $userdata_event = new Event(
+                $userdata_event = new UserLoginEvent(
                     [
                         'userdata' => $userdata,
                         'oauth2user' => $user,
@@ -280,7 +280,7 @@ class LoginOauth2Plugin extends Plugin
                 // Set again with any event-based modifications
                 $userdata = $userdata_event['userdata'];
 
-                $username_event = new Event(
+                $username_event = new UserLoginEvent(
                     [
                         'userdata' => $userdata,
                         'oauth2user' => $user,
