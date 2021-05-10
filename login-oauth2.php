@@ -268,7 +268,7 @@ class LoginOauth2Plugin extends Plugin
                 $user = $provider->getResourceOwner($token);
                 $userdata = $provider->getUserData($user);
 
-                $userdata_event = new UserLoginEvent(
+                $userdata_event = new Event(
                     [
                         'userdata' => $userdata,
                         'oauth2user' => $user,
@@ -280,7 +280,7 @@ class LoginOauth2Plugin extends Plugin
                 // Set again with any event-based modifications
                 $userdata = $userdata_event['userdata'];
 
-                $username_event = new UserLoginEvent(
+                $username_event = new Event(
                     [
                         'userdata' => $userdata,
                         'oauth2user' => $user,
