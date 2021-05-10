@@ -77,7 +77,7 @@ store_provider_data: true
 default_access_levels:
   access:
     site:
-      login: 'true'
+      login: true
 default_groups:
 
 providers:
