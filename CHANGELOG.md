@@ -6,6 +6,7 @@
    * Added configuration option to require existing Grav user
 1. [](#improved)
    * Code improvements and updates
+   * Only enable configured oauth2 providers
 
 # v2.0.5
 ## 12/02/2020

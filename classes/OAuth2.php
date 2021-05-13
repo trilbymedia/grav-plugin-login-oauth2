@@ -42,7 +42,9 @@ class OAuth2
         }
 
         foreach ($providers as $provider => $options) {
-            if (!empty($options['enabled'])) {
+            $enabled = $options['enabled'] ?? false;
+            $client_id = $options['client_id'] ?? false;
+            if ($enabled && $client_id) {
                 $this->addProvider($provider, $options);
             }
         }
