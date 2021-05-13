@@ -21,8 +21,11 @@ class GoogleProvider extends BaseProvider
         $options += [
             'clientId'      => $this->config->get('providers.google.client_id'),
             'clientSecret'  => $this->config->get('providers.google.client_secret'),
-            'hostedDomain'  => $this->config->get('providers.google.options.hd', '*')
         ];
+        $hd = $this->config->get('providers.google.options.hd');
+        if ($hd) {
+            $options['hostedDomain'] = $this->config->get('providers.google.options.hd');
+        }
 
         parent::initProvider($options);
     }

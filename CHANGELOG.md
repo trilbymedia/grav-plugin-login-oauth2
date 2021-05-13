@@ -7,6 +7,8 @@
 1. [](#improved)
    * Code improvements and updates
    * Only enable configured oauth2 providers
+1. [](#bugfix)
+    * Google: non-hosted google accounts cannot be used [#25](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/25)
 
 # v2.0.5
 ## 12/02/2020
