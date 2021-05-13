@@ -161,6 +161,10 @@ class LoginOauth2Plugin extends Plugin
             $session = $this->grav['session'];
             $session->oauth2_state = $provider->getState();
             $session->oauth2_provider = $provider_name;
+            if ($this->isAdmin()) {
+                $current = (string)$this->grav['admin']->request->getUri();
+                $session->redirect_after_login = $current;
+            }
 
             $authorizationUrl = $provider->getAuthorizationUrl();
 
@@ -182,6 +186,7 @@ class LoginOauth2Plugin extends Plugin
         /** @var Session $session */
         $session = $this->grav['session'];
         $provider_name = $session->oauth2_provider;
+        $login_redirect = $session->redirect_after_login;
 
         /** @var Language $t */
         $t = $this->grav['language'];
@@ -200,23 +205,41 @@ class LoginOauth2Plugin extends Plugin
                 $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
             } else {
                 // Fire Login process.
-                $event = $login->login([], ['remember_me' => true, 'oauth2' => true, 'provider' => $provider_name], ['return_event' => true]);
-                $user = $event->getUser();
+                $event = $login->login(
+                    [],
+                    ['admin' => $this->isAdmin(), 'remember_me' => true, 'oauth2' => true, 'provider' => $provider_name],
+                    ['authorize' => $this->isAdmin() ? 'admin.login' : 'site.login', 'return_event' => true]);
 
-                if ($user->authorize('login')) {
+                // Note: session variables have been reset!
+                $user = $event->getUser();
+                if ($user->authorized) {
                     $event->defMessage('PLUGIN_LOGIN.LOGIN_SUCCESSFUL', 'info');
 
-                    $event->defRedirect(
-                        $this->grav['session']->redirect_after_login
-                            ?: LoginPlugin::defaultRedirectAfterLogin()
-                            ?: $this->grav['uri']->referrer('/')
-                    );
-                } elseif ($user->username) {
+                    if ($this->isAdmin()) {
+                        $event->defRedirect($login_redirect ?? '/');
+                    } else {
+                        $event->defRedirect(
+                            $login_redirect
+                                ?: LoginPlugin::defaultRedirectAfterLogin()
+                                ?: $this->grav['uri']->referrer('/')
+                        );
+                    }
+                } elseif ($user->authenticated) {
                     $event->defMessage('PLUGIN_LOGIN.ACCESS_DENIED', 'error');
 
-                    $event->defRedirect($this->grav['config']->get('plugins.login.route_unauthorized', '/'));
+                    if ($this->isAdmin()) {
+                        $event->defRedirect($login_redirect ?? '/');
+                    } else {
+                        $event->defRedirect($this->grav['config']->get('plugins.login.route_unauthorized', '/'));
+                    }
                 } else {
                     $event->defMessage('PLUGIN_LOGIN.LOGIN_FAILED', 'error');
+
+                    if ($this->isAdmin()) {
+                        $event->defRedirect($login_redirect ?? '/');
+                    } else {
+                        $event->defRedirect($this->grav['config']->get('plugins.login.route', '/'));
+                    }
                 }
 
                 $message = $event->getMessage();
