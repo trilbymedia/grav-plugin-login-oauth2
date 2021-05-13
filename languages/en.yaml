@@ -33,3 +33,6 @@ PLUGIN_LOGIN_OAUTH2:
   DEAFULT_GROUPS_HELP: "Here you can assign default groups to assign users to when logging in"
   LOGIN_MESSAGE: "Login with one of these available social accounts..."
   OR: "or"
+  ERROR_EXISTING_ACCOUNT: "You have already an account using %s, please use it to login"
+  ERROR_NO_ACCOUNT: "You do not have user account in the site for %s"
+  OAUTH2_LOGIN_FAILED: "OAuth2 %s Login Failed: %s"

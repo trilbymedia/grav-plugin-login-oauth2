@@ -4,6 +4,7 @@
 1. [](#new)
    * Require **Grav 1.7.0**
    * Added configuration option to require existing Grav user
+   * Assign OAuth2 to existing user [#35](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/35)
 1. [](#improved)
    * Code improvements and updates
    * Only enable configured oauth2 providers

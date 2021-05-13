@@ -188,7 +188,7 @@ class LoginOauth2Plugin extends Plugin
         /** @var Message $messages */
         $messages = $this->grav['messages'];
 
-        if ($oauth2->isValidProvider($provider_name)) {
+        if ($provider_name && $oauth2->isValidProvider($provider_name)) {
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             if (empty($state)) {
                 $state = filter_input(INPUT_POST, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
@@ -203,7 +203,7 @@ class LoginOauth2Plugin extends Plugin
                 $event = $login->login([], ['remember_me' => true, 'oauth2' => true, 'provider' => $provider_name], ['return_event' => true]);
                 $user = $event->getUser();
 
-                if ($user->authenticated) {
+                if ($user->authorize('login')) {
                     $event->defMessage('PLUGIN_LOGIN.LOGIN_SUCCESSFUL', 'info');
 
                     $event->defRedirect(
@@ -211,14 +211,12 @@ class LoginOauth2Plugin extends Plugin
                             ?: LoginPlugin::defaultRedirectAfterLogin()
                             ?: $this->grav['uri']->referrer('/')
                     );
-                } else {
-                    if ($user->username) {
-                        $event->defMessage('PLUGIN_LOGIN.ACCESS_DENIED', 'error');
+                } elseif ($user->username) {
+                    $event->defMessage('PLUGIN_LOGIN.ACCESS_DENIED', 'error');
 
-                        $event->defRedirect($this->grav['config']->get('plugins.login.route_unauthorized', '/'));
-                    } else {
-                        $event->defMessage('PLUGIN_LOGIN.LOGIN_FAILED', 'error');
-                    }
+                    $event->defRedirect($this->grav['config']->get('plugins.login.route_unauthorized', '/'));
+                } else {
+                    $event->defMessage('PLUGIN_LOGIN.LOGIN_FAILED', 'error');
                 }
 
                 $message = $event->getMessage();
@@ -296,8 +294,27 @@ class LoginOauth2Plugin extends Plugin
                 /** @var UserCollectionInterface $accounts */
                 $accounts = $this->grav['accounts'];
                 $grav_user = $accounts->load($username);
-                if ($this->config->get('plugins.login-oauth2.require_grav_user', false) && !$grav_user->exists()) {
-                    throw new \RuntimeException('You do not have user account in the site.');
+
+                // If username cannot be found, fall back to email address.
+                $exists = $grav_user->exists();
+                if (!$exists) {
+                    $found_user = $accounts->find($userdata['email'], ['email']);
+                    if ($found_user->exists()) {
+                        $grav_user = $found_user;
+                        $exists = true;
+                    }
+                }
+
+                // Make sure we're using the same provider, multiple providers are not supported.
+                if ($exists) {
+                    $provider_test = $grav_user->get('provider');
+                    if ($provider_test && $provider_test !== $provider_name) {
+                        throw new RuntimeException($this->translate('PLUGIN_LOGIN_OAUTH2.ERROR_EXISTING_ACCOUNT', $provider_test));
+                    }
+                }
+
+                if ($this->config->get('plugins.login-oauth2.require_grav_user', false) && !$exists) {
+                    throw new RuntimeException($this->translate('PLUGIN_LOGIN_OAUTH2.ERROR_NO_ACCOUNT', $username));
                 }
 
                 // Add token to user
@@ -344,7 +361,7 @@ class LoginOauth2Plugin extends Plugin
                 $event->setStatus($event::AUTHENTICATION_SUCCESS);
                 $event->stopPropagation();
             } catch (Exception $e) {
-                $event->setMessage('OAuth2 ' . ucfirst($provider_name) . ' Login Failed: ' . $e->getMessage(), 'error');
+                $event->setMessage($this->translate('PLUGIN_LOGIN_OAUTH2.OAUTH2_LOGIN_FAILED', ucfirst($provider_name), $e->getMessage()), 'error');
                 $event->setStatus($event::AUTHENTICATION_FAILURE);
             }
         }
@@ -357,7 +374,9 @@ class LoginOauth2Plugin extends Plugin
         $provider_name = strtolower($provider->getName());
 
         $username_parts = [$provider_name, $userdata['id'], $userdata['login']];
-        $event['username'] = implode('.', $username_parts);
+        $username = implode('.', $username_parts);
+
+        $event['username'] = $username;
 
         $event->stopPropagation();
     }
@@ -375,5 +394,17 @@ class LoginOauth2Plugin extends Plugin
     public function userLogout(UserLoginEvent $event): void
     {
         // This gets fired on user logout.
+    }
+
+    /**
+     * @param mixed ...$args
+     * @return string
+     */
+    private function translate(...$args): string
+    {
+        /** @var Language $language */
+        $language = $this->grav['language'];
+
+        return $language->translate($args);
     }
 }

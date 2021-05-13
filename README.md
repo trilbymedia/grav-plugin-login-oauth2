@@ -72,6 +72,7 @@ enabled: true
 
 built_in_css: true
 button_style: row
+require_grav_user: false
 save_grav_user: false
 store_provider_data: true
 default_access_levels:
@@ -175,8 +176,9 @@ admin:
 |enabled|Enables the plugin | [default: `true`] \| `false`|
 |built_in_css|Enables the plugin-provided CSS to be loaded| [default: `true`] \| `false`|
 |button_style|If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin| [default: `row`] \| `square`|
-|save_grav_user|Store the grav user account as a local YAML account | true \| [default: `false`] |
-|store_provider_data|If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav| true \| [default: `false`] |
+|require_grav_user|Allow oauth login only for existing users | `true` \| [default: `false`] |
+|save_grav_user|Store the grav user account as a local YAML account | `true` \| [default: `false`] |
+|store_provider_data|If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav| `true` \| [default: `false`] |
 |default_access_levels.access|You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `site: { login: true }`]|
 |default_groups| You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `[]`]|
 
