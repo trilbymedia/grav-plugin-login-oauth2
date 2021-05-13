@@ -81,7 +81,7 @@ form:
             require_grav_user:
               type: toggle
               label: PLUGIN_LOGIN_OAUTH2.REQUIRE_GRAV_USER
-              help: REQUIRE_GRAV_USER_DESC
+              help: PLUGIN_LOGIN_OAUTH2.REQUIRE_GRAV_USER_DESC
               highlight: 0
               default: 0
               options:
@@ -93,7 +93,7 @@ form:
             save_grav_user:
               type: toggle
               label: PLUGIN_LOGIN_OAUTH2.SAVE_GRAV_USER
-              help: SAVE_GRAV_USER_DESC
+              help: PLUGIN_LOGIN_OAUTH2.SAVE_GRAV_USER_DESC
               highlight: 0
               default: 0
               options:
