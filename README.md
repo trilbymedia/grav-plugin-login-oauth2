@@ -177,7 +177,7 @@ admin:
 |button_style|If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin| [default: `row`] \| `square`|
 |save_grav_user|Store the grav user account as a local YAML account | true \| [default: `false`] |
 |store_provider_data|If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav| true \| [default: `false`] |
-|default_access_levels.access|You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `site: { login: 'true' }`]|
+|default_access_levels.access|You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `site: { login: true }`]|
 |default_groups| You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `[]`]|
 
 
@@ -285,10 +285,10 @@ For admin logins to be useful, you need to ensure you set `store_grav_user: true
 ```yaml
   access:
     admin:
-      login: 'true'
-      super: 'true'
+      login: true
+      super: true
     site:
-      login: 'true'
+      login: true
 ```
 
 Of course adjust this `access.admin:` settings to whatever you need, but **NEVER** set this in the `default_access_levels:` setting for the plugin, or every user will have admin access.  You want to maintain control over who can access and who can't, especially those logging in with OAuth2 providers as there is no control over 'who' can sign in.
