@@ -1,5 +1,5 @@
 # v2.1.1
-## mm/dd/2021
+## 05/24/2021
 
 1. [](#bugfix)
     * Fixed Facebook login never showing up [#40](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/40)
