@@ -164,6 +164,9 @@ class LoginOauth2Plugin extends Plugin
             if ($this->isAdmin()) {
                 $current = (string)$this->grav['admin']->request->getUri();
                 $session->redirect_after_login = $current;
+            } else {
+                $current = $this->grav['uri']->url(true);
+                $session->redirect_after_login = $current;
             }
 
             $authorizationUrl = $provider->getAuthorizationUrl();
@@ -219,8 +222,8 @@ class LoginOauth2Plugin extends Plugin
                         $event->defRedirect($login_redirect ?? '/');
                     } else {
                         $event->defRedirect(
-                            $login_redirect
-                                ?: LoginPlugin::defaultRedirectAfterLogin()
+                           LoginPlugin::defaultRedirectAfterLogin()
+                                ?: $login_redirect
                                 ?: $this->grav['uri']->referrer('/')
                         );
                     }
