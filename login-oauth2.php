@@ -13,6 +13,7 @@ use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\OAuth2;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
+use Monolog\Logger;
 use RocketTheme\Toolbox\Event\Event;
 use RocketTheme\Toolbox\Session\Message;
 use RuntimeException;
@@ -25,6 +26,8 @@ class LoginOauth2Plugin extends Plugin
 {
     /** @var bool */
     protected $admin = false;
+
+    protected $debug = false;
 
     /**
      * @return array
@@ -110,9 +113,11 @@ class LoginOauth2Plugin extends Plugin
         );
 
         // Check to ensure login plugin is enabled.
-        if (!$this->grav['config']->get('plugins.login.enabled')) {
+        if (!$this->config->get('plugins.login.enabled')) {
             throw new RuntimeException('The Login plugin needs to be installed and enabled');
         }
+
+        $this->debug = $this->config->get('plugins.login-oauth2.debug', false);
 
 
         $isAdmin = $this->admin;
@@ -155,7 +160,7 @@ class LoginOauth2Plugin extends Plugin
 
         if ($oauth2->isValidProvider($provider_name)) {
 
-            $provider = ProviderFactory::create($provider_name);
+            $provider = ProviderFactory::create($provider_name, $oauth2->getProviderOptions($provider_name));
 
             /** @var Session $session */
             $session = $this->grav['session'];
@@ -193,15 +198,21 @@ class LoginOauth2Plugin extends Plugin
         /** @var Message $messages */
         $messages = $this->grav['messages'];
 
+        $is_valid = $oauth2->isValidProvider($provider_name);
+
+        $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
+
         if ($provider_name && $oauth2->isValidProvider($provider_name)) {
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             if (empty($state)) {
                 $state = filter_input(INPUT_POST, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             }
 
+            $this->debug("sent state: $state, stored state: $session->oauth2_state");
+
             if (empty($state) || ($state !== $session->oauth2_state)) {
                 unset($session->oauth2_state);
-                // TODO: better error message?
+                $this->debug("Error: $session->oauth2_state != $state");
                 $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
             } else {
                 // Fire Login process.
@@ -257,8 +268,7 @@ class LoginOauth2Plugin extends Plugin
                 }
             }
         } else {
-            // TODO: better error message?
-            $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
+            $this->grav->redirect($login_redirect ?? '/');
         }
 
         $uri = $this->grav['uri'];
@@ -373,6 +383,8 @@ class LoginOauth2Plugin extends Plugin
 
                 $grav_user->merge($userdata);
 
+                $this->debug("userdata: " . json_encode($userdata));
+
                 // Save Grav user if so configured
                 if ($this->config->get('plugins.login-oauth2.save_grav_user', false)) {
                     $grav_user->save();
@@ -429,5 +441,12 @@ class LoginOauth2Plugin extends Plugin
         $language = $this->grav['language'];
 
         return $language->translate($args);
+    }
+
+    private function debug($message): void
+    {
+        if ($this->debug) {
+            $this->grav['log']->debug($message);
+        }
     }
 }

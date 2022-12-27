@@ -1,5 +1,5 @@
 enabled: true
-
+debug: false
 built_in_css: true
 button_style: row
 require_grav_user: false
