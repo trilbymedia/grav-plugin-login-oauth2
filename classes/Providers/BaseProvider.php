@@ -55,7 +55,7 @@ abstract class BaseProvider implements ProviderInterface
      */
     public function initProvider(array $options): void
     {
-        $options['redirectUri'] = self::getCallbackUri();
+        $options['redirectUri'] = static::getCallbackUri();
         $this->provider = new $this->classname($options);
     }
 
