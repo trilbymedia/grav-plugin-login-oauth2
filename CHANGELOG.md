@@ -1,3 +1,17 @@
+# v2.2.0
+## 12/28/2022
+
+1. [](#bugfix)
+   * Don't fail with exception when provider name is invalid or empty
+   * Change `self::getCallbackUrl()` to `static::getCallbackUrl()` to support overriding the method
+   * Properly support after login redirect logic (was not working as intended)
+1. [](#improved)
+   * Improved Exception to show any invalid providers [#42](https://github.com/trilbymedia/grav-plugin-login-oauth2/pull/42)
+   * CSS has been improved for better consistency of layout
+   * Login button text moved to Lang file for easier modification and translation
+   * Added some debug information for async/post calls to callback
+   * Updated Vendor libraries to latest   
+
 # v2.1.1
 ## 05/24/2021
 

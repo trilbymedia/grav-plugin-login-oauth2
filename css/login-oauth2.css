@@ -8,8 +8,9 @@
   font-family: inherit;
   cursor: pointer;
   outline: inherit;
-  text-align: center;
-  margin-bottom: 4px; }
+  display: flex;
+  margin-bottom: 4px;
+  border-radius: 3px; }
   .form-oauth2 button svg {
     fill: #fff; }
 
@@ -39,12 +40,16 @@
     background: #005582; }
 
 .form-oauth2.square-style button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 10px;
-  min-width: 100px; }
+  min-width: 120px; }
 
 .form-oauth2.square-style svg {
-  width: 48px;
-  height: 48px; }
+  width: 36px;
+  height: 36px; }
 
 .form-oauth2.square-style span {
   display: block;
@@ -52,12 +57,16 @@
   margin: 0.5rem 0 0; }
 
 .form-oauth2.button-style button, .form-oauth2.row-style button {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
   min-width: 150px;
+  width: 100%;
   padding: 10px; }
 
 .form-oauth2.button-style svg, .form-oauth2.row-style svg {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle; }
 
 .form-oauth2.button-style span, .form-oauth2.row-style span {
@@ -67,9 +76,6 @@
   vertical-align: middle;
   min-width: 100px;
   text-align: left; }
-
-.form-oauth2.row-style button {
-  min-width: 200px; }
 
 .form-oauth2 .oauth2-or {
   display: flex;

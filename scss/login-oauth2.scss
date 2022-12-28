@@ -18,8 +18,9 @@ $label_color: #fff;
     font-family: inherit;
     cursor: pointer;
     outline: inherit;
-    text-align: center;
+    display: flex;
     margin-bottom: 4px;
+    border-radius: 3px;
 
     svg {
       fill: $label_color;
@@ -64,13 +65,17 @@ $label_color: #fff;
 
   &.square-style {
     button {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       padding: 10px;
-      min-width: 100px;
+      min-width: 120px;
     }
 
     svg {
-      width: 48px;
-      height: 48px;
+      width: 36px;
+      height: 36px;
     }
 
     span {
@@ -82,12 +87,16 @@ $label_color: #fff;
 
   &.button-style, &.row-style {
     button {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
       min-width: 150px;
+      width: 100%;
       padding: 10px;
     }
     svg {
-      width: 32px;
-      height: 32px;
+      width: 24px;
+      height: 24px;
       vertical-align: middle;
     }
 
@@ -98,12 +107,6 @@ $label_color: #fff;
       vertical-align: middle;
       min-width: 100px;
       text-align: left;
-    }
-  }
-
-  &.row-style {
-    button {
-      min-width: 350px;
     }
   }
 

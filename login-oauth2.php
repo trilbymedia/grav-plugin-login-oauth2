@@ -4,10 +4,12 @@ namespace Grav\Plugin;
 
 use Composer\Autoload\ClassLoader;
 use Exception;
+use Grav\Common\Data\Data;
 use Grav\Common\Debugger;
 use Grav\Common\Language\Language;
 use Grav\Common\Plugin;
 use Grav\Common\Session;
+use Grav\Common\Uri;
 use Grav\Common\User\Interfaces\UserCollectionInterface;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
@@ -25,6 +27,8 @@ class LoginOauth2Plugin extends Plugin
 {
     /** @var bool */
     protected $admin = false;
+
+    protected $debug = false;
 
     /**
      * @return array
@@ -110,10 +114,11 @@ class LoginOauth2Plugin extends Plugin
         );
 
         // Check to ensure login plugin is enabled.
-        if (!$this->grav['config']->get('plugins.login.enabled')) {
+        if (!$this->config->get('plugins.login.enabled')) {
             throw new RuntimeException('The Login plugin needs to be installed and enabled');
         }
 
+        $this->debug = $this->config->get('plugins.login-oauth2.debug', false);
 
         $isAdmin = $this->admin;
         $this->grav['oauth2'] = static function () use ($isAdmin) {
@@ -155,16 +160,24 @@ class LoginOauth2Plugin extends Plugin
 
         if ($oauth2->isValidProvider($provider_name)) {
 
-            $provider = ProviderFactory::create($provider_name);
+            $provider = ProviderFactory::create($provider_name, $oauth2->getProviderOptions($provider_name));
 
             /** @var Session $session */
             $session = $this->grav['session'];
             $session->oauth2_state = $provider->getState();
             $session->oauth2_provider = $provider_name;
             if ($this->isAdmin()) {
-                $current = (string)$this->grav['admin']->request->getUri();
-                $session->redirect_after_login = $current;
+                $redirect = (string)$this->grav['admin']->request->getUri();
+            } else {
+                if ($this->config->get('plugins.login.redirect_after_login')) {
+                    $redirect = (string) $this->config->get('plugins.login.route_after_login');
+                } else {
+                    /** @var Uri $uri */
+                    $request = $this->grav['request'];
+                    $redirect = (string) $request->getUri();
+                }
             }
+            $session->redirect_after_login = $redirect;
 
             $authorizationUrl = $provider->getAuthorizationUrl();
 
@@ -185,6 +198,9 @@ class LoginOauth2Plugin extends Plugin
 
         /** @var Session $session */
         $session = $this->grav['session'];
+
+        $this->debug("session: " . json_encode($session->getAll()));
+
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;
 
@@ -193,15 +209,21 @@ class LoginOauth2Plugin extends Plugin
         /** @var Message $messages */
         $messages = $this->grav['messages'];
 
+        $is_valid = $oauth2->isValidProvider($provider_name);
+
+        $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
+
         if ($provider_name && $oauth2->isValidProvider($provider_name)) {
             $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             if (empty($state)) {
                 $state = filter_input(INPUT_POST, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
             }
 
+            $this->debug("sent state: $state, stored state: $session->oauth2_state");
+
             if (empty($state) || ($state !== $session->oauth2_state)) {
                 unset($session->oauth2_state);
-                // TODO: better error message?
+                $this->debug("Error: $session->oauth2_state != $state");
                 $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
             } else {
                 // Fire Login process.
@@ -257,8 +279,7 @@ class LoginOauth2Plugin extends Plugin
                 }
             }
         } else {
-            // TODO: better error message?
-            $messages->add($t->translate('PLUGIN_LOGIN.LOGIN_FAILED'), 'error');
+            $this->grav->redirect($login_redirect ?? '/');
         }
 
         $uri = $this->grav['uri'];
@@ -373,6 +394,8 @@ class LoginOauth2Plugin extends Plugin
 
                 $grav_user->merge($userdata);
 
+                $this->debug("userdata: " . json_encode($userdata));
+
                 // Save Grav user if so configured
                 if ($this->config->get('plugins.login-oauth2.save_grav_user', false)) {
                     $grav_user->save();
@@ -429,5 +452,12 @@ class LoginOauth2Plugin extends Plugin
         $language = $this->grav['language'];
 
         return $language->translate($args);
+    }
+
+    private function debug($message): void
+    {
+        if ($this->debug) {
+            $this->grav['log']->debug($message);
+        }
     }
 }

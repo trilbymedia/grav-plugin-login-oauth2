@@ -36,3 +36,8 @@ PLUGIN_LOGIN_OAUTH2:
   ERROR_EXISTING_ACCOUNT: "You have already an account using %s, please use it to login"
   ERROR_NO_ACCOUNT: "You do not have user account in the site for %s"
   OAUTH2_LOGIN_FAILED: "OAuth2 %s Login Failed: %s"
+  BUTTON_FACEBOOK: Facebook
+  BUTTON_GITHUB: GitHub
+  BUTTON_GOOGLE: Google
+  BUTTON_INSTAGRAM: Instagram
+  BUTTON_LINKEDIN: LinkedIn
