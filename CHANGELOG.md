@@ -1,5 +1,5 @@
 # v2.2.0
-## mm/dd/2022
+## 12/28/2022
 
 1. [](#bugfix)
    * Don't fail with exception when provider name is invalid or empty
