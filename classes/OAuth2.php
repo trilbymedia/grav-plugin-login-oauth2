@@ -75,8 +75,11 @@ class OAuth2
      * @param string $provider
      * @return bool
      */
-    public function isValidProvider(string $provider): bool
+    public function isValidProvider(?string $provider): bool
     {
+        if (is_null($provider)) {
+            return false;
+        }
         return array_key_exists($provider, $this->providers);
     }
 }
