@@ -30,6 +30,17 @@ form:
       validate:
         type: bool
 
+    debug:
+      type: toggle
+      label: Extra Debugging
+      highlight: 0
+      default: 0
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+
     site_callback_url:
       type: text
       disabled: true
