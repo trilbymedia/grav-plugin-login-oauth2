@@ -4,16 +4,17 @@ namespace Grav\Plugin;
 
 use Composer\Autoload\ClassLoader;
 use Exception;
+use Grav\Common\Data\Data;
 use Grav\Common\Debugger;
 use Grav\Common\Language\Language;
 use Grav\Common\Plugin;
 use Grav\Common\Session;
+use Grav\Common\Uri;
 use Grav\Common\User\Interfaces\UserCollectionInterface;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\OAuth2;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
-use Monolog\Logger;
 use RocketTheme\Toolbox\Event\Event;
 use RocketTheme\Toolbox\Session\Message;
 use RuntimeException;
@@ -119,7 +120,6 @@ class LoginOauth2Plugin extends Plugin
 
         $this->debug = $this->config->get('plugins.login-oauth2.debug', false);
 
-
         $isAdmin = $this->admin;
         $this->grav['oauth2'] = static function () use ($isAdmin) {
             // Add OAuth2 object to Grav
@@ -167,9 +167,17 @@ class LoginOauth2Plugin extends Plugin
             $session->oauth2_state = $provider->getState();
             $session->oauth2_provider = $provider_name;
             if ($this->isAdmin()) {
-                $current = (string)$this->grav['admin']->request->getUri();
-                $session->redirect_after_login = $current;
+                $redirect = (string)$this->grav['admin']->request->getUri();
+            } else {
+                if ($this->config->get('plugins.login.redirect_after_login')) {
+                    $redirect = (string) $this->config->get('plugins.login.route_after_login');
+                } else {
+                    /** @var Uri $uri */
+                    $request = $this->grav['request'];
+                    $redirect = (string) $request->getUri();
+                }
             }
+            $session->redirect_after_login = $redirect;
 
             $authorizationUrl = $provider->getAuthorizationUrl();
 
@@ -190,6 +198,9 @@ class LoginOauth2Plugin extends Plugin
 
         /** @var Session $session */
         $session = $this->grav['session'];
+
+        $this->debug("session: " . json_encode($session->getAll()));
+
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;
 
