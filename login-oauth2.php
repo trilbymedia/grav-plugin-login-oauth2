@@ -228,7 +228,7 @@ class LoginOauth2Plugin extends Plugin
             } else {
                 // Fire Login process.
                 $event = $login->login(
-                    [],
+                    ['rememberme' => true],
                     ['admin' => $this->isAdmin(), 'remember_me' => true, 'oauth2' => true, 'provider' => $provider_name],
                     ['authorize' => $this->isAdmin() ? 'admin.login' : 'site.login', 'return_event' => true]);
 
