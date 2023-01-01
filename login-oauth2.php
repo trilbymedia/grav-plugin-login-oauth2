@@ -271,7 +271,6 @@ class LoginOauth2Plugin extends Plugin
                     $debugger->addMessage($t->translate($message), 'debug');
 
                     $messages->add($t->translate($message), $event->getMessageType());
-                    $this->grav['session']->messages = $messages;
                 }
 
                 $redirect = $event->getRedirect();
