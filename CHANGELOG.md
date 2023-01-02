@@ -1,3 +1,9 @@
+# v2.2.2
+## 01/02/2023
+
+1. [](#bugfix)
+   * Set `composer.json` to use `^7.3.6 || ^8.0` + downgraded libs for PHP compatibility
+
 # v2.2.1
 ## 12/28/2022
 

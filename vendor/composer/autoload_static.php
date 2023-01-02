@@ -36,8 +36,8 @@ class ComposerStaticInit9e88f6b49322b6bce97c12c41764fc52
     public static $prefixDirsPsr4 = array (
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
-            1 => __DIR__ . '/..' . '/psr/http-factory/src',
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Psr\\Http\\Client\\' => 
         array (
@@ -45,12 +45,12 @@ class ComposerStaticInit9e88f6b49322b6bce97c12c41764fc52
         ),
         'League\\OAuth2\\Client\\' => 
         array (
-            0 => __DIR__ . '/..' . '/league/oauth2-github/src',
-            1 => __DIR__ . '/..' . '/league/oauth2-google/src',
-            2 => __DIR__ . '/..' . '/league/oauth2-linkedin/src',
-            3 => __DIR__ . '/..' . '/league/oauth2-facebook/src',
-            4 => __DIR__ . '/..' . '/league/oauth2-client/src',
-            5 => __DIR__ . '/..' . '/league/oauth2-instagram/src',
+            0 => __DIR__ . '/..' . '/league/oauth2-client/src',
+            1 => __DIR__ . '/..' . '/league/oauth2-facebook/src',
+            2 => __DIR__ . '/..' . '/league/oauth2-github/src',
+            3 => __DIR__ . '/..' . '/league/oauth2-google/src',
+            4 => __DIR__ . '/..' . '/league/oauth2-instagram/src',
+            5 => __DIR__ . '/..' . '/league/oauth2-linkedin/src',
         ),
         'GuzzleHttp\\Psr7\\' => 
         array (
