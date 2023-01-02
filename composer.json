@@ -6,6 +6,7 @@
     "homepage": "https://github.com/trilbymedia/grav-plugin-login-oauth2",
     "license": "MIT",
     "require": {
+        "php": "^7.3.6 || ^8.0",
         "ext-json": "*",
         "league/oauth2-client": "^2.6",
         "league/oauth2-github": "^2.0",
