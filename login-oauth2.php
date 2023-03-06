@@ -372,8 +372,7 @@ class LoginOauth2Plugin extends Plugin
                 if (!$current_access) {
                     $access = $this->config->get('plugins.login-oauth2.default_access_levels.access', []);
                     if (count($access) > 0) {
-                        $data['access'] = $access;
-                        $grav_user->merge($data);
+                        $grav_user->set('access', $access);
                     }
                 }
 
@@ -382,8 +381,7 @@ class LoginOauth2Plugin extends Plugin
                 if (!$current_groups) {
                     $groups = $this->config->get('plugins.login-oauth2.default_groups', []);
                     if (count($groups) > 0) {
-                        $data['groups'] = $groups;
-                        $grav_user->merge($data);
+                        $grav_user->set('groups', $groups);
                     }
                 }
 
