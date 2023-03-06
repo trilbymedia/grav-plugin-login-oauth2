@@ -1,5 +1,5 @@
 # v2.2.3
-## mm/dd/2023
+## 03/06/2023
 
 1. [](#bugfix)
    * Fixed an issue with default `access` and `groups` configuration not being merged into user object correctly.
