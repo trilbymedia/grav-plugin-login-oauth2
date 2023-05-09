@@ -216,9 +216,9 @@ class LoginOauth2Plugin extends Plugin
         $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
 
         if ($provider_name && $oauth2->isValidProvider($provider_name)) {
-            $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+            $state = isset($_GET['state']) ? htmlspecialchars(strip_tags($_GET['state']), ENT_QUOTES, 'UTF-8') : null;
             if (empty($state)) {
-                $state = filter_input(INPUT_POST, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+                $state = isset($_POST['state']) ? htmlspecialchars(strip_tags($_POST['state']), ENT_QUOTES, 'UTF-8') : null;
             }
 
             $this->debug("sent state: $state, stored state: $session->oauth2_state");
@@ -322,9 +322,9 @@ class LoginOauth2Plugin extends Plugin
         $options = $event->getOptions();
 
         if (isset($options['oauth2'])) {
-            $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+            $code = isset($_GET['code']) ? htmlspecialchars(strip_tags($_GET['code']), ENT_QUOTES, 'UTF-8') : null;
             if (!$code) {
-                $code = filter_input(INPUT_POST, 'code', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+                $code = isset($_POST['code']) ? htmlspecialchars(strip_tags($_POST['code']), ENT_QUOTES, 'UTF-8') : null;
             }
 
             $provider_name = $options['provider'];
