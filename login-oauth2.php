@@ -101,6 +101,7 @@ class LoginOauth2Plugin extends Plugin
         $this->enable([
                 'onTask.login.oauth2'       => ['loginRedirect', 0],
                 'onTask.callback.oauth2'    => ['loginCallback', 0],
+                'onTask.delete.oauth2'      => ['loginDataDelete', 0],
                 'onTwigLoader'              => ['onTwigLoader', 0],
                 'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
                 'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
@@ -153,7 +154,8 @@ class LoginOauth2Plugin extends Plugin
             throw new RuntimeException('You have already been logged in', 403);
         }
 
-        $provider_name = filter_input(INPUT_POST,'oauth2',FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+        $provider_name = isset($_POST['oauth2']) ? htmlspecialchars(strip_tags($_POST['oauth2']), ENT_QUOTES, 'UTF-8') : null;
+
         if (!isset($provider_name)) {
             throw new RuntimeException('Bad Request', 400);
         }
@@ -214,9 +216,9 @@ class LoginOauth2Plugin extends Plugin
         $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
 
         if ($provider_name && $oauth2->isValidProvider($provider_name)) {
-            $state = filter_input(INPUT_GET, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+            $state = isset($_GET['state']) ? htmlspecialchars(strip_tags($_GET['state']), ENT_QUOTES, 'UTF-8') : null;
             if (empty($state)) {
-                $state = filter_input(INPUT_POST, 'state', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+                $state = isset($_POST['state']) ? htmlspecialchars(strip_tags($_POST['state']), ENT_QUOTES, 'UTF-8') : null;
             }
 
             $this->debug("sent state: $state, stored state: $session->oauth2_state");
@@ -287,15 +289,42 @@ class LoginOauth2Plugin extends Plugin
         $this->grav->redirect($redirect);
     }
 
+    function loginDataDelete()
+    {
+        /** @var Login $login */
+        $login = $this->grav['login'];
+
+        /** @var OAuth2 $oauth2 */
+        $oauth2 = $this->grav['oauth2'];
+
+        /** @var Session $session */
+        $session = $this->grav['session'];
+
+        $this->debug("session: " . json_encode($session->getAll()));
+
+        $provider_name = $session->oauth2_provider;
+        $login_redirect = $session->redirect_after_login;
+
+        /** @var Language $t */
+        $t = $this->grav['language'];
+        /** @var Message $messages */
+        $messages = $this->grav['messages'];
+
+        $is_valid = $oauth2->isValidProvider($provider_name);
+
+        $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
+    }
+
+
     public function userLoginAuthenticate(UserLoginEvent $event): void
     {
         // Second parameter of Login::login() call.
         $options = $event->getOptions();
 
         if (isset($options['oauth2'])) {
-            $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+            $code = isset($_GET['code']) ? htmlspecialchars(strip_tags($_GET['code']), ENT_QUOTES, 'UTF-8') : null;
             if (!$code) {
-                $code = filter_input(INPUT_POST, 'code', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+                $code = isset($_POST['code']) ? htmlspecialchars(strip_tags($_POST['code']), ENT_QUOTES, 'UTF-8') : null;
             }
 
             $provider_name = $options['provider'];
