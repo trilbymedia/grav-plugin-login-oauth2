@@ -52,7 +52,7 @@ class OAuth2
      * @param string $provider
      * @param array|null $options
      */
-    public function addProvider(string $provider, array $options = null): void
+    public function addProvider(string $provider, ?array $options = null): void
     {
         $this->providers[$provider] = $options;
     }
