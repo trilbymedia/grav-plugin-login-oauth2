@@ -1,3 +1,9 @@
+# v2.2.5
+## 10/28/2024
+
+1. [](#improved)
+   * Vendor updates for compatibility improvements 
+
 # v2.2.4
 ## 05/09/2023
 
