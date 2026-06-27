@@ -55,7 +55,11 @@ abstract class BaseProvider implements ProviderInterface
      */
     public function initProvider(array $options): void
     {
-        $options['redirectUri'] = static::getCallbackUri();
+        // Honor a caller-supplied redirectUri (the headless/admin-next SSO bridge
+        // points the provider at an API callback endpoint instead of the classic
+        // `/task:callback.oauth2` Twig route). Falls back to the computed callback
+        // URI for the classic flow, which passes no redirectUri.
+        $options['redirectUri'] = $options['redirectUri'] ?? static::getCallbackUri();
         $this->provider = new $this->classname($options);
     }
 
