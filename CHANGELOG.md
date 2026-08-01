@@ -1,3 +1,9 @@
+# v2.2.7
+## 08/01/2026
+
+1. [](#new)
+    * OAuth providers can now sign you in to the new Grav admin, not just the classic admin and the site frontend ([#52](https://github.com/trilbymedia/grav-plugin-login-oauth2/issues/52)).
+
 # v2.2.6
 ## 05/01/2026
 

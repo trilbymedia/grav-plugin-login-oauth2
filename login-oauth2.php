@@ -111,6 +111,12 @@ class LoginOauth2Plugin extends Plugin
                 'onUserLogin'               => ['userLogin', 0],
                 'onUserLogout'              => ['userLogout', 0],
                 'onOAuth2Username'          => ['onOAuth2Username', 0],
+                // Headless SSO bridge for admin-next (API plugin). These let the
+                // SvelteKit admin login screen drive OAuth without the classic
+                // Twig login page / form tasks.
+                'onApiLoginProviders'       => ['onApiLoginProviders', 0],
+                'onApiLoginStart'           => ['onApiLoginStart', 0],
+                'onApiLoginCallback'        => ['onApiLoginCallback', 0],
             ]
         );
 
@@ -467,6 +473,155 @@ class LoginOauth2Plugin extends Plugin
     public function userLogout(UserLoginEvent $event): void
     {
         // This gets fired on user logout.
+    }
+
+    /**
+     * [onApiLoginProviders] Advertise the admin OAuth providers to admin-next.
+     *
+     * Reuses the same `admin.enabled` master switch and `admin.providers.*`
+     * config as the classic admin OAuth flow, so enabling SSO for the SvelteKit
+     * admin is the same toggle admins already know.
+     */
+    public function onApiLoginProviders(Event $event): void
+    {
+        if (!$this->config->get('plugins.login-oauth2.admin.enabled')) {
+            return;
+        }
+
+        $oauth2 = new OAuth2(true);
+        $oauth2->addEnabledProviders();
+
+        $providers = $event['providers'] ?? [];
+        foreach (array_keys($oauth2->getProviders()) as $name) {
+            $providers[] = [
+                'id'     => $name,
+                'label'  => ucfirst((string) $name),
+                'icon'   => (string) $name,
+                'plugin' => 'login-oauth2',
+            ];
+        }
+        $event['providers'] = $providers;
+    }
+
+    /**
+     * [onApiLoginStart] Build the provider authorization URL for admin-next.
+     *
+     * Stores the CSRF state + provider in the session (carried across the
+     * provider round-trip by the browser's session cookie) and points the
+     * provider at the API callback the bridge supplied, rather than the classic
+     * Twig callback route.
+     */
+    public function onApiLoginStart(Event $event): void
+    {
+        if (!$this->config->get('plugins.login-oauth2.admin.enabled')) {
+            return;
+        }
+
+        $provider_name = (string) $event['provider'];
+        $oauth2 = $this->ensureAdminOAuth2();
+        if (!$oauth2->isValidProvider($provider_name)) {
+            return;
+        }
+
+        $provider = ProviderFactory::create($provider_name, [
+            'redirectUri' => (string) $event['callback_url'],
+        ]);
+
+        /** @var Session $session */
+        $session = $this->grav['session'];
+        $session->oauth2_state = $provider->getState();
+        $session->oauth2_provider = $provider_name;
+
+        $event['redirect'] = $provider->getAuthorizationUrl();
+        $event->stopPropagation();
+    }
+
+    /**
+     * [onApiLoginCallback] Exchange the provider's code for a Grav user.
+     *
+     * Validates the CSRF state, then fires the SAME `Login::login()` chain the
+     * classic flow uses so the existing `userLoginAuthenticate()` handler does
+     * the code→token→userdata→user mapping unchanged. The API plugin takes the
+     * returned user from here and mints the JWT pair.
+     */
+    public function onApiLoginCallback(Event $event): void
+    {
+        if (!$this->config->get('plugins.login-oauth2.admin.enabled')) {
+            return;
+        }
+
+        $provider_name = (string) $event['provider'];
+        $oauth2 = $this->ensureAdminOAuth2();
+        if (!$oauth2->isValidProvider($provider_name)) {
+            return;
+        }
+
+        $request = $event['request'];
+        $query = $request->getQueryParams();
+
+        /** @var Session $session */
+        $session = $this->grav['session'];
+
+        // CSRF: the returned state must match the one we stored at start.
+        $state = isset($query['state']) ? htmlspecialchars(strip_tags((string) $query['state']), ENT_QUOTES, 'UTF-8') : '';
+        if ($state === '' || $state !== ($session->oauth2_state ?? null)) {
+            unset($session->oauth2_state, $session->oauth2_provider);
+            $event['error'] = 'sso_state_mismatch';
+            return;
+        }
+
+        // The shared userLoginAuthenticate() handler reads the auth code from
+        // $_GET['code']; make sure it's populated from the PSR-7 request.
+        if (isset($query['code'])) {
+            $_GET['code'] = htmlspecialchars(strip_tags((string) $query['code']), ENT_QUOTES, 'UTF-8');
+        }
+
+        /** @var Login $login */
+        $login = $this->grav['login'];
+
+        // Mirror the classic oauth2 login() call. `authorize` is left empty —
+        // the API plugin runs its own access gate (admin.super / admin.login /
+        // api.access) after this returns, matching how /auth/token behaves.
+        $loginEvent = $login->login(
+            ['rememberme' => false],
+            [
+                'admin'       => true,
+                'oauth2'      => true,
+                'provider'    => $provider_name,
+                'redirectUri' => (string) $event['callback_url'],
+            ],
+            ['authorize' => [], 'return_event' => true]
+        );
+
+        unset($session->oauth2_state, $session->oauth2_provider);
+
+        $user = $loginEvent->getUser();
+        if ($user && $user->authenticated) {
+            $event['user'] = $user;
+        } else {
+            $message = $loginEvent->getMessage();
+            $event['error'] = $message ? $this->grav['language']->translate($message) : 'sso_login_failed';
+        }
+        $event->stopPropagation();
+    }
+
+    /**
+     * Re-register the global `oauth2` service in admin mode for the current
+     * (API) request. On an `/api/*` request `isAdmin()` is false, so the
+     * service the plugin registered at init reads frontend providers; the
+     * provider classes read their credentials/scope from whichever subtree this
+     * service selects, so the admin-next SSO path forces the `.admin` subtree.
+     */
+    private function ensureAdminOAuth2(): OAuth2
+    {
+        unset($this->grav['oauth2']);
+        $this->grav['oauth2'] = static function () {
+            $oauth2 = new OAuth2(true);
+            $oauth2->addEnabledProviders();
+            return $oauth2;
+        };
+
+        return $this->grav['oauth2'];
     }
 
     /**
