@@ -15,6 +15,8 @@ use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\OAuth2;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
+use ReflectionClass;
+use ReflectionException;
 use RocketTheme\Toolbox\Event\Event;
 use RocketTheme\Toolbox\Session\Message;
 use RuntimeException;
@@ -29,6 +31,9 @@ class LoginOauth2Plugin extends Plugin
     protected $admin = false;
 
     protected $debug = false;
+
+    /** @var OAuth2|null Admin-mode service built for the headless SSO path. */
+    private $adminOAuth2;
 
     /**
      * @return array
@@ -488,19 +493,49 @@ class LoginOauth2Plugin extends Plugin
             return;
         }
 
-        $oauth2 = new OAuth2(true);
-        $oauth2->addEnabledProviders();
+        // Go through the shared admin service rather than a local instance, so
+        // providers contributed by satellite plugins (login-oauth2-extras and
+        // friends) get advertised too — they hang off their own config trees
+        // and this plugin can't see them any other way.
+        $oauth2 = $this->ensureAdminOAuth2();
 
         $providers = $event['providers'] ?? [];
         foreach (array_keys($oauth2->getProviders()) as $name) {
             $providers[] = [
-                'id'     => $name,
-                'label'  => ucfirst((string) $name),
+                'id'     => (string) $name,
+                'label'  => static::providerLabel((string) $name),
                 'icon'   => (string) $name,
                 'plugin' => 'login-oauth2',
             ];
         }
         $event['providers'] = $providers;
+    }
+
+    /**
+     * Display label for a provider id.
+     *
+     * Provider classes carry a properly-cased `$name` ('LinkedIn', 'Keycloak'),
+     * which reads better on a button than `ucfirst()` on the config key. Read
+     * as a class default so no provider gets constructed just to render the
+     * login screen — the League provider classes validate their options in the
+     * constructor and would throw here on partially-configured credentials.
+     */
+    private static function providerLabel(string $name): string
+    {
+        $classname = 'Grav\\Plugin\\Login\\OAuth2\\Providers\\' . ucfirst($name) . 'Provider';
+
+        if (class_exists($classname)) {
+            try {
+                $defaults = (new ReflectionClass($classname))->getDefaultProperties();
+                if (!empty($defaults['name'])) {
+                    return (string) $defaults['name'];
+                }
+            } catch (ReflectionException $e) {
+                // Fall through to the humanized id.
+            }
+        }
+
+        return ucfirst($name);
     }
 
     /**
@@ -611,9 +646,23 @@ class LoginOauth2Plugin extends Plugin
      * service the plugin registered at init reads frontend providers; the
      * provider classes read their credentials/scope from whichever subtree this
      * service selects, so the admin-next SSO path forces the `.admin` subtree.
+     *
+     * Satellite plugins (login-oauth2-extras and friends) keep their providers
+     * in their own `plugins.login-oauth2-<x>.admin.providers` config and add
+     * them to this service at init — which is too early here, because the
+     * service they added to gets replaced above. `onOAuth2ProvidersRegister`
+     * gives them a second, correctly-timed chance; without it their providers
+     * are invisible to admin-next entirely (#13).
+     *
+     * Built once per request: rebuilding would drop everything the satellites
+     * registered on the previous pass.
      */
     private function ensureAdminOAuth2(): OAuth2
     {
+        if ($this->adminOAuth2 instanceof OAuth2) {
+            return $this->adminOAuth2;
+        }
+
         unset($this->grav['oauth2']);
         $this->grav['oauth2'] = static function () {
             $oauth2 = new OAuth2(true);
@@ -621,7 +670,14 @@ class LoginOauth2Plugin extends Plugin
             return $oauth2;
         };
 
-        return $this->grav['oauth2'];
+        // Resolve before firing: satellite handlers (and the provider classes
+        // they construct) read `grav['oauth2']->isAdmin()` to pick their config
+        // subtree, so the admin instance has to be in place and settled first.
+        $this->adminOAuth2 = $this->grav['oauth2'];
+
+        $this->grav->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $this->adminOAuth2]));
+
+        return $this->adminOAuth2;
     }
 
     /**
