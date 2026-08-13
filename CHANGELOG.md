@@ -1,3 +1,10 @@
+# v2.2.8
+## 08/13/2026
+
+1. [](#bugfix)
+    * Fixed providers from add-on plugins such as Login OAuth2 Extras (Keycloak, Okta, Azure, GitLab, and others) not appearing on the new admin's login screen ([#13](https://github.com/trilbymedia/grav-plugin-login-oauth2-extras/issues/13)).
+    * Provider buttons now use the provider's proper name, so LinkedIn no longer reads as "Linkedin".
+
 # v2.2.7
 ## 08/01/2026
 
