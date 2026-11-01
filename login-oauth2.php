@@ -439,6 +439,11 @@ class LoginOauth2Plugin extends Plugin
 
                 $grav_user->merge($userdata);
 
+                // Group sync of the provider (Generic provider), before Grav checks the user's access
+                if (method_exists($provider, 'syncGroups')) {
+                    $provider->syncGroups($grav_user);
+                }
+
                 $this->debug("userdata: " . json_encode($userdata));
 
                 // Save Grav user if so configured

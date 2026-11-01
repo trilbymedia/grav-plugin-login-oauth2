@@ -2,8 +2,11 @@
 
 namespace Grav\Plugin\Login\OAuth2\Providers;
 
+use Grav\Common\File\CompiledYamlFile;
 use Grav\Common\Grav;
 use Grav\Common\Session;
+use Grav\Common\User\Interfaces\UserInterface;
+use Grav\Common\Utils;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\GenericProvider as LeagueGenericProvider;
 use League\OAuth2\Client\Provider\GenericResourceOwner;
@@ -16,6 +19,8 @@ class GenericProvider extends BaseProvider
     protected $name = 'Generic';
     /** @var string */
     protected $classname = LeagueGenericProvider::class;
+    /** @var string[]|null Group names the provider sent (groups claim), null if it sent none */
+    protected $idp_groups;
     /** @var bool "Extra Debugging" of the plugin, read once */
     protected $debug;
 
@@ -129,6 +134,11 @@ class GenericProvider extends BaseProvider
             throw new \RuntimeException(Grav::instance()['language']->translate('PLUGIN_LOGIN_OAUTH2.ERROR_EMAIL_NOT_VERIFIED'));
         }
 
+        if ($this->config->get('providers.generic.group_sync')) {
+            $groups_key = (string)$this->config->get('providers.generic.userdata_groups');
+            $this->idp_groups = $this->getGroupNames($data[$groups_key] ?? null);
+        }
+
         return [
             'id'         => $user->getId(),
             'login'      => $data[(string)$this->config->get('providers.generic.userdata_login')] ?? null,
@@ -193,6 +203,199 @@ class GenericProvider extends BaseProvider
     }
 
     /**
+     * Group sync: adds the user to the Grav groups of the identity provider's groups and removes the ones it added
+     * before; groups assigned in Grav stay.
+     *
+     * @param UserInterface $user
+     * @return void
+     */
+    public function syncGroups(UserInterface $user): void
+    {
+        if (!$this->config->get('providers.generic.group_sync')) {
+            return;
+        }
+        // Admin logins only with "Save Grav user": the new admin reads users from their account file, so synced groups
+        // would be gone right after the login.
+        $grav = Grav::instance();
+        if ($grav['oauth2']->isAdmin() && !$grav['config']->get('plugins.login-oauth2.save_grav_user')) {
+            $this->log('warning', 'group sync skipped for the admin login, "Save Grav user" is off');
+
+            return;
+        }
+        if ($this->idp_groups === null) {
+            $this->debug('group sync: no groups sent, groups unchanged');
+
+            return;
+        }
+
+        $config = $grav['config'];
+        $filter = array_filter((array)$this->config->get('providers.generic.group_filter'), 'strlen');
+        $prefix = (string)$this->config->get('providers.generic.group_prefix');
+        $create = (bool)$this->config->get('providers.generic.group_autocreate');
+
+        $wanted = $not_in_filter = $no_grav_group = $missing = [];
+        foreach ($this->idp_groups as $idp_group) {
+            if ($filter && !$this->matchesGroupFilter($idp_group, $filter)) {
+                $not_in_filter[] = $idp_group;
+                continue;
+            }
+
+            $name = $this->groupName($prefix . $idp_group);
+            if ($name === '') {
+                continue;
+            }
+            if ($config->get("groups.{$name}") === null) {
+                if (!$create) {
+                    $no_grav_group[] = $name;
+                    continue;
+                }
+                $missing += [$name => $idp_group];
+            }
+            $wanted[] = $name;
+        }
+        if ($missing && !$this->createGroups($missing)) {
+            $wanted = array_diff($wanted, array_keys($missing));
+        }
+        $wanted = array_unique($wanted);
+
+        // The user's groups: the ones assigned in Grav, plus the ones the sync manages now (`synced_groups` remembers
+        // which ones the sync added, so only those follow the provider).
+        $groups = (array)$user->get('groups');
+        $synced = (array)$user->get('synced_groups');
+        $manual = array_values(array_diff($groups, $synced));
+        $added = array_values(array_diff($wanted, $groups));
+        $removed = array_values(array_diff($synced, $wanted));
+        $synced = array_values(array_diff($wanted, $manual));
+
+        if ($added || $removed) {
+            $groups = array_merge($manual, $synced);
+            $user->set('groups', $groups);
+        }
+        $user->set('synced_groups', $synced);
+
+        $this->debug('group sync', [
+            'added'         => $added,
+            'removed'       => $removed,
+            'not in filter' => $not_in_filter,
+            'no Grav group' => $no_grav_group,
+            'groups'        => $groups,
+        ]);
+    }
+
+    /**
+     * Group names from the groups claim: a list of strings (or a single string), null if missing or invalid.
+     *
+     * @param mixed $claim
+     * @return string[]|null
+     */
+    protected function getGroupNames($claim): ?array
+    {
+        if (is_string($claim)) {
+            $claim = [$claim];
+        }
+        // Anything else than names (e.g. objects, or a map of roles) is invalid, not "no groups": that would remove all
+        // synced groups.
+        if (!is_array($claim) || array_filter($claim, 'is_string') !== $claim) {
+            if ($claim !== null) {
+                $this->log('warning', 'ignored groups claim, not a list of names', $claim);
+            }
+
+            return null;
+        }
+
+        return array_values(array_filter($claim, 'strlen'));
+    }
+
+    /**
+     * Whether a group of the provider matches one of the filter patterns (* and ? as wildcards, case-insensitive), by
+     * its name or its slug, so "grav-*" and "Grav *" both match "Grav Editors".
+     *
+     * @param string $group
+     * @param string[] $filter
+     * @return bool
+     */
+    protected function matchesGroupFilter(string $group, array $filter): bool
+    {
+        $slug = $this->groupName($group);
+        foreach ($filter as $pattern) {
+            if (Utils::matchWildcard((string)$pattern, $group) || Utils::matchWildcard((string)$pattern, $slug)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Grav group name: lowercase slug (e.g. "Grav Editors" becomes "grav-editors"). With the intl extension, other
+     * letters are transliterated first ("Ärzte" becomes "arzte"), without it they're dropped.
+     *
+     * @param string $name
+     * @return string
+     */
+    protected function groupName(string $name): string
+    {
+        static $transliterator;
+        if ($transliterator === null && class_exists(\Transliterator::class)) {
+            $transliterator = \Transliterator::create('Any-Latin; Latin-ASCII');
+        }
+        if ($transliterator) {
+            $name = $transliterator->transliterate($name) ?: $name;
+        }
+
+        return trim((string)preg_replace('/[^a-z0-9_-]+/', '-', mb_strtolower($name)), '-');
+    }
+
+    /**
+     * Creates Grav groups without permissions, in user/config/groups.yaml (where Grav keeps groups for both account
+     * types), and in the loaded config, so they count for this login already.
+     *
+     * @param string[] $missing Grav group names as keys, the provider's group names as values
+     * @return bool Whether they were created; if not, the error is logged
+     */
+    protected function createGroups(array $missing): bool
+    {
+        $grav = Grav::instance();
+
+        // Locked, so logins creating groups at the same time don't overwrite each other's. free() drops content cached
+        // earlier in this request, so the groups are read again under the lock.
+        $file = CompiledYamlFile::instance($grav['locator']->findResource('user://config/groups.yaml', true, true));
+        $file->free();
+        try {
+            $file->lock();
+            $groups = (array)$file->content();
+            $created = array_diff_key($missing, $groups);
+            foreach ($created as $name => $idp_group) {
+                $groups[$name] = [
+                    'groupname'    => $name,
+                    'readableName' => $idp_group,
+                    'description'  => 'Created by the group sync of the Login OAuth2 Generic provider',
+                    'enabled'      => true,
+                ];
+            }
+            if ($created) {
+                $file->save($groups);
+            }
+        } catch (\RuntimeException $e) {
+            $this->log('error', 'group sync could not create Grav groups, skipped them',
+                ['groups' => array_keys($missing), 'error' => $e->getMessage()]);
+
+            return false;
+        } finally {
+            $file->free();
+        }
+
+        foreach (array_keys($missing) as $name) {
+            $grav['config']->set("groups.{$name}", (array)$groups[$name]);
+            if (isset($created[$name])) {
+                $this->log('info', 'group sync created Grav group', $name);
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Writes a debug message to the Grav log, if "Extra Debugging" is enabled in the plugin; the value is only encoded
      * then.
      *
@@ -231,8 +434,8 @@ class GenericProvider extends BaseProvider
     protected function forLog($value): string
     {
         $cut = static function (&$item) {
-            if (is_string($item) && strlen($item) > 100) {
-                $item = mb_strcut($item, 0, 100) . '...';
+            if (is_string($item)) {
+                $item = Utils::truncate($item, 100, false, ' ', '...');
             }
         };
         if (is_array($value)) {

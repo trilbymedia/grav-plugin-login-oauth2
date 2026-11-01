@@ -102,6 +102,11 @@ providers:
     userdata_email_verified: 'email_verified'
     userdata_picture: 'picture'
     avatar_from_picture: true
+    group_sync: false
+    userdata_groups: 'groups'
+    group_filter: []
+    group_prefix: ''
+    group_autocreate: false
     options:
       scope: ['openid', 'email', 'profile']
       scope_separator: 'space'
@@ -170,6 +175,11 @@ admin:
       userdata_email_verified: 'email_verified'
       userdata_picture: 'picture'
       avatar_from_picture: true
+      group_sync: false
+      userdata_groups: 'groups'
+      group_filter: []
+      group_prefix: ''
+      group_autocreate: false
       options:
         scope: ['openid', 'email', 'profile']
         scope_separator: 'space'
@@ -251,11 +261,18 @@ Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using 
 | userdata_email_verified | The claim saying whether the email address is verified in the userinfo response, used by `enforce_email_verified`                                                                                                   | [default: `email_verified`] \| `<string>`       |
 | userdata_picture        | The claim with the URL of the user's picture in the userinfo response, used by `avatar_from_picture`                                                                                                                | [default: `picture`] \| `<string>`              |
 | avatar_from_picture     | Use the user's picture (`userdata_picture`) as avatar in Grav, browsers load it directly from the URL the provider sends                                                                                            | [default: `true`] \| `false`                    |
+| group_sync              | Assign the user to Grav groups from the provider's groups on every login (see below)                                                                                                                                | `true` \| [default: `false`]                    |
+| userdata_groups         | The claim with the user's group names in the userinfo response, used by `group_sync`                                                                                                                                | [default: `groups`] \| `<string>`               |
+| group_filter            | Provider side: identity provider groups to sync, by name or slug, `*` and `?` as wildcards                                                                                                                          | e.g. `['grav-*']` [default: `[]` = all]         |
+| group_prefix            | Grav side: prepended to the Grav group names                                                                                                                                                                        | e.g. `idp_` [default: `''`]                     |
+| group_autocreate        | Create missing Grav groups (without permissions) instead of skipping them                                                                                                                                           | `true` \| [default: `false`]                    |
 | scope                   | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions                                                                                         | e.g. `['openid', 'email', 'profile']`           |
 | scope_separator         | The separator of the scopes in the authorization request                                                                                                                                                            | [default: `space`] \| `comma`                   |
 | pkce_method             | The PKCE (Proof Key for Code Exchange) method, `plain` is **not** recommended and should only be used if the provider supports nothing else                                                                         | [default: `S256`] \| `plain` \| `''` (disabled) |
 
 Besides `login`, `fullname` and `email`, only `email_verified` and, with `avatar_from_picture`, the `avatar_url` are stored under the `generic` key (empty if not available), not the whole resource owner details.
+
+With `group_sync`, each login adds the user to the Grav groups named after the provider's groups (lowercase slugs with the `group_prefix`, e.g. `Grav Editors` becomes `grav-editors`; with PHP's intl extension other letters are transliterated, e.g. `Ärzte` becomes `arzte`, without it they're dropped) and removes the groups it added before that the provider no longer sends; groups assigned in Grav stay, and without a groups claim nothing changes. This happens before Grav checks the user's access. Limits: changes reach logged-in users at their next login; admin logins only sync with `save_grav_user` (the new admin reads users from their account file; without it they skip the sync with a warning, and groups synced before stay meanwhile); without a `group_prefix` the provider can assign any existing Grav group, privileged ones included; the prefix is part of the slug, so one of only characters the slug drops (e.g. `-` or `.`) has no effect; with `group_autocreate` every new provider group is added to `user/config/groups.yaml` for good, so limit them with `group_filter`; groups deleted at the provider stay in Grav.
 
 > NOTE: If no Grav user with the resulting username exists, an existing Grav user with the same email address is used. With `enforce_email_verified` (default), logins without a verified email address are denied; without it, only use providers that verify the email addresses of their users.
 

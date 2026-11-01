@@ -27,6 +27,11 @@ providers:
     userdata_email_verified: 'email_verified'
     userdata_picture: 'picture'
     avatar_from_picture: true
+    group_sync: false
+    userdata_groups: 'groups'
+    group_filter: []
+    group_prefix: ''
+    group_autocreate: false
     options:
       scope: ['openid', 'email', 'profile']
       scope_separator: 'space'
@@ -95,6 +100,11 @@ admin:
       userdata_email_verified: 'email_verified'
       userdata_picture: 'picture'
       avatar_from_picture: true
+      group_sync: false
+      userdata_groups: 'groups'
+      group_filter: []
+      group_prefix: ''
+      group_autocreate: false
       options:
         scope: ['openid', 'email', 'profile']
         scope_separator: 'space'

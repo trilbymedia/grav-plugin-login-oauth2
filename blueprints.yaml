@@ -329,6 +329,53 @@ form:
                               validate:
                                 type: bool
 
+                        generic_groups_left:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC
+                          text: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            providers.generic.group_sync:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC_ENABLED
+                              highlight: 1
+                              default: 0
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC_ENABLED_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
+                            providers.generic.group_filter:
+                              type: selectize
+                              size: large
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_FILTER
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_FILTER_HELP
+                              classes: fancy
+                              validate:
+                                type: commalist
+
+                            providers.generic.group_prefix:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_PREFIX
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_PREFIX_HELP
+
+                            providers.generic.group_autocreate:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_AUTOCREATE
+                              highlight: 1
+                              default: 0
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_AUTOCREATE_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
                         generic_advanced_left:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.ADVANCED
@@ -402,6 +449,12 @@ form:
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE_HELP
                               placeholder: picture
+
+                            providers.generic.userdata_groups:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS_HELP
+                              placeholder: groups
 
                     generic_column_right:
                       type: column
@@ -486,6 +539,63 @@ form:
                               validate:
                                 type: bool
 
+                        generic_groups_right:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC
+                          text: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            generic.admin_group_sync_notice:
+                              type: conditional
+                              condition: "save_grav_user != true"
+                              fields:
+
+                                generic.admin_group_sync_needs_save:
+                                  type: display
+                                  style: vertical
+                                  content: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC_NEEDS_SAVE
+
+                            admin.providers.generic.group_sync:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC_ENABLED
+                              highlight: 1
+                              default: 0
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_SYNC_ENABLED_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
+                            admin.providers.generic.group_filter:
+                              type: selectize
+                              size: large
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_FILTER
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_FILTER_HELP
+                              classes: fancy
+                              validate:
+                                type: commalist
+
+                            admin.providers.generic.group_prefix:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_PREFIX
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_PREFIX_HELP
+
+                            admin.providers.generic.group_autocreate:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.GROUP_AUTOCREATE
+                              highlight: 1
+                              default: 0
+                              help: PLUGIN_LOGIN_OAUTH2.GROUP_AUTOCREATE_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
                         generic_advanced_right:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.ADVANCED
@@ -559,6 +669,12 @@ form:
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE_HELP
                               placeholder: picture
+
+                            admin.providers.generic.userdata_groups:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS_HELP
+                              placeholder: groups
 
                 providers.generic.description:
                   type: display
