@@ -94,10 +94,13 @@ providers:
     authorization_endpoint: ''
     token_endpoint: ''
     userinfo_endpoint: ''
+    enforce_email_verified: true
     userdata_id: 'sub'
     userdata_login: 'preferred_username'
     userdata_fullname: 'name'
     userdata_email: 'email'
+    userdata_email_verified: 'email_verified'
+    userdata_picture: 'picture'
     avatar_from_picture: true
     options:
       scope: ['openid', 'email', 'profile']
@@ -159,10 +162,13 @@ admin:
       authorization_endpoint: ''
       token_endpoint: ''
       userinfo_endpoint: ''
+      enforce_email_verified: true
       userdata_id: 'sub'
       userdata_login: 'preferred_username'
       userdata_fullname: 'name'
       userdata_email: 'email'
+      userdata_email_verified: 'email_verified'
+      userdata_picture: 'picture'
       avatar_from_picture: true
       options:
         scope: ['openid', 'email', 'profile']
@@ -228,27 +234,30 @@ admin:
 
 Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using the [Generic Provider](https://oauth2-client.thephpleague.com/usage/) of The League OAuth2 Client. The defaults of the user data keys match the standard OpenID Connect claims.
 
-| Key                    | Description                                                                                                                                 | Values                                          |
-| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------- |
-| enabled                | Enable or disable this specific provider. This stops its showing as an valid login option                                                   | [default: `true`] \| `false`                    |
-| label                  | The text of the login button, e.g. the name of your identity provider                                                                       | [default: `Generic`] \| `<string>`              |
-| client_id              | The **Client ID** Provided by the provider when you register an application for OAuth2 authentication                                       | `<string>`                                      |
-| client_secret          | The **Client Secret** Provided by the provider when you register an application for OAuth2 authentication                                   | `<string>`                                      |
-| authorization_endpoint | The authorization endpoint of the provider                                                                                                  | e.g. `https://idp.example.com/authorize`        |
-| token_endpoint         | The token endpoint of the provider                                                                                                          | e.g. `https://idp.example.com/token`            |
-| userinfo_endpoint      | The endpoint returning the details of the logged in user (OpenID Connect: userinfo endpoint)                                                | e.g. `https://idp.example.com/userinfo`         |
-| userdata_id            | The key of the unique user ID in the resource owner details                                                                                 | [default: `sub`] \| `<string>`                  |
-| userdata_login         | The key of the login name in the resource owner details                                                                                     | [default: `preferred_username`] \| `<string>`   |
-| userdata_fullname      | The key of the full name in the resource owner details                                                                                      | [default: `name`] \| `<string>`                 |
-| userdata_email         | The key of the email address in the resource owner details                                                                                  | [default: `email`] \| `<string>`                |
-| avatar_from_picture    | Use the user's picture (OpenID Connect claim `picture`) as avatar in Grav, browsers load it directly from the URL the provider sends        | [default: `true`] \| `false`                    |
-| scope                  | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions                 | e.g. `['openid', 'email', 'profile']`           |
-| scope_separator        | The separator of the scopes in the authorization request                                                                                    | [default: `space`] \| `comma`                   |
-| pkce_method            | The PKCE (Proof Key for Code Exchange) method, `plain` is **not** recommended and should only be used if the provider supports nothing else | [default: `S256`] \| `plain` \| `''` (disabled) |
+| Key                     | Description                                                                                                                                                                                                         | Values                                          |
+| :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------- |
+| enabled                 | Enable or disable this specific provider. This stops its showing as an valid login option                                                                                                                           | [default: `true`] \| `false`                    |
+| label                   | The text of the login button, e.g. the name of your identity provider                                                                                                                                               | [default: `Generic`] \| `<string>`              |
+| client_id               | The **Client ID** Provided by the provider when you register an application for OAuth2 authentication                                                                                                               | `<string>`                                      |
+| client_secret           | The **Client Secret** Provided by the provider when you register an application for OAuth2 authentication                                                                                                           | `<string>`                                      |
+| authorization_endpoint  | The authorization endpoint of the provider                                                                                                                                                                          | e.g. `https://idp.example.com/authorize`        |
+| token_endpoint          | The token endpoint of the provider                                                                                                                                                                                  | e.g. `https://idp.example.com/token`            |
+| userinfo_endpoint       | The endpoint returning the details of the logged in user (OpenID Connect: userinfo endpoint)                                                                                                                        | e.g. `https://idp.example.com/userinfo`         |
+| enforce_email_verified  | Deny the login unless the provider confirms the email address as verified (`userdata_email_verified`); without it, anyone registering there with someone else's email could log in as the Grav user with that email | [default: `true`] \| `false`                    |
+| userdata_id             | The claim with the user's unique ID in the userinfo response                                                                                                                                                        | [default: `sub`] \| `<string>`                  |
+| userdata_login          | The claim with the username in the userinfo response                                                                                                                                                                | [default: `preferred_username`] \| `<string>`   |
+| userdata_fullname       | The claim with the full name in the userinfo response                                                                                                                                                               | [default: `name`] \| `<string>`                 |
+| userdata_email          | The claim with the email address in the userinfo response                                                                                                                                                           | [default: `email`] \| `<string>`                |
+| userdata_email_verified | The claim saying whether the email address is verified in the userinfo response, used by `enforce_email_verified`                                                                                                   | [default: `email_verified`] \| `<string>`       |
+| userdata_picture        | The claim with the URL of the user's picture in the userinfo response, used by `avatar_from_picture`                                                                                                                | [default: `picture`] \| `<string>`              |
+| avatar_from_picture     | Use the user's picture (`userdata_picture`) as avatar in Grav, browsers load it directly from the URL the provider sends                                                                                            | [default: `true`] \| `false`                    |
+| scope                   | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions                                                                                         | e.g. `['openid', 'email', 'profile']`           |
+| scope_separator         | The separator of the scopes in the authorization request                                                                                                                                                            | [default: `space`] \| `comma`                   |
+| pkce_method             | The PKCE (Proof Key for Code Exchange) method, `plain` is **not** recommended and should only be used if the provider supports nothing else                                                                         | [default: `S256`] \| `plain` \| `''` (disabled) |
 
 Besides `login`, `fullname` and `email`, only `email_verified` and, with `avatar_from_picture`, the `avatar_url` are stored under the `generic` key (empty if not available), not the whole resource owner details.
 
-> NOTE: If no Grav user with the resulting username exists, an existing Grav user with the same email address is used. Only use providers that verify the email addresses of their users.
+> NOTE: If no Grav user with the resulting username exists, an existing Grav user with the same email address is used. With `enforce_email_verified` (default), logins without a verified email address are denied; without it, only use providers that verify the email addresses of their users.
 
 #### GitHub
 

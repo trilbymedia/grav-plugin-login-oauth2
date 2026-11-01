@@ -116,8 +116,17 @@ class GenericProvider extends BaseProvider
 
         // Without a unique ID all users would be mapped to the same Grav user.
         $id_key = (string)$this->config->get('providers.generic.userdata_id');
-        if (!isset($data[$id_key]) || $data[$id_key] === '') {
-            throw new \RuntimeException('User ID claim "' . $id_key . '" not found in the userinfo response');
+        $id = $data[$id_key] ?? '';
+        if ((!is_string($id) && !is_int($id)) || $id === '') {
+            throw new \RuntimeException('User ID claim "' . $id_key . '" missing or invalid in the userinfo response');
+        }
+
+        // Otherwise anyone registering at the provider with someone else's email could log in as the Grav user with it.
+        $email_verified = $this->getEmailVerified($data);
+        if ($email_verified !== true && $this->config->get('providers.generic.enforce_email_verified')) {
+            $this->log('warning', 'login denied, email not verified', $id);
+
+            throw new \RuntimeException(Grav::instance()['language']->translate('PLUGIN_LOGIN_OAUTH2.ERROR_EMAIL_NOT_VERIFIED'));
         }
 
         return [
@@ -127,7 +136,7 @@ class GenericProvider extends BaseProvider
             'email'      => $data[(string)$this->config->get('providers.generic.userdata_email')] ?? null,
             // Only the provider data worth keeping, not the whole resource owner details.
             'generic'    => [
-                'email_verified' => $this->getEmailVerified($data),
+                'email_verified' => $email_verified,
                 'avatar_url'     => $this->getAvatar($data),
             ],
         ];
@@ -141,14 +150,15 @@ class GenericProvider extends BaseProvider
      */
     public function getEmailVerified(array $data): ?bool
     {
-        if (!isset($data['email_verified'])) {
+        $claim = (string)$this->config->get('providers.generic.userdata_email_verified');
+        if (!isset($data[$claim])) {
             return null;
         }
 
         // Some providers send it as string ("true" / "false").
-        $email_verified = filter_var($data['email_verified'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        $email_verified = filter_var($data[$claim], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         if ($email_verified === null) {
-            $this->log('warning', 'ignored claim "email_verified", not a boolean', $data['email_verified']);
+            $this->log('warning', "ignored claim \"{$claim}\", not a boolean", $data[$claim]);
         }
 
         return $email_verified;
@@ -172,8 +182,8 @@ class GenericProvider extends BaseProvider
             return null;
         }
 
-        if (!is_string($picture) || !filter_var($picture, FILTER_VALIDATE_URL)
-            || !in_array(strtolower((string)parse_url($picture, PHP_URL_SCHEME)), ['http', 'https'], true)) {
+        if (!is_string($picture) || !preg_match('#^https?://#i', $picture)
+            || !filter_var($picture, FILTER_VALIDATE_URL)) {
             $this->log('warning', "ignored claim \"{$claim}\", not an http(s) URL", $picture);
 
             return null;

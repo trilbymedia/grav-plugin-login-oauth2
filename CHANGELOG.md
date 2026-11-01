@@ -3,6 +3,8 @@
 
 1. [](#new)
     * Added a Generic provider to log in with any OAuth2 or OpenID Connect identity provider, offering great flexibility through many configuration options
+1. [](#improved)
+    * Reorganized the plugin settings into clearly named sections
 1. [](#bugfix)
     * Values a provider doesn't send (e.g. a scope that wasn't granted) no longer erase the email address, name or other values of an existing Grav user
     * Added and fixed several missing help texts of certain options

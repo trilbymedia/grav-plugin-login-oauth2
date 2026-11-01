@@ -19,10 +19,12 @@ providers:
     authorization_endpoint: ''
     token_endpoint: ''
     userinfo_endpoint: ''
+    enforce_email_verified: true
     userdata_id: 'sub'
     userdata_login: 'preferred_username'
     userdata_fullname: 'name'
     userdata_email: 'email'
+    userdata_email_verified: 'email_verified'
     userdata_picture: 'picture'
     avatar_from_picture: true
     options:
@@ -85,10 +87,12 @@ admin:
       authorization_endpoint: ''
       token_endpoint: ''
       userinfo_endpoint: ''
+      enforce_email_verified: true
       userdata_id: 'sub'
       userdata_login: 'preferred_username'
       userdata_fullname: 'name'
       userdata_email: 'email'
+      userdata_email_verified: 'email_verified'
       userdata_picture: 'picture'
       avatar_from_picture: true
       options:

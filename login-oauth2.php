@@ -212,7 +212,7 @@ class LoginOauth2Plugin extends Plugin
         /** @var Session $session */
         $session = $this->grav['session'];
 
-        $this->debug("session: " . json_encode($session->getAll()));
+        $this->debug("session: " . json_encode(array_diff_key($session->getAll(), ['oauth2_pkce_code' => true])));
 
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;
@@ -311,7 +311,7 @@ class LoginOauth2Plugin extends Plugin
         /** @var Session $session */
         $session = $this->grav['session'];
 
-        $this->debug("session: " . json_encode($session->getAll()));
+        $this->debug("session: " . json_encode(array_diff_key($session->getAll(), ['oauth2_pkce_code' => true])));
 
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;

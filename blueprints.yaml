@@ -33,22 +33,6 @@ form:
       validate:
         type: bool
 
-    site_callback_url:
-      type: text
-      disabled: true
-      copy_to_clipboard: true
-      label: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI
-      help: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI_HELP
-      data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', false]
-
-    admin_callback_url:
-      type: text
-      disabled: true
-      copy_to_clipboard: true
-      label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
-      help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
-      data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', true]
-
     oauth2_tabs:
       type: tabs
 
@@ -58,6 +42,33 @@ form:
           type: tab
           title: PLUGIN_LOGIN_OAUTH2.CONFIGURATION
           fields:
+
+            callbacks_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_CALLBACKS
+              text: PLUGIN_LOGIN_OAUTH2.SECTION_CALLBACKS_DESC
+              underline: true
+
+            site_callback_url:
+              type: text
+              disabled: true
+              copy_to_clipboard: true
+              label: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI
+              help: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI_HELP
+              data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', false]
+
+            admin_callback_url:
+              type: text
+              disabled: true
+              copy_to_clipboard: true
+              label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+              help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+              data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', true]
+
+            buttons_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_BUTTONS
+              underline: true
 
             built_in_css:
               type: toggle
@@ -80,6 +91,11 @@ form:
               options:
                 row: Horizontal Row
                 square: Square Block
+
+            users_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_USERS
+              underline: true
 
             require_grav_user:
               type: toggle
@@ -117,6 +133,12 @@ form:
               validate:
                 type: bool
 
+            defaults_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_DEFAULTS
+              text: PLUGIN_LOGIN_OAUTH2.SECTION_DEFAULTS_DESC
+              underline: true
+
             default_access_levels.access:
               type: textarea
               label: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS
@@ -138,6 +160,11 @@ form:
               validate:
                 type: commalist
 
+            troubleshooting_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_TROUBLESHOOTING
+              underline: true
+
             debug:
               type: toggle
               label: Extra Debugging
@@ -156,6 +183,11 @@ form:
 
           fields:
 
+            admin_login_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_ADMIN_LOGIN
+              underline: true
+
             admin.enabled:
               type: toggle
               label: PLUGIN_LOGIN_OAUTH2.ADMIN_ENABLED
@@ -167,6 +199,12 @@ form:
                 0: Disabled
               validate:
                 type: bool
+
+            admin_buttons_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_BUTTONS
+              text: PLUGIN_LOGIN_OAUTH2.SECTION_ADMIN_BUTTONS_DESC
+              underline: true
 
             admin.built_in_css:
               type: toggle
@@ -258,6 +296,18 @@ form:
                           help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
                           placeholder: https://idp.example.com/userinfo
 
+                        providers.generic.enforce_email_verified:
+                          type: toggle
+                          label: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED
+                          highlight: 1
+                          default: 1
+                          help: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED_HELP
+                          options:
+                            1: Enabled
+                            0: Disabled
+                          validate:
+                            type: bool
+
                         generic_avatar_left:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.AVATAR
@@ -341,6 +391,12 @@ form:
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: email
 
+                            providers.generic.userdata_email_verified:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED_HELP
+                              placeholder: email_verified
+
                             providers.generic.userdata_picture:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE
@@ -396,6 +452,18 @@ form:
                           label: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS
                           help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
                           placeholder: https://idp.example.com/userinfo
+
+                        admin.providers.generic.enforce_email_verified:
+                          type: toggle
+                          label: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED
+                          highlight: 1
+                          default: 1
+                          help: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED_HELP
+                          options:
+                            1: Enabled
+                            0: Disabled
+                          validate:
+                            type: bool
 
                         generic_avatar_right:
                           type: fieldset
@@ -479,6 +547,12 @@ form:
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: email
+
+                            admin.providers.generic.userdata_email_verified:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED_HELP
+                              placeholder: email_verified
 
                             admin.providers.generic.userdata_picture:
                               type: text
