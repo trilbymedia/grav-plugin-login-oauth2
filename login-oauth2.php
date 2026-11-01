@@ -430,6 +430,13 @@ class LoginOauth2Plugin extends Plugin
                     unset($userdata[$provider_name]);
                 }
 
+                // getUserData() returns null for values the provider didn't send (e.g. scope not granted). Skip them
+                // in this main array, so they don't erase existing values of the Grav user (e.g. its email); the
+                // provider's sub-array is still replaced as a whole by merge().
+                $userdata = array_filter($userdata, static function ($value) {
+                    return $value !== null;
+                });
+
                 $grav_user->merge($userdata);
 
                 $this->debug("userdata: " . json_encode($userdata));
@@ -500,10 +507,10 @@ class LoginOauth2Plugin extends Plugin
         $oauth2 = $this->ensureAdminOAuth2();
 
         $providers = $event['providers'] ?? [];
-        foreach (array_keys($oauth2->getProviders()) as $name) {
+        foreach ($oauth2->getProviders() as $name => $options) {
             $providers[] = [
                 'id'     => (string) $name,
-                'label'  => static::providerLabel((string) $name),
+                'label'  => (string) ($options['label'] ?? '') ?: static::providerLabel((string) $name),
                 'icon'   => (string) $name,
                 'plugin' => 'login-oauth2',
             ];

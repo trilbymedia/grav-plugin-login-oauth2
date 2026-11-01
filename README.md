@@ -1,16 +1,17 @@
 # Login OAuth2 Plugin
 
-The **Login OAuth2** Plugin for [Grav CMS](http://github.com/getgrav/grav) allows user authentication against an OAuth2 Authentication Provider. This plugin makes use of [The League OAuth2 Client](http://oauth2-client.thephpleague.com/) 
+The **Login OAuth2** Plugin for [Grav CMS](http://github.com/getgrav/grav) allows user authentication against an OAuth2 Authentication Provider. This plugin makes use of [The League OAuth2 Client](http://oauth2-client.thephpleague.com/)
 
 Currently the core plugin supports the following providers:
 
-* **Facebook** - https://developers.facebook.com/docs/facebook-login/web
-* **GitHub** - https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/
-* **Google** - https://developers.google.com/identity/protocols/OpenIDConnect
-* **Instagram** - https://www.instagram.com/developer/authentication/
-* **LinkedIn** - https://developer.linkedin.com/docs/oauth2
+* **Generic** - any OAuth2 (or OpenID Connect) provider - <https://oauth2-client.thephpleague.com/usage/>
+* **Facebook** - <https://developers.facebook.com/docs/facebook-login/web>
+* **GitHub** - <https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/>
+* **Google** - <https://developers.google.com/identity/protocols/OpenIDConnect>
+* **Instagram** - <https://www.instagram.com/developer/authentication/>
+* **LinkedIn** - <https://developer.linkedin.com/docs/oauth2>
 
-It's also possible to extend this plugin an create a new AOauth2 for specific providers. 
+It's also possible to extend this plugin an create a new AOauth2 for specific providers.
 
 ## Callback URL
 
@@ -34,7 +35,6 @@ http://yoursite.com/admin/task:callback.oauth2
 
 Where `http://yoursite.com/admin` is the URL you use to log into the admin plugin. Again, if you have this under SSL, you would need to use `https://` rather than `http://`.  Some OAuth2 providers allow you to use provide multiple callback URLs, and in this case you can use the same application setup with multiple URLs, to work with the **site** and the **admin** and potentially `http://` and `https://` URLs.  However, some providers only allow a single callback URL, and in these cases you need to create multiple OAuth2 applications to handle each callback URL.
 
-
 ## Installation
 
 Installing the Login OAuth2 plugin can be done in one of two ways. The GPM (Grav Package Manager) installation method enables you to quickly and easily install the plugin with a simple terminal command, while the manual method enables you to do so via a zip file.
@@ -43,7 +43,9 @@ Installing the Login OAuth2 plugin can be done in one of two ways. The GPM (Grav
 
 The simplest way to install this plugin is via the [Grav Package Manager (GPM)](http://learn.getgrav.org/advanced/grav-gpm) through your system's terminal (also called the command line).  From the root of your Grav install type:
 
-    bin/gpm install login-oauth2
+```bash
+bin/gpm install login-oauth2
+```
 
 This will install the Login OAuth2 plugin into your `/user/plugins` directory within Grav. Its files can be found under `/your/site/grav/user/plugins/login-oauth2`.
 
@@ -53,9 +55,11 @@ To install this plugin, just download the zip version of this repository and unz
 
 You should now have all the plugin files under
 
-    /your/site/grav/user/plugins/login-oauth2
-    
-Before configuring this plugin, you should copy the `user/plugins/login-oauth2/login-oauth2.yaml` to `user/config/plugins/login-oauth2.yaml` and only edit that copy.    
+```text
+/your/site/grav/user/plugins/login-oauth2
+```
+
+Before configuring this plugin, you should copy the `user/plugins/login-oauth2/login-oauth2.yaml` to `user/config/plugins/login-oauth2.yaml` and only edit that copy.
 
 ### Admin Installation
 
@@ -82,6 +86,24 @@ default_access_levels:
 default_groups:
 
 providers:
+  generic:
+    enabled: true
+    label: ''
+    client_id: ''
+    client_secret: ''
+    authorization_endpoint: ''
+    token_endpoint: ''
+    userinfo_endpoint: ''
+    userdata_id: 'sub'
+    userdata_login: 'preferred_username'
+    userdata_fullname: 'name'
+    userdata_email: 'email'
+    avatar_from_picture: true
+    options:
+      scope: ['openid', 'email', 'profile']
+      scope_separator: 'space'
+      pkce_method: 'S256'
+
   github:
     enabled: true
     client_id: ''
@@ -129,6 +151,24 @@ admin:
   button_style: row
 
   providers:
+    generic:
+      enabled: false
+      label: ''
+      client_id: ''
+      client_secret: ''
+      authorization_endpoint: ''
+      token_endpoint: ''
+      userinfo_endpoint: ''
+      userdata_id: 'sub'
+      userdata_login: 'preferred_username'
+      userdata_fullname: 'name'
+      userdata_email: 'email'
+      avatar_from_picture: true
+      options:
+        scope: ['openid', 'email', 'profile']
+        scope_separator: 'space'
+        pkce_method: 'S256'
+
     github:
       enabled: false
       client_id: ''
@@ -171,68 +211,92 @@ admin:
 
 ### Server Settings
 
-|Key                   |Description                 | Values |
-|:---------------------|:---------------------------|:-------|
-|enabled|Enables the plugin | [default: `true`] \| `false`|
-|built_in_css|Enables the plugin-provided CSS to be loaded| [default: `true`] \| `false`|
-|button_style|If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin| [default: `row`] \| `square`|
-|require_grav_user|Allow oauth login only for existing users | `true` \| [default: `false`] |
-|save_grav_user|Store the grav user account as a local YAML account | `true` \| [default: `false`] |
-|store_provider_data|If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav| `true` \| [default: `false`] |
-|default_access_levels.access|You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `site: { login: true }`]|
-|default_groups| You can find more information on access levels in the https://learn.getgrav.org/advanced/groups-and-permissions#permissions|[default: `[]`]|
-
+| Key                          | Description                                                                                                                   | Values                             |
+| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :--------------------------------- |
+| enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`       |
+| built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`       |
+| button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`       |
+| require_grav_user            | Allow oauth login only for existing users                                                                                     | `true` \| [default: `false`]       |
+| save_grav_user               | Store the grav user account as a local YAML account                                                                           | `true` \| [default: `false`]       |
+| store_provider_data          | If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav                                | `true` \| [default: `false`]       |
+| default_access_levels.access | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `site: { login: true }`] |
+| default_groups               | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `[]`]                    |
 
 ### OAuth2 Providers
 
+#### Generic
+
+Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using the [Generic Provider](https://oauth2-client.thephpleague.com/usage/) of The League OAuth2 Client. The defaults of the user data keys match the standard OpenID Connect claims.
+
+| Key                    | Description                                                                                                                                 | Values                                          |
+| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------- |
+| enabled                | Enable or disable this specific provider. This stops its showing as an valid login option                                                   | [default: `true`] \| `false`                    |
+| label                  | The text of the login button, e.g. the name of your identity provider                                                                       | [default: `Generic`] \| `<string>`              |
+| client_id              | The **Client ID** Provided by the provider when you register an application for OAuth2 authentication                                       | `<string>`                                      |
+| client_secret          | The **Client Secret** Provided by the provider when you register an application for OAuth2 authentication                                   | `<string>`                                      |
+| authorization_endpoint | The authorization endpoint of the provider                                                                                                  | e.g. `https://idp.example.com/authorize`        |
+| token_endpoint         | The token endpoint of the provider                                                                                                          | e.g. `https://idp.example.com/token`            |
+| userinfo_endpoint      | The endpoint returning the details of the logged in user (OpenID Connect: userinfo endpoint)                                                | e.g. `https://idp.example.com/userinfo`         |
+| userdata_id            | The key of the unique user ID in the resource owner details                                                                                 | [default: `sub`] \| `<string>`                  |
+| userdata_login         | The key of the login name in the resource owner details                                                                                     | [default: `preferred_username`] \| `<string>`   |
+| userdata_fullname      | The key of the full name in the resource owner details                                                                                      | [default: `name`] \| `<string>`                 |
+| userdata_email         | The key of the email address in the resource owner details                                                                                  | [default: `email`] \| `<string>`                |
+| avatar_from_picture    | Use the user's picture (OpenID Connect claim `picture`) as avatar in Grav, browsers load it directly from the URL the provider sends        | [default: `true`] \| `false`                    |
+| scope                  | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions                 | e.g. `['openid', 'email', 'profile']`           |
+| scope_separator        | The separator of the scopes in the authorization request                                                                                    | [default: `space`] \| `comma`                   |
+| pkce_method            | The PKCE (Proof Key for Code Exchange) method, `plain` is **not** recommended and should only be used if the provider supports nothing else | [default: `S256`] \| `plain` \| `''` (disabled) |
+
+Besides `login`, `fullname` and `email`, only `email_verified` and, with `avatar_from_picture`, the `avatar_url` are stored under the `generic` key (empty if not available), not the whole resource owner details.
+
+> NOTE: If no Grav user with the resulting username exists, an existing Grav user with the same email address is used. Only use providers that verify the email addresses of their users.
+
 #### GitHub
 
-|Key                   |Description                 | Values |
-|:---------------------|:---------------------------|:-------|
-|enabled|Enable or disable this specific provider. This stops its showing as an valid login option| [default: `true`] \| `false` |
-|client_id|The **Client ID** Provided by GitHub when you register an application for OAuth2 authentication | `<string>` |
-|client_secret|The **Client Secret** Provided by GitHub when you register an application for OAuth2 authentication | `<string>` |
-|scope|An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['user', 'user:email', 'repo']` |
+| Key           | Description                                                                                                                 | Values                                |
+| :------------ | :-------------------------------------------------------------------------------------------------------------------------- | :------------------------------------ |
+| enabled       | Enable or disable this specific provider. This stops its showing as an valid login option                                   | [default: `true`] \| `false`          |
+| client_id     | The **Client ID** Provided by GitHub when you register an application for OAuth2 authentication                             | `<string>`                            |
+| client_secret | The **Client Secret** Provided by GitHub when you register an application for OAuth2 authentication                         | `<string>`                            |
+| scope         | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['user', 'user:email', 'repo']` |
 
 #### Instagram
 
-|Key                   |Description                 | Values |
-|:---------------------|:---------------------------|:-------|
-|enabled|Enable or disable this specific provider. This stops its showing as an valid login option| [default: `true`] \| `false` |
-|client_id|The **Client ID** Provided by Instagram when you register an application for OAuth2 authentication | `<string>` |
-|client_secret|The **Client Secret** Provided by Instagram when you register an application for OAuth2 authentication | `<string>` |
-|scope|An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['basic', 'likes', 'comments']` |
-|host|The host address of the Instagram OAuth2 API service _[don't change this unless you know what you are doing]_| e.g. `https://api.instagram.com` |
+| Key           | Description                                                                                                                 | Values                                |
+| :------------ | :-------------------------------------------------------------------------------------------------------------------------- | :------------------------------------ |
+| enabled       | Enable or disable this specific provider. This stops its showing as an valid login option                                   | [default: `true`] \| `false`          |
+| client_id     | The **Client ID** Provided by Instagram when you register an application for OAuth2 authentication                          | `<string>`                            |
+| client_secret | The **Client Secret** Provided by Instagram when you register an application for OAuth2 authentication                      | `<string>`                            |
+| scope         | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['basic', 'likes', 'comments']` |
+| host          | The host address of the Instagram OAuth2 API service _[don't change this unless you know what you are doing]_               | e.g. `https://api.instagram.com`      |
 
 #### Facebook
 
-|Key                   |Description                 | Values |
-|:---------------------|:---------------------------|:-------|
-|enabled|Enable or disable this specific provider. This stops its showing as an valid login option| [default: `true`] \| `false` |
-|app_id|The **App ID** Provided by Facebook when you register an application for OAuth2 authentication | `<string>` |
-|app_secret|The **App Secret** Provided by Facebook when you register an application for OAuth2 authentication | `<string>` |
-|scope|An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['email', 'public_profile', 'user_hometown']` |
-|graph_api_version|The Graph AP version to use _[don't change this unless you know what you are doing]_. | e.g. `v2.10` |
+| Key               | Description                                                                                                                 | Values                                              |
+| :---------------- | :-------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------- |
+| enabled           | Enable or disable this specific provider. This stops its showing as an valid login option                                   | [default: `true`] \| `false`                        |
+| app_id            | The **App ID** Provided by Facebook when you register an application for OAuth2 authentication                              | `<string>`                                          |
+| app_secret        | The **App Secret** Provided by Facebook when you register an application for OAuth2 authentication                          | `<string>`                                          |
+| scope             | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['email', 'public_profile', 'user_hometown']` |
+| graph_api_version | The Graph AP version to use _[don't change this unless you know what you are doing]_.                                       | e.g. `v2.10`                                        |
 
 #### Google
 
-|Key                   |Description                 | Values |
-|:---------------------|:---------------------------|:-------|
-|enabled|Enable or disable this specific provider. This stops its showing as an valid login option| [default: `true`] \| `false` |
-|client_id|The **Client ID** Provided by Google when you register an application for OAuth2 authentication | `<string>` |
-|client_secret|The **Client Secret** Provided by Google when you register an application for OAuth2 authentication | `<string>` |
-|scope|An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['email', 'profile']` |
-|avatar_size|The size in pixels of the avatar URL to store | e.g. `200` |
+| Key           | Description                                                                                                                 | Values                       |
+| :------------ | :-------------------------------------------------------------------------------------------------------------------------- | :--------------------------- |
+| enabled       | Enable or disable this specific provider. This stops its showing as an valid login option                                   | [default: `true`] \| `false` |
+| client_id     | The **Client ID** Provided by Google when you register an application for OAuth2 authentication                             | `<string>`                   |
+| client_secret | The **Client Secret** Provided by Google when you register an application for OAuth2 authentication                         | `<string>`                   |
+| scope         | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['email', 'profile']`  |
+| avatar_size   | The size in pixels of the avatar URL to store                                                                               | e.g. `200`                   |
 
-#### Instagram
+#### LinkedIn
 
-|Key                   |Description                 | Values |
-|:---------------------|:---------------------------|:-------|
-|enabled|Enable or disable this specific provider. This stops its showing as an valid login option| [default: `true`] \| `false` |
-|client_id|The **Client ID** Provided by Instagram when you register an application for OAuth2 authentication | `<string>` |
-|client_secret|The **Client Secret** Provided by Instagram when you register an application for OAuth2 authentication | `<string>` |
-|scope|An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['r_basicprofile','r_emailaddress']` |
-
+| Key           | Description                                                                                                                 | Values                                     |
+| :------------ | :-------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------- |
+| enabled       | Enable or disable this specific provider. This stops its showing as an valid login option                                   | [default: `true`] \| `false`               |
+| client_id     | The **Client ID** Provided by LinkedIn when you register an application for OAuth2 authentication                           | `<string>`                                 |
+| client_secret | The **Client Secret** Provided by LinkedIn when you register an application for OAuth2 authentication                       | `<string>`                                 |
+| scope         | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions | e.g. `['r_basicprofile','r_emailaddress']` |
 
 > Note that if you use the admin plugin, a file with your configuration will be saved in the `user/config/plugins/login-oauth2.yaml`.
 
@@ -244,19 +308,21 @@ Once properly configured, the functionality of the OAuth2 plugin is simple for t
 
 Any user data available via the `scope` provider options will be retrieved.  Core fields like `username`, and `email` will be stored on the Grav user object, and anything else that is provider-specific can be optionally stored as well.  By default, the Grav user object **is not** persisted to a physical Grav account YAML file, instead it's just kept in session temporarily.
 
+Values a provider doesn't send (e.g. no public email on GitHub, or a scope that wasn't granted) don't erase the values an existing Grav user already has, such as its email address or full name. The provider-specific data (e.g. under `github:`), however, follows the provider: it's replaced as a whole on every login, so values the provider no longer sends are removed there, and values it sends as `null` are cleared.
+
 #### Storing Grav User
 
 By default the OAuth2 plugin does not store any local user information.  Upon successfully authenticating against the OAuth2 user, a user is created and is available during the session.  However, upon returning, the user must re-authenticate and the OAuth2 data is retrieved again.
 
-If you want to be able to set user data (extra fields, or specific user access) for a particular user, you can enable the `save_grav_user` option, and this will create a local Grav user in the `accounts/` folder.  This is a local record of the user and attributes can be set here.  
+If you want to be able to set user data (extra fields, or specific user access) for a particular user, you can enable the `save_grav_user` option, and this will create a local Grav user in the `accounts/` folder.  This is a local record of the user and attributes can be set here.
 
-> NOTE: Any attribute stored under the provider key (e.g. `github:`) in the user account file will be overwritten by the plugin during the next login.  This information is always in sync with latest data from the provider.  
->  
+> NOTE: Any attribute stored under the provider key (e.g. `github:`) in the user account file will be overwritten by the plugin during the next login.  This information is always in sync with latest data from the provider.
+>
 > Also note that the password will never be stored in the Grav user under `accounts/`.
 
 #### OAuth2 to Grav Access Mapping
 
-The OAuth2 plugin provides a flexible way to map your OAuth2 users into Grav.  
+The OAuth2 plugin provides a flexible way to map your OAuth2 users into Grav.
 
 > For Groups and Access mapping to work properly a valid `search_dn`, `query_dn` and `group_query` is required.
 
@@ -268,7 +334,7 @@ user:
     login: true
 ```
 
-In order for a front-end user to be able to log into a Grav site the minimum of `site: [login: true]` is required. You can of course configure this with any access settings you wish to provide. 
+In order for a front-end user to be able to log into a Grav site the minimum of `site: [login: true]` is required. You can of course configure this with any access settings you wish to provide.
 
 It is not advised to provide any `admin` access via OAuth2 accounts, but if you wish a particular OAuth user to be able to log into the admin, you should enable the `save_grav_user` option, so the userdata is persisted as a Grav Account YAML file, and then manually add the desired permissions.  These **will not** be reset to the default values on each login.
 
@@ -276,7 +342,7 @@ It is not advised to provide any `admin` access via OAuth2 accounts, but if you 
 
 ### Admin Notes
 
-New in version `2.0` is the support for OAuth2 providers to be able to login via the admin.  After careful consideration, we decided to provide configuration options for both `Site` and `Admin` as there are some providers that need to have a unique **OAuth2 Application** setup for each unique callback.  This is important because by default, Grav uses a different session for both `Site` and `Admin`.  Therefore you need a unique callback, one that goes to the frontend site, and one to the admin.  This means we have to provide a way to have unique application settings for both `Site` and `Admin`.  
+New in version `2.0` is the support for OAuth2 providers to be able to login via the admin.  After careful consideration, we decided to provide configuration options for both `Site` and `Admin` as there are some providers that need to have a unique **OAuth2 Application** setup for each unique callback.  This is important because by default, Grav uses a different session for both `Site` and `Admin`.  Therefore you need a unique callback, one that goes to the frontend site, and one to the admin.  This means we have to provide a way to have unique application settings for both `Site` and `Admin`.
 
 There are some providers such as **Discord** and **GitLab** that actually allow for multiple callback URLs to be registered.  In this case, simply copy over the same `client_id` and `client_secret` for both `Site` and `Admin`.
 
@@ -313,5 +379,3 @@ access:
 
 {{ vardump(grav.user) }}
 ```
-
-

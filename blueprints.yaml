@@ -1,7 +1,7 @@
 name: Login OAuth2
 type: login-oauth2
 slug: form
-version: 2.2.8
+version: 2.3.0
 description: OAuth2 Client Plugin to integrate with Grav's Login
 icon: plug
 author:
@@ -192,6 +192,264 @@ form:
           title: PLUGIN_LOGIN_OAUTH2.PROVIDERS
 
           fields:
+
+            generic:
+              type: fieldset
+              title: Generic
+              collapsible: true
+
+              fields:
+
+                generic_columns:
+                  type: columns
+
+                  fields:
+
+                    generic_column_left:
+                      type: column
+
+                      fields:
+
+                        generic.site:
+                          type: display
+                          style: vertical
+                          content: '<h3>Site</h3>'
+
+                        providers.generic.enabled:
+                          type: toggle
+                          label: Enabled
+                          highlight: 1
+                          default: 0
+                          options:
+                            1: Enabled
+                            0: Disabled
+                          validate:
+                            type: bool
+
+                        providers.generic.label:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.LABEL
+                          help: PLUGIN_LOGIN_OAUTH2.LABEL_HELP
+
+                        providers.generic.client_id:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
+
+                        providers.generic.client_secret:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
+
+                        providers.generic.authorization_endpoint:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.URL_AUTHORIZE
+                          placeholder: https://idp.example.com/authorize
+
+                        providers.generic.token_endpoint:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.URL_ACCESS_TOKEN
+                          placeholder: https://idp.example.com/token
+
+                        providers.generic.userinfo_endpoint:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS
+                          help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
+                          placeholder: https://idp.example.com/userinfo
+
+                        generic_advanced_left:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.ADVANCED
+                          text: PLUGIN_LOGIN_OAUTH2.ADVANCED_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            providers.generic.options.scope:
+                              type: selectize
+                              size: large
+                              label: PLUGIN_LOGIN_OAUTH2.SCOPE
+                              classes: fancy
+                              validate:
+                                type: commalist
+
+                            providers.generic.options.scope_separator:
+                              type: select
+                              label: PLUGIN_LOGIN_OAUTH2.SCOPE_SEPARATOR
+                              help: PLUGIN_LOGIN_OAUTH2.SCOPE_SEPARATOR_HELP
+                              default: space
+                              size: medium
+                              options:
+                                space: Space
+                                comma: Comma
+
+                            providers.generic.options.pkce_method:
+                              type: select
+                              label: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD
+                              help: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD_HELP
+                              default: S256
+                              size: medium
+                              options:
+                                '': Disabled
+                                S256: S256 (recommended)
+                                plain: plain (not recommended)
+
+                            providers.generic.userdata_id:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_ID
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_ID_HELP
+
+                            providers.generic.userdata_login:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_LOGIN
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+
+                            providers.generic.userdata_fullname:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_FULLNAME
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+
+                            providers.generic.userdata_email:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+
+                            providers.generic.avatar_from_picture:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
+                    generic_column_right:
+                      type: column
+
+                      fields:
+
+                        generic.admin:
+                          type: display
+                          style: vertical
+                          content: '<h3>Admin</h3>'
+
+                        admin.providers.generic.enabled:
+                          type: toggle
+                          label: Enabled
+                          highlight: 1
+                          default: 0
+                          options:
+                            1: Enabled
+                            0: Disabled
+                          validate:
+                            type: bool
+
+                        admin.providers.generic.label:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.LABEL
+                          help: PLUGIN_LOGIN_OAUTH2.LABEL_HELP
+
+                        admin.providers.generic.client_id:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_ID
+
+                        admin.providers.generic.client_secret:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.CLIENT_SECRET
+
+                        admin.providers.generic.authorization_endpoint:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.URL_AUTHORIZE
+                          placeholder: https://idp.example.com/authorize
+
+                        admin.providers.generic.token_endpoint:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.URL_ACCESS_TOKEN
+                          placeholder: https://idp.example.com/token
+
+                        admin.providers.generic.userinfo_endpoint:
+                          type: text
+                          label: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS
+                          help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
+                          placeholder: https://idp.example.com/userinfo
+
+                        generic_advanced_right:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.ADVANCED
+                          text: PLUGIN_LOGIN_OAUTH2.ADVANCED_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            admin.providers.generic.options.scope:
+                              type: selectize
+                              size: large
+                              label: PLUGIN_LOGIN_OAUTH2.SCOPE
+                              classes: fancy
+                              validate:
+                                type: commalist
+
+                            admin.providers.generic.options.scope_separator:
+                              type: select
+                              label: PLUGIN_LOGIN_OAUTH2.SCOPE_SEPARATOR
+                              help: PLUGIN_LOGIN_OAUTH2.SCOPE_SEPARATOR_HELP
+                              default: space
+                              size: medium
+                              options:
+                                space: Space
+                                comma: Comma
+
+                            admin.providers.generic.options.pkce_method:
+                              type: select
+                              label: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD
+                              help: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD_HELP
+                              default: S256
+                              size: medium
+                              options:
+                                '': Disabled
+                                S256: S256 (recommended)
+                                plain: plain (not recommended)
+
+                            admin.providers.generic.userdata_id:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_ID
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_ID_HELP
+
+                            admin.providers.generic.userdata_login:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_LOGIN
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+
+                            admin.providers.generic.userdata_fullname:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_FULLNAME
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+
+                            admin.providers.generic.userdata_email:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+
+                            admin.providers.generic.avatar_from_picture:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
+                providers.generic.description:
+                  type: display
+                  style: vertical
+                  content: '[<i class="fa fa-book"></i> Generic OAuth2 Provider from the official documentation](https://oauth2-client.thephpleague.com/usage/?target=_blank)'
+                  markdown: true
 
             github:
               type: fieldset
