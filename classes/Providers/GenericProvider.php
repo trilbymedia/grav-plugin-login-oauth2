@@ -214,11 +214,11 @@ class GenericProvider extends BaseProvider
         if (!$this->config->get('providers.generic.group_sync')) {
             return;
         }
-        // Admin logins only with "Save Grav user": the new admin reads users from their account file, so synced groups
+        // Admin logins only with "Save Grav user (admin)": the new admin reads users from their account file, so synced groups
         // would be gone right after the login.
         $grav = Grav::instance();
-        if ($grav['oauth2']->isAdmin() && !$grav['config']->get('plugins.login-oauth2.save_grav_user')) {
-            $this->log('warning', 'group sync skipped for the admin login, "Save Grav user" is off');
+        if ($grav['oauth2']->isAdmin() && !$grav['oauth2']->saveGravUser()) {
+            $this->log('warning', 'group sync skipped for the admin login, "Save Grav user (admin)" is off');
 
             return;
         }

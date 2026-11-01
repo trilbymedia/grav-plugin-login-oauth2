@@ -33,6 +33,29 @@ class OAuth2
         return $this->admin;
     }
 
+    /**
+     * Whether this login saves the user as a Grav account: "Save Grav user (site)" or "Save Grav user (admin)", which
+     * follows the site one as long as it isn't set.
+     */
+    public function saveGravUser(): bool
+    {
+        $config = Grav::instance()['config'];
+        $site = (bool)$config->get('plugins.login-oauth2.save_grav_user');
+
+        return $this->admin ? (bool)($config->get('plugins.login-oauth2.admin.save_grav_user') ?? $site) : $site;
+    }
+
+    /**
+     * Condition of the admin's group sync notice in the blueprint: the admin "Save Grav user" field, or the site's as
+     * long as the admin one isn't set, as the form's conditions only see stored values, not the inherited one.
+     */
+    public static function adminSaveGravUserCondition(): string
+    {
+        $set = Grav::instance()['config']->get('plugins.login-oauth2.admin.save_grav_user') !== null;
+
+        return ($set ? 'admin.' : '') . 'save_grav_user != true';
+    }
+
     public function addEnabledProviders(): void
     {
         if ($this->admin) {

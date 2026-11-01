@@ -200,6 +200,23 @@ form:
               validate:
                 type: bool
 
+            admin_users_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_USERS
+              underline: true
+
+            admin.save_grav_user:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.ADMIN_SAVE_GRAV_USER
+              help: PLUGIN_LOGIN_OAUTH2.ADMIN_SAVE_GRAV_USER_HELP
+              highlight: 0
+              config-default@: plugins.login-oauth2.save_grav_user
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
             admin_buttons_section:
               type: section
               title: PLUGIN_LOGIN_OAUTH2.SECTION_BUTTONS
@@ -550,7 +567,7 @@ form:
 
                             generic.admin_group_sync_notice:
                               type: conditional
-                              condition: "save_grav_user != true"
+                              data-condition@: ['Grav\Plugin\Login\OAuth2\OAuth2::adminSaveGravUserCondition']
                               fields:
 
                                 generic.admin_group_sync_needs_save:

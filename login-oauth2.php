@@ -447,7 +447,7 @@ class LoginOauth2Plugin extends Plugin
                 $this->debug("userdata: " . json_encode($userdata));
 
                 // Save Grav user if so configured
-                if ($this->config->get('plugins.login-oauth2.save_grav_user', false)) {
+                if ($this->grav['oauth2']->saveGravUser()) {
                     $grav_user->save();
                 }
 
