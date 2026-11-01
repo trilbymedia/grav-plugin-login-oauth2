@@ -212,8 +212,6 @@ class LoginOauth2Plugin extends Plugin
         /** @var Session $session */
         $session = $this->grav['session'];
 
-        $this->debug("session: " . json_encode($session->getAll()));
-
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;
 
@@ -311,8 +309,6 @@ class LoginOauth2Plugin extends Plugin
         /** @var Session $session */
         $session = $this->grav['session'];
 
-        $this->debug("session: " . json_encode($session->getAll()));
-
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;
 
@@ -397,7 +393,7 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
-                if ($this->config->get('plugins.login-oauth2.require_grav_user', false) && !$exists) {
+                if ($this->grav['oauth2']->requireGravUser() && !$exists) {
                     throw new RuntimeException($this->translate('PLUGIN_LOGIN_OAUTH2.ERROR_NO_ACCOUNT', $username));
                 }
 
@@ -416,7 +412,26 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
-                // Default Groups
+                // Remove Provider Userdata if configured
+                if (!$this->config->get('plugins.login-oauth2.store_provider_data', false)) {
+                    unset($userdata[$provider_name]);
+                }
+
+                // getUserData() returns null for values the provider didn't send (e.g. scope not granted). Skip them
+                // in this main array, so they don't erase existing values of the Grav user (e.g. its email); the
+                // provider's sub-array is still replaced as a whole by merge().
+                $userdata = array_filter($userdata, static function ($value) {
+                    return $value !== null;
+                });
+
+                $grav_user->merge($userdata);
+
+                // Group sync of the provider (Generic provider), before Grav checks the user's access
+                if (method_exists($provider, 'syncGroups')) {
+                    $provider->syncGroups($grav_user);
+                }
+
+                // Default Groups, after the group sync: also for users it left without any
                 $current_groups = $grav_user->get('groups');
                 if (!$current_groups) {
                     $groups = $this->config->get('plugins.login-oauth2.default_groups', []);
@@ -425,17 +440,10 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
-                // Remove Provider Userdata if configured
-                if (!$this->config->get('plugins.login-oauth2.store_provider_data', false)) {
-                    unset($userdata[$provider_name]);
-                }
-
-                $grav_user->merge($userdata);
-
                 $this->debug("userdata: " . json_encode($userdata));
 
                 // Save Grav user if so configured
-                if ($this->config->get('plugins.login-oauth2.save_grav_user', false)) {
+                if ($this->grav['oauth2']->saveGravUser()) {
                     $grav_user->save();
                 }
 
@@ -456,6 +464,14 @@ class LoginOauth2Plugin extends Plugin
         $userdata = $event['userdata'];
         $provider = $event['provider'];
         $provider_name = strtolower($provider->getName());
+
+        // Providers that build their own collision-free username (Generic provider)
+        if (method_exists($provider, 'getUsername')) {
+            $event['username'] = $provider->getUsername($userdata);
+            $event->stopPropagation();
+
+            return;
+        }
 
         $username_parts = [$provider_name, $userdata['id'], $userdata['login']];
         $username = implode('.', $username_parts);
@@ -500,10 +516,10 @@ class LoginOauth2Plugin extends Plugin
         $oauth2 = $this->ensureAdminOAuth2();
 
         $providers = $event['providers'] ?? [];
-        foreach (array_keys($oauth2->getProviders()) as $name) {
+        foreach ($oauth2->getProviders() as $name => $options) {
             $providers[] = [
                 'id'     => (string) $name,
-                'label'  => static::providerLabel((string) $name),
+                'label'  => (string) ($options['label'] ?? '') ?: static::providerLabel((string) $name),
                 'icon'   => (string) $name,
                 'plugin' => 'login-oauth2',
             ];

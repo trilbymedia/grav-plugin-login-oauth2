@@ -1,3 +1,19 @@
+# v2.3.0
+## 11/01/2026
+
+1. [](#new)
+    * Added a Generic provider to log in with any OAuth2 or OpenID Connect identity provider, offering great flexibility through many configuration options, including group sync
+1. [](#improved)
+    * Reorganized the plugin settings into clearly named tabs and sections
+    * Separate "Save Grav user" settings for site and admin logins (admin follows the site setting until set)
+    * Separate "Require Existing Grav user" settings for site and admin logins (admin follows the site setting until set)
+1. [](#bugfix)
+    * Values a provider doesn't send (e.g. a scope that wasn't granted) no longer erase the email address, name or other values of an existing Grav user
+    * Added and fixed several missing help texts of certain options
+    * Generic provider: a missing or invalid groups claim counts as no groups, so access the identity provider took away is removed, and a group name prefix without letters or digits skips the sync instead of matching every Grav group
+    * Generic provider: the Grav username is built from a hash of the token endpoint and the user ID, so different identity providers or unusual claim values can't map to the same account, and claims that aren't plain text are ignored
+    * Updated the bundled Guzzle libraries (guzzle 7.16.1, psr7 2.13.2, promises 2.6.0) to clear their open security advisories
+
 # v2.2.8
 ## 08/13/2026
 
