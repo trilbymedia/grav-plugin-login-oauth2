@@ -1,5 +1,5 @@
 PLUGIN_LOGIN_OAUTH2:
-  CONFIGURATION: "Configuration"
+  GENERAL: "General"
   DOCUMENTATION: "Instructions"
   PROVIDERS: "OAuth2 Providers"
   SECTION_CALLBACKS: "Callback URIs"
@@ -7,6 +7,7 @@ PLUGIN_LOGIN_OAUTH2:
   SECTION_BUTTONS: "Login Buttons"
   SECTION_ADMIN_BUTTONS_DESC: "Only for the classic admin, Admin2 shows its own buttons."
   SECTION_USERS: "User Accounts"
+  SECTION_USERS_SHARED_DESC: "For site and admin logins."
   SECTION_DEFAULTS: "Default Permissions"
   SECTION_DEFAULTS_DESC: "Assigned at login to users without any, e.g. new users."
   SECTION_TROUBLESHOOTING: "Troubleshooting"
@@ -82,6 +83,7 @@ PLUGIN_LOGIN_OAUTH2:
   GROUP_AUTOCREATE_HELP: "Creates them without permissions; otherwise they're skipped. Groups deleted at the provider stay in Grav."
   ADVANCED: "Advanced"
   ADVANCED_DESC: "Scope, PKCE and the claims of the user data. The defaults fit most OpenID Connect providers."
+  SITE: "Site"
   ADMIN: "Admin"
   ADMIN_ENABLED: "Enabled in Admin"
   ADMIN_ENABLED_HELP: "Offers OAuth2 login on the admin login page (Admin2 and classic admin), with the providers enabled in their Admin column (OAuth2 Providers tab)."

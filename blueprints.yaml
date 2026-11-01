@@ -40,7 +40,7 @@ form:
 
         tab_1:
           type: tab
-          title: PLUGIN_LOGIN_OAUTH2.CONFIGURATION
+          title: PLUGIN_LOGIN_OAUTH2.GENERAL
           fields:
 
             callbacks_section:
@@ -65,61 +65,11 @@ form:
               help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
               data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', true]
 
-            buttons_section:
-              type: section
-              title: PLUGIN_LOGIN_OAUTH2.SECTION_BUTTONS
-              underline: true
-
-            built_in_css:
-              type: toggle
-              label: PLUGIN_LOGIN_OAUTH2.BUILTIN_CSS
-              highlight: 1
-              default: 1
-              help: PLUGIN_LOGIN_OAUTH2.BUILTIN_CSS_HELP
-              options:
-                1: PLUGIN_ADMIN.ENABLED
-                0: PLUGIN_ADMIN.DISABLED
-              validate:
-                type: bool
-
-            button_style:
-              type: select
-              label: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE
-              default: row
-              size: medium
-              help: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE_HELP
-              options:
-                row: Horizontal Row
-                square: Square Block
-
             users_section:
               type: section
               title: PLUGIN_LOGIN_OAUTH2.SECTION_USERS
+              text: PLUGIN_LOGIN_OAUTH2.SECTION_USERS_SHARED_DESC
               underline: true
-
-            require_grav_user:
-              type: toggle
-              label: PLUGIN_LOGIN_OAUTH2.REQUIRE_GRAV_USER
-              help: PLUGIN_LOGIN_OAUTH2.REQUIRE_GRAV_USER_DESC
-              highlight: 0
-              default: 0
-              options:
-                1: Enabled
-                0: Disabled
-              validate:
-                type: bool
-
-            save_grav_user:
-              type: toggle
-              label: PLUGIN_LOGIN_OAUTH2.SAVE_GRAV_USER
-              help: PLUGIN_LOGIN_OAUTH2.SAVE_GRAV_USER_DESC
-              highlight: 0
-              default: 0
-              options:
-                1: Enabled
-                0: Disabled
-              validate:
-                type: bool
 
             store_provider_data:
               type: toggle
@@ -176,6 +126,68 @@ form:
                 0: Disabled
               validate:
                 type: bool
+
+        tab_site:
+          type: tab
+          title: PLUGIN_LOGIN_OAUTH2.SITE
+
+          fields:
+
+            site_users_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_USERS
+              underline: true
+
+            require_grav_user:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.REQUIRE_GRAV_USER
+              help: PLUGIN_LOGIN_OAUTH2.REQUIRE_GRAV_USER_DESC
+              highlight: 0
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
+            save_grav_user:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.SAVE_GRAV_USER
+              help: PLUGIN_LOGIN_OAUTH2.SAVE_GRAV_USER_DESC
+              highlight: 0
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
+            buttons_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_BUTTONS
+              underline: true
+
+            built_in_css:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.BUILTIN_CSS
+              highlight: 1
+              default: 1
+              help: PLUGIN_LOGIN_OAUTH2.BUILTIN_CSS_HELP
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            button_style:
+              type: select
+              label: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE
+              default: row
+              size: medium
+              help: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE_HELP
+              options:
+                row: Horizontal Row
+                square: Square Block
 
         tab_admin:
           type: tab
