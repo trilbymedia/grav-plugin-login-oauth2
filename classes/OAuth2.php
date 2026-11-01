@@ -34,15 +34,31 @@ class OAuth2
     }
 
     /**
-     * Whether this login saves the user as a Grav account: "Save Grav user (site)" or "Save Grav user (admin)", which
-     * follows the site one as long as it isn't set.
+     * Whether this login saves the user as a Grav account ("Save Grav user (site)" / "(admin)").
      */
     public function saveGravUser(): bool
     {
-        $config = Grav::instance()['config'];
-        $site = (bool)$config->get('plugins.login-oauth2.save_grav_user');
+        return $this->userSetting('save_grav_user');
+    }
 
-        return $this->admin ? (bool)($config->get('plugins.login-oauth2.admin.save_grav_user') ?? $site) : $site;
+    /**
+     * Whether this login needs an existing Grav account ("Require Existing Grav user (site)" / "(admin)").
+     */
+    public function requireGravUser(): bool
+    {
+        return $this->userSetting('require_grav_user');
+    }
+
+    /**
+     * A user account setting of this login: the site one, or for admin logins the admin one, which follows the site
+     * one as long as it isn't set.
+     */
+    protected function userSetting(string $key): bool
+    {
+        $config = Grav::instance()['config'];
+        $site = (bool)$config->get("plugins.login-oauth2.{$key}");
+
+        return $this->admin ? (bool)($config->get("plugins.login-oauth2.admin.{$key}") ?? $site) : $site;
     }
 
     /**

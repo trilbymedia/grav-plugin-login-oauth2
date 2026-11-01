@@ -157,7 +157,8 @@ admin:
   enabled: false
   built_in_css: true
   button_style: row
-  # save_grav_user: true   # not set: as save_grav_user
+  # require_grav_user: true   # not set: as require_grav_user
+  # save_grav_user: true      # not set: as save_grav_user
 
   providers:
     generic:
@@ -228,17 +229,18 @@ admin:
 
 ### Server Settings
 
-| Key                          | Description                                                                                                                   | Values                                              |                    |                                           |
-| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------- | ------------------ | ----------------------------------------- |
-| enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`                        |                    |                                           |
-| built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`                        |                    |                                           |
-| button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`                        |                    |                                           |
-| require_grav_user            | Allow oauth login only for existing users                                                                                     | `true` \| [default: `false`]                        |                    |                                           |
-| save_grav_user               | Store the grav user account as a local YAML account (site logins; admin logins: `admin.save_grav_user`)                       | `true` \| [default: `false`]                        |                    |                                           |
-| admin.save_grav_user         | Like `save_grav_user`, for admin logins (the new admin and admin group sync need it)                                          | `true` \| `false` \| [default: as `save_grav_user`] | [default: `false`] | `false` \| [default: as `save_grav_user`] |
-| store_provider_data          | If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav                                | `true` \| [default: `false`]                        |                    |                                           |
-| default_access_levels.access | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `site: { login: true }`]                  |                    |                                           |
-| default_groups               | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `[]`]                                     |                    |                                           |
+| Key                          | Description                                                                                                                   | Values                                                 |                    |                                           |
+| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------- | ------------------ | ----------------------------------------- |
+| enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`                           |                    |                                           |
+| built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`                           |                    |                                           |
+| button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`                           |                    |                                           |
+| require_grav_user            | Allow oauth login only for existing users (site logins; admin logins: `admin.require_grav_user`)                              | `true` \| [default: `false`]                           |                    |                                           |
+| admin.require_grav_user      | Like `require_grav_user`, for admin logins, e.g. so only accounts you created can use the admin login                         | `true` \| `false` \| [default: as `require_grav_user`] |                    |                                           |
+| save_grav_user               | Store the grav user account as a local YAML account (site logins; admin logins: `admin.save_grav_user`)                       | `true` \| [default: `false`]                           |                    |                                           |
+| admin.save_grav_user         | Like `save_grav_user`, for admin logins (the new admin and admin group sync need it)                                          | `true` \| `false` \| [default: as `save_grav_user`]    | [default: `false`] | `false` \| [default: as `save_grav_user`] |
+| store_provider_data          | If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav                                | `true` \| [default: `false`]                           |                    |                                           |
+| default_access_levels.access | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `site: { login: true }`]                     |                    |                                           |
+| default_groups               | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `[]`]                                        |                    |                                           |
 
 ### OAuth2 Providers
 

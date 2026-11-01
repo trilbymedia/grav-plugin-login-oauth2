@@ -6,6 +6,7 @@
 1. [](#improved)
     * Reorganized the plugin settings into clearly named sections
     * Separate "Save Grav user" settings for site and admin logins (admin follows the site setting until set)
+    * Separate "Require Existing Grav user" settings for site and admin logins (admin follows the site setting until set)
 1. [](#bugfix)
     * Values a provider doesn't send (e.g. a scope that wasn't granted) no longer erase the email address, name or other values of an existing Grav user
     * Added and fixed several missing help texts of certain options

@@ -397,7 +397,7 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
-                if ($this->config->get('plugins.login-oauth2.require_grav_user', false) && !$exists) {
+                if ($this->grav['oauth2']->requireGravUser() && !$exists) {
                     throw new RuntimeException($this->translate('PLUGIN_LOGIN_OAUTH2.ERROR_NO_ACCOUNT', $username));
                 }
 

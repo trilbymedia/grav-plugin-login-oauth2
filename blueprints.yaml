@@ -205,6 +205,18 @@ form:
               title: PLUGIN_LOGIN_OAUTH2.SECTION_USERS
               underline: true
 
+            admin.require_grav_user:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.ADMIN_REQUIRE_GRAV_USER
+              help: PLUGIN_LOGIN_OAUTH2.ADMIN_REQUIRE_GRAV_USER_HELP
+              highlight: 0
+              config-default@: plugins.login-oauth2.require_grav_user
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
             admin.save_grav_user:
               type: toggle
               label: PLUGIN_LOGIN_OAUTH2.ADMIN_SAVE_GRAV_USER
