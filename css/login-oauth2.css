@@ -19,6 +19,11 @@
   .form-oauth2 button.facebook:hover {
     background: #2d4373; }
 
+.form-oauth2 button.generic {
+  background: #4A5568; }
+  .form-oauth2 button.generic:hover {
+    background: #353d4a; }
+
 .form-oauth2 button.github {
   background: #181717; }
   .form-oauth2 button.github:hover {

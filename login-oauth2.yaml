@@ -11,6 +11,32 @@ default_access_levels:
       login: true
 default_groups:
 providers:
+  generic:
+    enabled: true
+    label: ''
+    client_id: ''
+    client_secret: ''
+    authorization_endpoint: ''
+    token_endpoint: ''
+    userinfo_endpoint: ''
+    enforce_email_verified: true
+    userdata_id: 'sub'
+    userdata_login: 'preferred_username'
+    userdata_fullname: 'name'
+    userdata_email: 'email'
+    userdata_email_verified: 'email_verified'
+    userdata_picture: 'picture'
+    avatar_from_picture: true
+    group_sync: false
+    userdata_groups: 'groups'
+    group_filter: []
+    group_prefix: ''
+    group_autocreate: false
+    options:
+      scope: ['openid', 'email', 'profile']
+      scope_separator: 'space'
+      pkce_method: 'S256'
+
   github:
     enabled: true
     client_id: ''
@@ -58,6 +84,32 @@ admin:
   button_style: row
 
   providers:
+    generic:
+      enabled: false
+      label: ''
+      client_id: ''
+      client_secret: ''
+      authorization_endpoint: ''
+      token_endpoint: ''
+      userinfo_endpoint: ''
+      enforce_email_verified: true
+      userdata_id: 'sub'
+      userdata_login: 'preferred_username'
+      userdata_fullname: 'name'
+      userdata_email: 'email'
+      userdata_email_verified: 'email_verified'
+      userdata_picture: 'picture'
+      avatar_from_picture: true
+      group_sync: false
+      userdata_groups: 'groups'
+      group_filter: []
+      group_prefix: ''
+      group_autocreate: false
+      options:
+        scope: ['openid', 'email', 'profile']
+        scope_separator: 'space'
+        pkce_method: 'S256'
+
     github:
       enabled: false
       client_id: ''

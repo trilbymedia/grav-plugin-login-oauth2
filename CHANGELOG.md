@@ -1,3 +1,16 @@
+# v2.3.0
+## 10/31/2026
+
+1. [](#new)
+    * Added a Generic provider to log in with any OAuth2 or OpenID Connect identity provider, offering great flexibility through many configuration options, including group sync
+1. [](#improved)
+    * Reorganized the plugin settings into clearly named tabs and sections
+    * Separate "Save Grav user" settings for site and admin logins (admin follows the site setting until set)
+    * Separate "Require Existing Grav user" settings for site and admin logins (admin follows the site setting until set)
+1. [](#bugfix)
+    * Values a provider doesn't send (e.g. a scope that wasn't granted) no longer erase the email address, name or other values of an existing Grav user
+    * Added and fixed several missing help texts of certain options
+
 # v2.2.8
 ## 08/13/2026
 
