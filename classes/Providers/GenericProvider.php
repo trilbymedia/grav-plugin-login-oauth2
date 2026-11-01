@@ -16,6 +16,17 @@ class GenericProvider extends BaseProvider
     protected $name = 'Generic';
     /** @var string */
     protected $classname = LeagueGenericProvider::class;
+    /** @var bool "Extra Debugging" of the plugin, read once */
+    protected $debug;
+
+    /**
+     * GenericProvider constructor.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->debug = (bool)Grav::instance()['config']->get('plugins.login-oauth2.debug');
+    }
 
     /**
      * @param array $options
@@ -101,6 +112,7 @@ class GenericProvider extends BaseProvider
         \assert($user instanceof GenericResourceOwner);
 
         $data = $user->toArray();
+        $this->debug('userinfo response', $data);
 
         // Without a unique ID all users would be mapped to the same Grav user.
         $id_key = (string)$this->config->get('providers.generic.userdata_id');
@@ -134,7 +146,12 @@ class GenericProvider extends BaseProvider
         }
 
         // Some providers send it as string ("true" / "false").
-        return filter_var($data['email_verified'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        $email_verified = filter_var($data['email_verified'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($email_verified === null) {
+            $this->log('warning', 'ignored claim "email_verified", not a boolean', $data['email_verified']);
+        }
+
+        return $email_verified;
     }
 
     /**
@@ -156,16 +173,63 @@ class GenericProvider extends BaseProvider
 
         if (!is_string($picture) || !filter_var($picture, FILTER_VALIDATE_URL)
             || !in_array(strtolower((string)parse_url($picture, PHP_URL_SCHEME)), ['http', 'https'], true)) {
-            // Cut to 100 characters: a data: URI carries the whole image base64-encoded (often many KB), which would
-            // flood the log. JSON-encoded, so line breaks from the provider can't forge extra log lines.
-            $value = is_string($picture)
-                ? json_encode(substr($picture, 0, 100) . (strlen($picture) > 100 ? '...' : ''), JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE)
-                : gettype($picture);
-            Grav::instance()['log']->warning('GenericProvider: ignored claim "picture", not an http(s) URL: ' . $value);
+            $this->log('warning', 'ignored claim "picture", not an http(s) URL', $picture);
 
             return null;
         }
 
         return $picture;
+    }
+
+    /**
+     * Writes a debug message to the Grav log, if "Extra Debugging" is enabled in the plugin; the value is only encoded
+     * then.
+     *
+     * @param string $message
+     * @param mixed $value
+     * @return void
+     */
+    protected function debug(string $message, $value = null): void
+    {
+        if ($this->debug) {
+            $this->log('debug', $message, $value);
+        }
+    }
+
+    /**
+     * Writes a log line with the "OIDC GenericProvider:" prefix, followed by the value (see forLog()) if given.
+     *
+     * @param string $level
+     * @param string $message
+     * @param mixed $value
+     * @return void
+     */
+    protected function log(string $level, string $message, $value = null): void
+    {
+        Grav::instance()['log']->{$level}('OIDC GenericProvider: ' . $message . ($value !== null ? ': ' . $this->forLog($value) : ''));
+    }
+
+    /**
+     * A value for the log: JSON-encoded, so line breaks from the provider can't forge extra log lines. Texts longer than
+     * 100 characters are cut, also inside arrays: e.g. a data: URI carries the whole image base64-encoded (often many
+     * KB) and would flood the log.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    protected function forLog($value): string
+    {
+        $cut = static function (&$item) {
+            if (is_string($item) && strlen($item) > 100) {
+                $item = mb_strcut($item, 0, 100) . '...';
+            }
+        };
+        if (is_array($value)) {
+            array_walk_recursive($value, $cut);
+        } else {
+            $cut($value);
+        }
+
+        return (string)json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     }
 }
