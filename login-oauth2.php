@@ -465,6 +465,14 @@ class LoginOauth2Plugin extends Plugin
         $provider = $event['provider'];
         $provider_name = strtolower($provider->getName());
 
+        // Providers that build their own collision-free username (Generic provider)
+        if (method_exists($provider, 'getUsername')) {
+            $event['username'] = $provider->getUsername($userdata);
+            $event->stopPropagation();
+
+            return;
+        }
+
         $username_parts = [$provider_name, $userdata['id'], $userdata['login']];
         $username = implode('.', $username_parts);
 

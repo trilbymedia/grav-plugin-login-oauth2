@@ -154,17 +154,39 @@ class GenericProvider extends BaseProvider
             $this->idp_groups = $this->getGroupNames($data[$groups_key] ?? null);
         }
 
+        // Only non-empty texts, so e.g. an array claim can't end up in the user's name or email.
+        $text = function (string $setting) use ($data): ?string {
+            $value = $data[(string)$this->config->get("providers.generic.{$setting}")] ?? null;
+
+            return is_string($value) && $value !== '' ? $value : null;
+        };
+
         return [
-            'id'         => $id,
-            'login'      => $data[(string)$this->config->get('providers.generic.userdata_login')] ?? null,
-            'fullname'   => $data[(string)$this->config->get('providers.generic.userdata_fullname')] ?? null,
-            'email'      => $data[(string)$this->config->get('providers.generic.userdata_email')] ?? null,
+            'id'         => (string)$id,
+            'login'      => $text('userdata_login'),
+            'fullname'   => $text('userdata_fullname'),
+            'email'      => $text('userdata_email'),
             // Only the provider data worth keeping, not the whole resource owner details.
             'generic'    => [
                 'email_verified' => $email_verified,
                 'avatar_url'     => $this->getAvatar($data),
             ],
         ];
+    }
+
+    /**
+     * Grav username of this identity: "generic." + a hash of the token endpoint and the user ID claim. The endpoint
+     * namespaces the ID per identity provider (site and admin can use different ones), the hash keeps the key
+     * fixed-length and filesystem safe, so no ID or username claim can collide with another or break the account file.
+     *
+     * @param array $userdata From getUserData()
+     * @return string
+     */
+    public function getUsername(array $userdata): string
+    {
+        $authority = (string)$this->config->get('providers.generic.token_endpoint');
+
+        return 'generic.' . substr(hash('sha256', $authority . "\0" . $userdata['id']), 0, 32);
     }
 
     /**
@@ -252,16 +274,19 @@ class GenericProvider extends BaseProvider
 
             return;
         }
-        // No (valid) groups claim: unchanged, as a missing claim doesn't mean "no groups".
         if ($this->idp_groups === null) {
-            $this->debug('group sync: no groups sent, groups unchanged');
-
             return;
         }
 
         $config = $grav['config'];
         $filter = array_filter((array)$this->config->get('providers.generic.group_filter'), 'strlen');
         $prefix = (string)$this->config->get('providers.generic.group_prefix');
+        // A prefix without letters or digits ("!", "-") would vanish from the slugs, giving the provider every Grav group.
+        if ($prefix !== '' && $this->groupName($prefix) === '') {
+            $this->log('warning', 'group sync skipped, "Grav Group Name Prefix" has no letters or digits', $prefix);
+
+            return;
+        }
         $create = (bool)$this->config->get('providers.generic.group_autocreate');
 
         // 1. The Grav groups the provider's groups stand for ($wanted, keyed by name, so each only once).
@@ -328,24 +353,25 @@ class GenericProvider extends BaseProvider
     }
 
     /**
-     * Group names from the groups claim: a list of strings (or a single string), null if missing or invalid.
+     * Group names from the groups claim: a list of strings (or a single string). A missing claim means no groups:
+     * many providers (e.g. Keycloak) leave it out when the user has none, so keeping the synced groups would keep
+     * access the provider took away. Anything else (objects, a map of roles) is logged and also counts as no groups.
      *
      * @param mixed $claim
-     * @return string[]|null
+     * @return string[]
      */
-    protected function getGroupNames($claim): ?array
+    protected function getGroupNames($claim): array
     {
+        if ($claim === null) {
+            return [];
+        }
         if (is_string($claim)) {
             $claim = [$claim];
         }
-        // Anything else than names (e.g. objects, or a map of roles) is invalid, not "no groups": that would remove all
-        // synced groups.
-        if (!is_array($claim) || array_filter($claim, 'is_string') !== $claim) {
-            if ($claim !== null) {
-                $this->log('warning', 'ignored groups claim, not a list of names', $claim);
-            }
+        if (!is_array($claim) || array_values($claim) !== $claim || array_filter($claim, 'is_string') !== $claim) {
+            $this->log('warning', 'groups claim is not a list of names, treated as no groups', $claim);
 
-            return null;
+            return [];
         }
 
         return array_values(array_filter($claim, 'strlen'));
