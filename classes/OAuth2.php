@@ -71,6 +71,26 @@ class OAuth2
         return ($set ? 'admin.' : '') . 'save_grav_user != true';
     }
 
+    /**
+     * Default provider of the callback URIs in the blueprint: the first admin provider that is enabled and has a
+     * client ID, else the first such site provider, else the Generic provider.
+     */
+    public static function callbackProvider(): string
+    {
+        $config = (array)(Grav::instance()['config']->get('plugins.login-oauth2') ?? []);
+
+        foreach ([$config['admin']['providers'] ?? [], $config['providers'] ?? []] as $providers) {
+            foreach ((array)$providers as $provider => $options) {
+                // Facebook names its client ID "app_id".
+                if (!empty($options['enabled']) && (!empty($options['client_id']) || !empty($options['app_id']))) {
+                    return (string)$provider;
+                }
+            }
+        }
+
+        return 'generic';
+    }
+
     public function addEnabledProviders(): void
     {
         if ($this->admin) {

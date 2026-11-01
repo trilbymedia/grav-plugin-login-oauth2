@@ -1,3 +1,11 @@
+# v2.3.1
+## 11/01/2026
+
+1. [](#improved)
+    * The Callback URIs section has a provider select and shows the callback URIs of the selected provider, by default the first provider enabled with a client ID
+1. [](#bugfix)
+    * The Admin Callback URI shows the URI Admin2 logins use (the SSO callback of the API plugin, one per provider) instead of the site's; with the classic admin it's still the admin path
+
 # v2.3.0
 ## 11/01/2026
 

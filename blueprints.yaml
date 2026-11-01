@@ -1,7 +1,7 @@
 name: Login OAuth2
 type: login-oauth2
 slug: form
-version: 2.3.0
+version: 2.3.1
 description: OAuth2 Client Plugin to integrate with Grav's Login
 icon: plug
 author:
@@ -49,6 +49,108 @@ form:
               text: PLUGIN_LOGIN_OAUTH2.SECTION_CALLBACKS_DESC
               underline: true
 
+            callback_provider:
+              type: select
+              label: PLUGIN_LOGIN_OAUTH2.CALLBACK_PROVIDER
+              help: PLUGIN_LOGIN_OAUTH2.CALLBACK_PROVIDER_HELP
+              data-default@: ['Grav\Plugin\Login\OAuth2\OAuth2::callbackProvider']
+              options:
+                generic: Generic
+                github: GitHub
+                instagram: Instagram
+                facebook: Facebook
+                google: Google
+                linkedin: LinkedIn
+              validate:
+                ignore: true
+
+            # Until a provider is selected: the select then shows its default, but has no value yet (' ' compares as
+            # empty, as Admin2 trims the compared value).
+            admin_callback_default:
+              type: conditional
+              condition: "callback_provider == ' '"
+              fields:
+                admin_callback_url_default:
+                  type: text
+                  disabled: true
+                  copy_to_clipboard: true
+                  label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+                  help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+                  data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getAdminCallbackUri']
+
+            admin_callback_generic:
+              type: conditional
+              condition: "callback_provider == generic"
+              fields:
+                admin_callback_url_generic:
+                  type: text
+                  disabled: true
+                  copy_to_clipboard: true
+                  label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+                  help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+                  data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getAdminCallbackUri', 'generic']
+
+            admin_callback_github:
+              type: conditional
+              condition: "callback_provider == github"
+              fields:
+                admin_callback_url_github:
+                  type: text
+                  disabled: true
+                  copy_to_clipboard: true
+                  label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+                  help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+                  data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getAdminCallbackUri', 'github']
+
+            admin_callback_instagram:
+              type: conditional
+              condition: "callback_provider == instagram"
+              fields:
+                admin_callback_url_instagram:
+                  type: text
+                  disabled: true
+                  copy_to_clipboard: true
+                  label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+                  help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+                  data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getAdminCallbackUri', 'instagram']
+
+            admin_callback_facebook:
+              type: conditional
+              condition: "callback_provider == facebook"
+              fields:
+                admin_callback_url_facebook:
+                  type: text
+                  disabled: true
+                  copy_to_clipboard: true
+                  label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+                  help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+                  data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getAdminCallbackUri', 'facebook']
+
+            admin_callback_google:
+              type: conditional
+              condition: "callback_provider == google"
+              fields:
+                admin_callback_url_google:
+                  type: text
+                  disabled: true
+                  copy_to_clipboard: true
+                  label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+                  help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+                  data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getAdminCallbackUri', 'google']
+
+            admin_callback_linkedin:
+              type: conditional
+              condition: "callback_provider == linkedin"
+              fields:
+                admin_callback_url_linkedin:
+                  type: text
+                  disabled: true
+                  copy_to_clipboard: true
+                  label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
+                  help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
+                  data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getAdminCallbackUri', 'linkedin']
+
+            # Last, after the conditionals: hidden ones still take spacing in Admin2, which would leave a gap at the end.
             site_callback_url:
               type: text
               disabled: true
@@ -56,14 +158,6 @@ form:
               label: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI
               help: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI_HELP
               data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', false]
-
-            admin_callback_url:
-              type: text
-              disabled: true
-              copy_to_clipboard: true
-              label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
-              help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
-              data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', true]
 
             users_section:
               type: section

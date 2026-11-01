@@ -27,13 +27,19 @@ Where `http://yoursite.com` is the URL of your Grav-based site.  If you are usin
 https://yoursite.com/task:callback.oauth2
 ```
 
-If you use the OAuth2 plugin to login to the **admin** side of your Grav site, your callback URL will look like this:
+If you use the OAuth2 plugin to login to the **admin** side of your Grav site with Admin2, your callback URL is the SSO callback of the API plugin, with the name of the provider (e.g. `generic`):
+
+```text
+http://yoursite.com/api/v1/auth/sso/generic/callback
+```
+
+Where `/api` and `v1` are the route and version prefix of the API plugin. With the classic admin plugin, your callback URL will look like this:
 
 ```text
 http://yoursite.com/admin/task:callback.oauth2
 ```
 
-Where `http://yoursite.com/admin` is the URL you use to log into the admin plugin. Again, if you have this under SSL, you would need to use `https://` rather than `http://`.  Some OAuth2 providers allow you to use provide multiple callback URLs, and in this case you can use the same application setup with multiple URLs, to work with the **site** and the **admin** and potentially `http://` and `https://` URLs.  However, some providers only allow a single callback URL, and in these cases you need to create multiple OAuth2 applications to handle each callback URL.
+Where `http://yoursite.com/admin` is the URL you use to log into the admin plugin. The **General** tab of the plugin settings shows the callback URLs of the provider you select. Again, if you have this under SSL, you would need to use `https://` rather than `http://`.  Some OAuth2 providers allow you to use provide multiple callback URLs, and in this case you can use the same application setup with multiple URLs, to work with the **site** and the **admin** and potentially `http://` and `https://` URLs.  However, some providers only allow a single callback URL, and in these cases you need to create multiple OAuth2 applications to handle each callback URL.
 
 ## Installation
 
