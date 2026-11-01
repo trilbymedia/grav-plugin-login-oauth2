@@ -33,18 +33,6 @@ form:
       validate:
         type: bool
 
-    debug:
-      type: toggle
-      label: Extra Debugging
-      help: PLUGIN_LOGIN_OAUTH2.DEBUG_HELP
-      highlight: 0
-      default: 0
-      options:
-        1: Enabled
-        0: Disabled
-      validate:
-        type: bool
-
     site_callback_url:
       type: text
       disabled: true
@@ -149,6 +137,18 @@ form:
               classes: fancy
               validate:
                 type: commalist
+
+            debug:
+              type: toggle
+              label: Extra Debugging
+              help: PLUGIN_LOGIN_OAUTH2.DEBUG_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
 
         tab_admin:
           type: tab
