@@ -12,6 +12,7 @@
     * Added and fixed several missing help texts of certain options
     * Generic provider: a missing or invalid groups claim counts as no groups, so access the identity provider took away is removed, and a group name prefix without letters or digits skips the sync instead of matching every Grav group
     * Generic provider: the Grav username is built from a hash of the token endpoint and the user ID, so different identity providers or unusual claim values can't map to the same account, and claims that aren't plain text are ignored
+    * Updated the bundled Guzzle libraries (guzzle 7.16.1, psr7 2.13.2, promises 2.6.0) to clear their open security advisories
 
 # v2.2.8
 ## 08/13/2026
