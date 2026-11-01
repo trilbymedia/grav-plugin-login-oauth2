@@ -212,8 +212,6 @@ class LoginOauth2Plugin extends Plugin
         /** @var Session $session */
         $session = $this->grav['session'];
 
-        $this->debug("session: " . json_encode(array_diff_key($session->getAll(), ['oauth2_pkce_code' => true])));
-
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;
 
@@ -310,8 +308,6 @@ class LoginOauth2Plugin extends Plugin
 
         /** @var Session $session */
         $session = $this->grav['session'];
-
-        $this->debug("session: " . json_encode(array_diff_key($session->getAll(), ['oauth2_pkce_code' => true])));
 
         $provider_name = $session->oauth2_provider;
         $login_redirect = $session->redirect_after_login;
@@ -416,15 +412,6 @@ class LoginOauth2Plugin extends Plugin
                     }
                 }
 
-                // Default Groups
-                $current_groups = $grav_user->get('groups');
-                if (!$current_groups) {
-                    $groups = $this->config->get('plugins.login-oauth2.default_groups', []);
-                    if (count($groups) > 0) {
-                        $grav_user->set('groups', $groups);
-                    }
-                }
-
                 // Remove Provider Userdata if configured
                 if (!$this->config->get('plugins.login-oauth2.store_provider_data', false)) {
                     unset($userdata[$provider_name]);
@@ -442,6 +429,15 @@ class LoginOauth2Plugin extends Plugin
                 // Group sync of the provider (Generic provider), before Grav checks the user's access
                 if (method_exists($provider, 'syncGroups')) {
                     $provider->syncGroups($grav_user);
+                }
+
+                // Default Groups, after the group sync: also for users it left without any
+                $current_groups = $grav_user->get('groups');
+                if (!$current_groups) {
+                    $groups = $this->config->get('plugins.login-oauth2.default_groups', []);
+                    if (count($groups) > 0) {
+                        $grav_user->set('groups', $groups);
+                    }
                 }
 
                 $this->debug("userdata: " . json_encode($userdata));

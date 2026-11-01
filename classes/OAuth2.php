@@ -55,10 +55,9 @@ class OAuth2
      */
     protected function userSetting(string $key): bool
     {
-        $config = Grav::instance()['config'];
-        $site = (bool)$config->get("plugins.login-oauth2.{$key}");
+        $site = (bool)($this->config[$key] ?? false);
 
-        return $this->admin ? (bool)($config->get("plugins.login-oauth2.admin.{$key}") ?? $site) : $site;
+        return $this->admin ? (bool)($this->config['admin'][$key] ?? $site) : $site;
     }
 
     /**

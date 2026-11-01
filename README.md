@@ -229,18 +229,18 @@ admin:
 
 ### Server Settings
 
-| Key                          | Description                                                                                                                   | Values                                                 |                    |                                           |
-| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------- | ------------------ | ----------------------------------------- |
-| enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`                           |                    |                                           |
-| built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`                           |                    |                                           |
-| button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`                           |                    |                                           |
-| require_grav_user            | Allow oauth login only for existing users (site logins; admin logins: `admin.require_grav_user`)                              | `true` \| [default: `false`]                           |                    |                                           |
-| admin.require_grav_user      | Like `require_grav_user`, for admin logins, e.g. so only accounts you created can use the admin login                         | `true` \| `false` \| [default: as `require_grav_user`] |                    |                                           |
-| save_grav_user               | Store the grav user account as a local YAML account (site logins; admin logins: `admin.save_grav_user`)                       | `true` \| [default: `false`]                           |                    |                                           |
-| admin.save_grav_user         | Like `save_grav_user`, for admin logins (the new admin and admin group sync need it)                                          | `true` \| `false` \| [default: as `save_grav_user`]    | [default: `false`] | `false` \| [default: as `save_grav_user`] |
-| store_provider_data          | If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav                                | `true` \| [default: `false`]                           |                    |                                           |
-| default_access_levels.access | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `site: { login: true }`]                     |                    |                                           |
-| default_groups               | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `[]`]                                        |                    |                                           |
+| Key                          | Description                                                                                                                   | Values                                                 |
+| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------- |
+| enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`                           |
+| built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`                           |
+| button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`                           |
+| require_grav_user            | Allow oauth login only for existing users (site logins; admin logins: `admin.require_grav_user`)                              | `true` \| [default: `false`]                           |
+| admin.require_grav_user      | Like `require_grav_user`, for admin logins, e.g. so only accounts you created can use the admin login                         | `true` \| `false` \| [default: as `require_grav_user`] |
+| save_grav_user               | Store the grav user account as a local YAML account (site logins; admin logins: `admin.save_grav_user`)                       | `true` \| [default: `false`]                           |
+| admin.save_grav_user         | Like `save_grav_user`, for admin logins (the new admin and admin group sync need it)                                          | `true` \| `false` \| [default: as `save_grav_user`]    |
+| store_provider_data          | If storing a local Grav user, you can also store OAuth2 Provider data so its available in Grav                                | `true` \| [default: `false`]                           |
+| default_access_levels.access | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `site: { login: true }`]                     |
+| default_groups               | You can find more information on access levels in the <https://learn.getgrav.org/advanced/groups-and-permissions#permissions> | [default: `[]`]                                        |
 
 ### OAuth2 Providers
 
@@ -276,9 +276,18 @@ Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using 
 
 Besides `login`, `fullname` and `email`, only `email_verified` and, with `avatar_from_picture`, the `avatar_url` are stored under the `generic` key (empty if not available), not the whole resource owner details.
 
-With `group_sync`, each login adds the user to the Grav groups named after the provider's groups (lowercase slugs with the `group_prefix`, e.g. `Grav Editors` becomes `grav-editors`; with PHP's intl extension other letters are transliterated, e.g. `Ärzte` becomes `arzte`, without it they're dropped) and removes the groups it added before that the provider no longer sends; groups assigned in Grav stay, and without a groups claim nothing changes. This happens before Grav checks the user's access. Limits: changes reach logged-in users at their next login; admin logins only sync with `admin.save_grav_user` (the new admin reads users from their account file; without it they skip the sync with a warning, and groups synced before stay meanwhile); without a `group_prefix` the provider can assign any existing Grav group, privileged ones included; the prefix is part of the slug, so one of only characters the slug drops (e.g. `-` or `.`) has no effect; with `group_autocreate` every new provider group is added to `user/config/groups.yaml` for good, so limit them with `group_filter`; groups deleted at the provider stay in Grav.
+With `group_sync`, each login adds the user to the Grav groups named after the provider's groups (lowercase slugs with the `group_prefix`, e.g. `Grav Editors` becomes `grav-editors`; with PHP's intl extension other letters are transliterated, e.g. `Ärzte` becomes `arzte`, without it they're dropped; provider groups with no letters or digits left, e.g. `★`, are skipped) and removes the groups it added before that the provider no longer sends (site and admin logins keep track of theirs separately in the user's `synced_groups`, as both have their own settings); groups assigned in Grav stay, and without a groups claim nothing changes. This happens before Grav checks the user's access. Limits:
 
-> NOTE: If no Grav user with the resulting username exists, an existing Grav user with the same email address is used. With `enforce_email_verified` (default), logins without a verified email address are denied; without it, only use providers that verify the email addresses of their users.
+* Changes reach logged-in users at their next login.
+* Admin logins only sync with `admin.save_grav_user` (the new admin reads users from their account file; without it they skip the sync with a warning, and groups synced before stay meanwhile).
+* Without a `group_prefix` the provider can assign any existing Grav group, privileged ones included.
+* The prefix is part of the slug, so one of only characters the slug drops (e.g. `-` or `.`) has no effect.
+* With `group_autocreate` every new provider group is added to `user/config/groups.yaml` for good, so limit them with `group_filter`.
+* Groups deleted at the provider stay in Grav.
+
+> NOTE: The Grav username is `generic.<user ID>.<username>`, from the User ID and Username claims (`userdata_id`, `userdata_login`). Use the same claims for site and admin logins, and an identity provider setup that sends both the same user ID (some providers, e.g. Microsoft Entra ID, send a different `sub` per application): otherwise a person gets a different username, and so a different Grav account, on each side (or one found by email, see below).
+>
+> If no Grav user with the resulting username exists, an existing Grav user with the same email address is used. With `enforce_email_verified` (default), logins without a verified email address are denied; without it, only use providers that verify the email addresses of their users.
 
 #### GitHub
 

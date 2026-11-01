@@ -337,18 +337,6 @@ form:
                           help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
                           placeholder: https://idp.example.com/userinfo
 
-                        providers.generic.enforce_email_verified:
-                          type: toggle
-                          label: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED
-                          highlight: 1
-                          default: 1
-                          help: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED_HELP
-                          options:
-                            1: Enabled
-                            0: Disabled
-                          validate:
-                            type: bool
-
                         generic_avatar_left:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.AVATAR
@@ -417,6 +405,38 @@ form:
                               validate:
                                 type: bool
 
+                        generic_security_left:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.SECURITY
+                          text: PLUGIN_LOGIN_OAUTH2.SECURITY_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            providers.generic.enforce_email_verified:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
+                            providers.generic.options.pkce_method:
+                              type: select
+                              label: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD
+                              help: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD_HELP
+                              default: S256
+                              size: medium
+                              options:
+                                '': Disabled
+                                S256: S256 (recommended)
+                                plain: plain (not recommended)
+
                         generic_advanced_left:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.ADVANCED
@@ -444,58 +464,61 @@ form:
                                 space: Space
                                 comma: Comma
 
-                            providers.generic.options.pkce_method:
-                              type: select
-                              label: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD
-                              help: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD_HELP
-                              default: S256
-                              size: medium
-                              options:
-                                '': Disabled
-                                S256: S256 (recommended)
-                                plain: plain (not recommended)
-
                             providers.generic.userdata_id:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_ID
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_ID_HELP
                               placeholder: sub
+                              validate:
+                                required: true
 
                             providers.generic.userdata_login:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_LOGIN
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: preferred_username
+                              validate:
+                                required: true
 
                             providers.generic.userdata_fullname:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_FULLNAME
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: name
+                              validate:
+                                required: true
 
                             providers.generic.userdata_email:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: email
+                              validate:
+                                required: true
 
                             providers.generic.userdata_email_verified:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED_HELP
                               placeholder: email_verified
+                              validate:
+                                required: true
 
                             providers.generic.userdata_picture:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE_HELP
                               placeholder: picture
+                              validate:
+                                required: true
 
                             providers.generic.userdata_groups:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS_HELP
                               placeholder: groups
+                              validate:
+                                required: true
 
                     generic_column_right:
                       type: column
@@ -546,18 +569,6 @@ form:
                           label: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS
                           help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
                           placeholder: https://idp.example.com/userinfo
-
-                        admin.providers.generic.enforce_email_verified:
-                          type: toggle
-                          label: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED
-                          highlight: 1
-                          default: 1
-                          help: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED_HELP
-                          options:
-                            1: Enabled
-                            0: Disabled
-                          validate:
-                            type: bool
 
                         generic_avatar_right:
                           type: fieldset
@@ -637,6 +648,38 @@ form:
                               validate:
                                 type: bool
 
+                        generic_security_right:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.SECURITY
+                          text: PLUGIN_LOGIN_OAUTH2.SECURITY_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            admin.providers.generic.enforce_email_verified:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.ENFORCE_EMAIL_VERIFIED_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
+                            admin.providers.generic.options.pkce_method:
+                              type: select
+                              label: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD
+                              help: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD_HELP
+                              default: S256
+                              size: medium
+                              options:
+                                '': Disabled
+                                S256: S256 (recommended)
+                                plain: plain (not recommended)
+
                         generic_advanced_right:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.ADVANCED
@@ -664,58 +707,61 @@ form:
                                 space: Space
                                 comma: Comma
 
-                            admin.providers.generic.options.pkce_method:
-                              type: select
-                              label: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD
-                              help: PLUGIN_LOGIN_OAUTH2.PKCE_METHOD_HELP
-                              default: S256
-                              size: medium
-                              options:
-                                '': Disabled
-                                S256: S256 (recommended)
-                                plain: plain (not recommended)
-
                             admin.providers.generic.userdata_id:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_ID
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_ID_HELP
                               placeholder: sub
+                              validate:
+                                required: true
 
                             admin.providers.generic.userdata_login:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_LOGIN
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: preferred_username
+                              validate:
+                                required: true
 
                             admin.providers.generic.userdata_fullname:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_FULLNAME
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: name
+                              validate:
+                                required: true
 
                             admin.providers.generic.userdata_email:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
                               placeholder: email
+                              validate:
+                                required: true
 
                             admin.providers.generic.userdata_email_verified:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL_VERIFIED_HELP
                               placeholder: email_verified
+                              validate:
+                                required: true
 
                             admin.providers.generic.userdata_picture:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE_HELP
                               placeholder: picture
+                              validate:
+                                required: true
 
                             admin.providers.generic.userdata_groups:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_GROUPS_HELP
                               placeholder: groups
+                              validate:
+                                required: true
 
                 providers.generic.description:
                   type: display

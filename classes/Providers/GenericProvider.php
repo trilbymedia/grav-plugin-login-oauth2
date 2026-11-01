@@ -109,17 +109,31 @@ class GenericProvider extends BaseProvider
     }
 
     /**
-     * @param ResourceOwnerInterface|GenericResourceOwner $user
-     * @return array
+     * Maps the userinfo response to the user data the plugin merges into the Grav user, with the claim names set for
+     * this side (site or admin login).
+     *
+     * Before that, it denies the login (exception) without a usable user ID, or with an email address the provider
+     * doesn't confirm as verified while "Enforce Verified Email" is on. With group sync on, it also keeps the groups
+     * claim for syncGroups(), which the plugin calls later, once it has the Grav user.
+     *
+     * Claims the provider doesn't send are null here: the plugin drops those before merging, so they don't erase the
+     * values of an existing Grav user. The `generic` sub-array (only stored with "Store Provider data") replaces the
+     * stored one as a whole.
+     *
+     * @param ResourceOwnerInterface|GenericResourceOwner $user The userinfo response
+     * @return array id and login (the Grav username is generic.<id>.<login>), fullname, email, generic
+     * @throws \RuntimeException To deny the login; the plugin shows the message to the user
      */
     public function getUserData(ResourceOwnerInterface $user): array
     {
         \assert($user instanceof GenericResourceOwner);
 
+        // The whole response as the provider sent it, to check the claim names (Extra Debugging only).
         $data = $user->toArray();
         $this->debug('userinfo response', $data);
 
-        // Without a unique ID all users would be mapped to the same Grav user.
+        // Without a unique ID all users would be mapped to the same Grav user. It becomes part of the Grav username,
+        // so only a non-empty text or a number.
         $id_key = (string)$this->config->get('providers.generic.userdata_id');
         $id = $data[$id_key] ?? '';
         if ((!is_string($id) && !is_int($id)) || $id === '') {
@@ -134,13 +148,14 @@ class GenericProvider extends BaseProvider
             throw new \RuntimeException(Grav::instance()['language']->translate('PLUGIN_LOGIN_OAUTH2.ERROR_EMAIL_NOT_VERIFIED'));
         }
 
+        // Only read with group sync on, so an invalid groups claim is only reported (warning) when it matters.
         if ($this->config->get('providers.generic.group_sync')) {
             $groups_key = (string)$this->config->get('providers.generic.userdata_groups');
             $this->idp_groups = $this->getGroupNames($data[$groups_key] ?? null);
         }
 
         return [
-            'id'         => $user->getId(),
+            'id'         => $id,
             'login'      => $data[(string)$this->config->get('providers.generic.userdata_login')] ?? null,
             'fullname'   => $data[(string)$this->config->get('providers.generic.userdata_fullname')] ?? null,
             'email'      => $data[(string)$this->config->get('providers.generic.userdata_email')] ?? null,
@@ -175,10 +190,16 @@ class GenericProvider extends BaseProvider
     }
 
     /**
-     * Avatar URL from the picture claim (OpenID Connect: picture), if enabled. Grav uses it as the user's avatar.
+     * Avatar URL from the picture claim (OpenID Connect: picture), if "Avatar from Picture" is on. Stored as
+     * generic.avatar_url, which Grav's getAvatarUrl() uses when the user has no uploaded avatar (Admin2 only shows
+     * uploaded ones).
      *
-     * @param array $data
-     * @return string|null
+     * Browsers load the picture directly from that URL, so only http(s) URLs are used. Anything else, e.g. a data: URI
+     * carrying the whole image (often many KB, which would be stored on the user and in the session), is logged (cut,
+     * see forLog()) and ignored.
+     *
+     * @param array $data The userinfo response
+     * @return string|null Null if off, not sent or not an http(s) URL
      */
     public function getAvatar(array $data): ?string
     {
@@ -192,6 +213,7 @@ class GenericProvider extends BaseProvider
             return null;
         }
 
+        // http:// or https:// (any case), and a well-formed URL (e.g. with a host, without spaces).
         if (!is_string($picture) || !preg_match('#^https?://#i', $picture)
             || !filter_var($picture, FILTER_VALIDATE_URL)) {
             $this->log('warning', "ignored claim \"{$claim}\", not an http(s) URL", $picture);
@@ -203,10 +225,18 @@ class GenericProvider extends BaseProvider
     }
 
     /**
-     * Group sync: adds the user to the Grav groups of the identity provider's groups and removes the ones it added
-     * before; groups assigned in Grav stay.
+     * Group sync: adds the user to the Grav groups matching the identity provider's groups, and removes the ones this
+     * side's sync (site or admin login) added before that the provider no longer sends. Groups assigned in Grav are
+     * never touched.
      *
-     * @param UserInterface $user
+     * The plugin calls it after merging the provider's user data into the Grav user, and before default groups, saving
+     * the user and Grav's access check, so the groups count for this login already. It uses the groups claim kept by
+     * getUserData(): no or an invalid claim leaves the groups unchanged, an empty list removes the synced ones.
+     *
+     * Each provider group that passes the filter becomes the Grav group named after the slug of prefix + name (see
+     * groupName()). Groups missing in Grav are skipped, or created without permissions ("Create Missing Grav Groups").
+     *
+     * @param UserInterface $user The Grav user of this login (saved later by the plugin, if so configured)
      * @return void
      */
     public function syncGroups(UserInterface $user): void
@@ -214,14 +244,15 @@ class GenericProvider extends BaseProvider
         if (!$this->config->get('providers.generic.group_sync')) {
             return;
         }
-        // Admin logins only with "Save Grav user (admin)": the new admin reads users from their account file, so synced groups
-        // would be gone right after the login.
         $grav = Grav::instance();
+        // Admin logins only with "Save Grav user (admin)": the new admin reads users from their account file, so synced
+        // groups would be gone right after the login.
         if ($grav['oauth2']->isAdmin() && !$grav['oauth2']->saveGravUser()) {
             $this->log('warning', 'group sync skipped for the admin login, "Save Grav user (admin)" is off');
 
             return;
         }
+        // No (valid) groups claim: unchanged, as a missing claim doesn't mean "no groups".
         if ($this->idp_groups === null) {
             $this->debug('group sync: no groups sent, groups unchanged');
 
@@ -233,6 +264,7 @@ class GenericProvider extends BaseProvider
         $prefix = (string)$this->config->get('providers.generic.group_prefix');
         $create = (bool)$this->config->get('providers.generic.group_autocreate');
 
+        // 1. The Grav groups the provider's groups stand for ($wanted, keyed by name, so each only once).
         $wanted = $not_in_filter = $no_grav_group = $missing = [];
         foreach ($this->idp_groups as $idp_group) {
             if ($filter && !$this->matchesGroupFilter($idp_group, $filter)) {
@@ -240,10 +272,15 @@ class GenericProvider extends BaseProvider
                 continue;
             }
 
-            $name = $this->groupName($prefix . $idp_group);
-            if ($name === '') {
+            // Skipped if the group's own name has no letters or digits ("★", "!!!"): with a prefix it would become a
+            // group named just the prefix (e.g. "staff-" + "★" becomes "staff"), the same one for all such groups.
+            if ($this->groupName($idp_group) === '') {
                 continue;
             }
+            $name = $this->groupName($prefix . $idp_group);
+
+            // Not a Grav group yet: skipped, or collected to be created together below (the first provider name of a
+            // Grav name becomes its readable name).
             if ($config->get("groups.{$name}") === null) {
                 if (!$create) {
                     $no_grav_group[] = $name;
@@ -251,27 +288,35 @@ class GenericProvider extends BaseProvider
                 }
                 $missing += [$name => $idp_group];
             }
-            $wanted[] = $name;
+            $wanted[$name] = $name;
         }
+        // Groups that couldn't be created (error logged) aren't assigned.
         if ($missing && !$this->createGroups($missing)) {
-            $wanted = array_diff($wanted, array_keys($missing));
+            $wanted = array_diff_key($wanted, $missing);
         }
-        $wanted = array_unique($wanted);
 
-        // The user's groups: the ones assigned in Grav, plus the ones the sync manages now (`synced_groups` remembers
-        // which ones the sync added, so only those follow the provider).
+        // 2. The user's groups. Site and admin logins sync with their own settings, so `synced_groups` remembers per
+        // side which groups its sync added. Only those follow the provider; all others ($manual: assigned in Grav, or
+        // default groups) stay as they are.
+        //  - added:   wanted, but not a group of the user yet
+        //  - removed: added by this side's sync before, no longer wanted, and not held by the other side's sync too
+        //  - synced:  this side's groups from now on, the wanted ones except those assigned in Grav, so a later sync
+        //             never removes a group the user already had
+        $side = $grav['oauth2']->isAdmin() ? 'admin' : 'site';
+        $other = (array)$user->get('synced_groups.' . ($side === 'admin' ? 'site' : 'admin'));
         $groups = (array)$user->get('groups');
-        $synced = (array)$user->get('synced_groups');
-        $manual = array_values(array_diff($groups, $synced));
+        $synced = (array)$user->get("synced_groups.{$side}");
+        $manual = array_values(array_diff($groups, $synced, $other));
         $added = array_values(array_diff($wanted, $groups));
-        $removed = array_values(array_diff($synced, $wanted));
+        $removed = array_values(array_diff($synced, $wanted, $other));
         $synced = array_values(array_diff($wanted, $manual));
 
+        // Only changed when needed: the other groups keep their order, new ones are appended.
         if ($added || $removed) {
-            $groups = array_merge($manual, $synced);
+            $groups = array_values(array_merge(array_diff($groups, $removed), $added));
             $user->set('groups', $groups);
         }
-        $user->set('synced_groups', $synced);
+        $user->set("synced_groups.{$side}", $synced);
 
         $this->debug('group sync', [
             'added'         => $added,
@@ -347,23 +392,31 @@ class GenericProvider extends BaseProvider
     }
 
     /**
-     * Creates Grav groups without permissions, in user/config/groups.yaml (where Grav keeps groups for both account
-     * types), and in the loaded config, so they count for this login already.
+     * Creates Grav groups for the group sync: without permissions (they're granted in Grav), with the provider's group
+     * name as readable name. They're written to user/config/groups.yaml, where Grav keeps groups for both account
+     * types, and set in the config loaded for this request, so Grav's access check of this login knows them already.
+     *
+     * syncGroups() calls it once per login with all missing groups, so the file is read and written only once.
      *
      * @param string[] $missing Grav group names as keys, the provider's group names as values
-     * @return bool Whether they were created; if not, the error is logged
+     * @return bool Whether they exist now; false if the file couldn't be written (error logged), then they're not
+     *              assigned in this login
      */
     protected function createGroups(array $missing): bool
     {
         $grav = Grav::instance();
 
-        // Locked, so logins creating groups at the same time don't overwrite each other's. free() drops content cached
-        // earlier in this request, so the groups are read again under the lock.
+        // Read, changed and written under a lock, so logins creating groups at the same time don't overwrite each
+        // other's. free() drops the content this file instance may have cached earlier in this request, so it's read
+        // again under the lock. lock() waits for other logins writing the file, and fails (exception) if it can't be
+        // opened for writing, e.g. read-only.
         $file = CompiledYamlFile::instance($grav['locator']->findResource('user://config/groups.yaml', true, true));
         $file->free();
         try {
             $file->lock();
             $groups = (array)$file->content();
+            // Another login may have created some of them meanwhile: only the ones still missing are added, the others
+            // are used as they are in the file.
             $created = array_diff_key($missing, $groups);
             foreach ($created as $name => $idp_group) {
                 $groups[$name] = [
@@ -382,14 +435,17 @@ class GenericProvider extends BaseProvider
 
             return false;
         } finally {
+            // Releases the lock and the cached content.
             $file->free();
         }
 
+        $this->debug('starting group sync for created Grav groups...');
+        // The groups as they are in the file now, also into the config loaded for this request (it was read before).
         foreach (array_keys($missing) as $name) {
             $grav['config']->set("groups.{$name}", (array)$groups[$name]);
-            if (isset($created[$name])) {
-                $this->log('info', 'group sync created Grav group', $name);
-            }
+        }
+        if ($created) {
+            $this->log('info', 'group sync created Grav groups', array_keys($created));
         }
 
         return true;
