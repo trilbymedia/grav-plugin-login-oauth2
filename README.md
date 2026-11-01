@@ -276,12 +276,22 @@ Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using 
 
 Besides `login`, `fullname` and `email`, only `email_verified` and, with `avatar_from_picture`, the `avatar_url` are stored under the `generic` key (empty if not available), not the whole resource owner details.
 
-With `group_sync`, each login adds the user to the Grav groups named after the provider's groups (lowercase slugs with the `group_prefix`, e.g. `Grav Editors` becomes `grav-editors`; with PHP's intl extension other letters are transliterated, e.g. `Ärzte` becomes `arzte`, without it they're dropped; provider groups with no letters or digits left, e.g. `★`, are skipped) and removes the groups it added before that the provider no longer sends (site and admin logins keep track of theirs separately in the user's `synced_groups`, as both have their own settings); groups assigned in Grav stay. A missing or invalid groups claim counts as no groups, since many providers (e.g. Keycloak) leave the claim out when a user has none, so the groups the sync added are removed. A `group_prefix` without letters or digits (e.g. `!`) would disappear from the slugs, so the sync is skipped with a warning instead. This happens before Grav checks the user's access. Limits:
+With `group_sync`, each login adds the user to the Grav groups named after the provider's groups (lowercase slugs with the `group_prefix`, e.g. `Grav Editors` becomes `grav-editors`; with PHP's intl extension other letters are transliterated, e.g. `Ärzte` becomes `arzte`, without it they're dropped; provider groups with no letters or digits left, e.g. `★`, are skipped). This happens before Grav checks the user's access.
+
+Which groups the sync changes:
+
+* **Groups assigned in Grav are never removed.** The sync only removes groups it added itself, which it records in the user's `synced_groups` (site and admin logins keep track of theirs separately, as both have their own settings).
+* **A group assigned in Grav that the provider also sends stays assigned in Grav**, so the sync never takes it over or removes it later.
+* **Default groups** (`default_groups`) are given after the sync to a user left with no groups at all. Once given, they count as groups assigned in Grav and stay.
+* **A group the sync added is removed** once the provider no longer sends it.
+* **A missing or invalid groups claim counts as no groups.** Many providers (e.g. Keycloak) leave the claim out when a user has none, so a user removed from their last group at the provider loses the groups the sync added, but keeps the ones assigned in Grav. If the provider isn't set up to send a groups claim at all, each login removes the groups the sync added before, so check the claim before turning `group_sync` on.
+
+Limits:
 
 * Changes reach logged-in users at their next login.
 * Admin logins only sync with `admin.save_grav_user` (the new admin reads users from their account file; without it they skip the sync with a warning, and groups synced before stay meanwhile).
-* Without a `group_prefix` the provider can assign any existing Grav group, privileged ones included.
-* The prefix is part of the slug, so one of only characters the slug drops (e.g. `-` or `.`) has no effect.
+* Without a `group_prefix` the provider can assign any existing Grav group, privileged ones included. Use a `group_filter` or `group_prefix` to limit it.
+* The prefix is part of the slug, so it needs at least one letter or digit. A prefix made only of characters the slug drops (e.g. `!`, `-` or `.`) would disappear and give the provider every Grav group, so the sync is skipped with a warning instead.
 * With `group_autocreate` every new provider group is added to `user/config/groups.yaml` for good, so limit them with `group_filter`.
 * Groups deleted at the provider stay in Grav.
 
