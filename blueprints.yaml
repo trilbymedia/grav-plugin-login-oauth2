@@ -36,6 +36,7 @@ form:
     debug:
       type: toggle
       label: Extra Debugging
+      help: PLUGIN_LOGIN_OAUTH2.DEBUG_HELP
       highlight: 0
       default: 0
       options:
@@ -131,6 +132,9 @@ form:
             default_access_levels.access:
               type: textarea
               label: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS
+              help: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS_HELP
+              markdown: true
+              description: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS_DESC
               yaml: true
               size: large
               validate:
@@ -142,8 +146,6 @@ form:
               placeholder: "e.g. administrators, publishers"
               label: PLUGIN_LOGIN_OAUTH2.DEFAULT_GROUPS
               help: PLUGIN_LOGIN_OAUTH2.DEFAULT_GROUPS_HELP
-              markdown: true
-              description: PLUGIN_LOGIN_OAUTH2.DEFAULT_ACCESS_LEVELS_DESC
               classes: fancy
               validate:
                 type: commalist
@@ -157,6 +159,7 @@ form:
             admin.enabled:
               type: toggle
               label: PLUGIN_LOGIN_OAUTH2.ADMIN_ENABLED
+              help: PLUGIN_LOGIN_OAUTH2.ADMIN_ENABLED_HELP
               highlight: 0
               default: 0
               options:
@@ -182,7 +185,7 @@ form:
               label: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE
               default: row
               size: medium
-              help: PLUGIN_LOGIN_OAUTH2.BUTTON_STYLE_HELP
+              help: PLUGIN_LOGIN_OAUTH2.ADMIN_BUTTON_STYLE_HELP
               options:
                 row: Horizontal Row
                 square: Square Block
@@ -255,6 +258,27 @@ form:
                           help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
                           placeholder: https://idp.example.com/userinfo
 
+                        generic_avatar_left:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.AVATAR
+                          text: PLUGIN_LOGIN_OAUTH2.AVATAR_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            providers.generic.avatar_from_picture:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
                         generic_advanced_left:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.ADVANCED
@@ -297,33 +321,31 @@ form:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_ID
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_ID_HELP
+                              placeholder: sub
 
                             providers.generic.userdata_login:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_LOGIN
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+                              placeholder: preferred_username
 
                             providers.generic.userdata_fullname:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_FULLNAME
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+                              placeholder: name
 
                             providers.generic.userdata_email:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+                              placeholder: email
 
-                            providers.generic.avatar_from_picture:
-                              type: toggle
-                              label: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE
-                              highlight: 1
-                              default: 1
-                              help: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE_HELP
-                              options:
-                                1: Enabled
-                                0: Disabled
-                              validate:
-                                type: bool
+                            providers.generic.userdata_picture:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE_HELP
+                              placeholder: picture
 
                     generic_column_right:
                       type: column
@@ -375,6 +397,27 @@ form:
                           help: PLUGIN_LOGIN_OAUTH2.URL_RESOURCE_OWNER_DETAILS_HELP
                           placeholder: https://idp.example.com/userinfo
 
+                        generic_avatar_right:
+                          type: fieldset
+                          title: PLUGIN_LOGIN_OAUTH2.AVATAR
+                          text: PLUGIN_LOGIN_OAUTH2.AVATAR_DESC
+                          collapsible: true
+                          collapsed: true
+
+                          fields:
+
+                            admin.providers.generic.avatar_from_picture:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
                         generic_advanced_right:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.ADVANCED
@@ -417,33 +460,31 @@ form:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_ID
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_ID_HELP
+                              placeholder: sub
 
                             admin.providers.generic.userdata_login:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_LOGIN
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+                              placeholder: preferred_username
 
                             admin.providers.generic.userdata_fullname:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_FULLNAME
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+                              placeholder: name
 
                             admin.providers.generic.userdata_email:
                               type: text
                               label: PLUGIN_LOGIN_OAUTH2.USERDATA_EMAIL
                               help: PLUGIN_LOGIN_OAUTH2.USERDATA_HELP
+                              placeholder: email
 
-                            admin.providers.generic.avatar_from_picture:
-                              type: toggle
-                              label: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE
-                              highlight: 1
-                              default: 1
-                              help: PLUGIN_LOGIN_OAUTH2.AVATAR_FROM_PICTURE_HELP
-                              options:
-                                1: Enabled
-                                0: Disabled
-                              validate:
-                                type: bool
+                            admin.providers.generic.userdata_picture:
+                              type: text
+                              label: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE
+                              help: PLUGIN_LOGIN_OAUTH2.USERDATA_PICTURE_HELP
+                              placeholder: picture
 
                 providers.generic.description:
                   type: display

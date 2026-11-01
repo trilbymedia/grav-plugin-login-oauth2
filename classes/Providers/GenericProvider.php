@@ -117,7 +117,7 @@ class GenericProvider extends BaseProvider
         // Without a unique ID all users would be mapped to the same Grav user.
         $id_key = (string)$this->config->get('providers.generic.userdata_id');
         if (!isset($data[$id_key]) || $data[$id_key] === '') {
-            throw new \RuntimeException('User ID "' . $id_key . '" not found in the resource owner details');
+            throw new \RuntimeException('User ID claim "' . $id_key . '" not found in the userinfo response');
         }
 
         return [
@@ -155,7 +155,7 @@ class GenericProvider extends BaseProvider
     }
 
     /**
-     * Avatar URL from the OpenID Connect claim "picture", if enabled. Grav uses it as the user's avatar.
+     * Avatar URL from the picture claim (OpenID Connect: picture), if enabled. Grav uses it as the user's avatar.
      *
      * @param array $data
      * @return string|null
@@ -166,14 +166,15 @@ class GenericProvider extends BaseProvider
             return null;
         }
 
-        $picture = $data['picture'] ?? null;
+        $claim = (string)$this->config->get('providers.generic.userdata_picture');
+        $picture = $data[$claim] ?? null;
         if ($picture === null) {
             return null;
         }
 
         if (!is_string($picture) || !filter_var($picture, FILTER_VALIDATE_URL)
             || !in_array(strtolower((string)parse_url($picture, PHP_URL_SCHEME)), ['http', 'https'], true)) {
-            $this->log('warning', 'ignored claim "picture", not an http(s) URL', $picture);
+            $this->log('warning', "ignored claim \"{$claim}\", not an http(s) URL", $picture);
 
             return null;
         }

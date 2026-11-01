@@ -23,6 +23,7 @@ providers:
     userdata_login: 'preferred_username'
     userdata_fullname: 'name'
     userdata_email: 'email'
+    userdata_picture: 'picture'
     avatar_from_picture: true
     options:
       scope: ['openid', 'email', 'profile']
@@ -88,6 +89,7 @@ admin:
       userdata_login: 'preferred_username'
       userdata_fullname: 'name'
       userdata_email: 'email'
+      userdata_picture: 'picture'
       avatar_from_picture: true
       options:
         scope: ['openid', 'email', 'profile']
