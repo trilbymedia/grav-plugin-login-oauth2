@@ -82,6 +82,7 @@ enabled: true
 
 built_in_css: true
 button_style: row
+enforce_oauth2: false
 require_grav_user: false
 save_grav_user: false
 store_provider_data: true
@@ -162,6 +163,7 @@ providers:
 
 admin:
   enabled: false
+  enforce_oauth2: false
   built_in_css: true
   button_style: row
   # require_grav_user: true   # not set: as require_grav_user
@@ -242,6 +244,8 @@ admin:
 | enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`                           |
 | built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`                           |
 | button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`                           |
+| enforce_oauth2               | Deny site logins with a password (also magic links) while a site provider is active: only OAuth2 logins, remember me          | `true` \| [default: `false`]                           |
+| admin.enforce_oauth2         | Deny admin logins with a password (Admin2, classic admin) while `admin.enabled` is on and an admin provider is active         | `true` \| [default: `false`]                           |
 | require_grav_user            | Allow oauth login only for existing users (site logins; admin logins: `admin.require_grav_user`)                              | `true` \| [default: `false`]                           |
 | admin.require_grav_user      | Like `require_grav_user`, for admin logins, e.g. so only accounts you created can use the admin login                         | `true` \| `false` \| [default: as `require_grav_user`] |
 | save_grav_user               | Store the grav user account as a local YAML account (site logins; admin logins: `admin.save_grav_user`)                       | `true` \| [default: `false`]                           |
@@ -400,6 +404,11 @@ It is not advised to provide any `admin` access via OAuth2 accounts, but if you 
 
 > NOTE: See the [Groups and Permissions Documentation](https://learn.getgrav.org/advanced/groups-and-permissions?target=_blank) for more information about how Grav permissions work in conjunction with access levels and groups.
 
+#### Enforce OAuth2
+
+With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (one its login page shows): logins with a password, magic links and logins after registration are denied. The password forms stay visible, and Admin2 answers "Invalid username or password.". On the site, logins with a "remember me" cookie still work.
+
+Don't use Admin2 invitations with `admin.enforce_oauth2`: accepting one creates the account but doesn't log in, its user logs in with OAuth2 instead (matched by email).
 ### Admin Notes
 
 New in version `2.0` is the support for OAuth2 providers to be able to login via the admin.  After careful consideration, we decided to provide configuration options for both `Site` and `Admin` as there are some providers that need to have a unique **OAuth2 Application** setup for each unique callback.  This is important because by default, Grav uses a different session for both `Site` and `Admin`.  Therefore you need a unique callback, one that goes to the frontend site, and one to the admin.  This means we have to provide a way to have unique application settings for both `Site` and `Admin`.

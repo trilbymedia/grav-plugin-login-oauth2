@@ -2,6 +2,7 @@ enabled: true
 debug: false
 built_in_css: true
 button_style: row
+enforce_oauth2: false
 require_grav_user: false
 save_grav_user: false
 store_provider_data: true
@@ -81,6 +82,7 @@ providers:
 
 admin:
   enabled: false
+  enforce_oauth2: false
   built_in_css: true
   button_style: row
 

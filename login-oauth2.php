@@ -11,6 +11,7 @@ use Grav\Common\Plugin;
 use Grav\Common\Session;
 use Grav\Common\Uri;
 use Grav\Common\User\Interfaces\UserCollectionInterface;
+use Grav\Plugin\Api\Exceptions\ForbiddenException as ApiForbiddenException;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\OAuth2;
@@ -111,7 +112,7 @@ class LoginOauth2Plugin extends Plugin
                 'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
                 'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
                 'onLoginPage'               => ['onLoginPage', 10],
-                'onUserLoginAuthenticate'   => ['userLoginAuthenticate', 1000],
+                'onUserLoginAuthenticate'   => [['userLoginEnforceOAuth2', 20000], ['userLoginAuthenticate', 1000]],
                 'onUserLoginFailure'        => ['userLoginFailure', 0],
                 'onUserLogin'               => ['userLogin', 0],
                 'onUserLogout'              => ['userLogout', 0],
@@ -122,6 +123,7 @@ class LoginOauth2Plugin extends Plugin
                 'onApiLoginProviders'       => ['onApiLoginProviders', 0],
                 'onApiLoginStart'           => ['onApiLoginStart', 0],
                 'onApiLoginCallback'        => ['onApiLoginCallback', 0],
+                'onApiInvitationAccepted'   => ['onApiInvitationAccepted', 0],
             ]
         );
 
@@ -322,6 +324,57 @@ class LoginOauth2Plugin extends Plugin
         $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
     }
 
+    /**
+     * [onUserLoginAuthenticate:20000] "Enforce OAuth2": denies every login but an OAuth2 one on that side (site, or
+     * admin with Admin2), before the Login plugin checks passwords, magic links or logins after registration. Logins
+     * with a "remember me" cookie still pass, as OAuth2 logins set it too.
+     */
+    public function userLoginEnforceOAuth2(UserLoginEvent $event): void
+    {
+        $admin = (bool)$event->getOption('admin');
+        if ($event->getOption('oauth2') || $event->getOption('remember_me_login') || !$this->isOAuth2Enforced($admin)) {
+            return;
+        }
+
+        $this->grav['log']->notice('Login OAuth2: denied ' . ($admin ? 'an admin' : 'a site') . ' login without OAuth2 (Enforce OAuth2)');
+        $event->setMessage($this->grav['language']->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_DENIED'), 'error');
+        $event->setStatus($event::AUTHENTICATION_FAILURE);
+        $event->stopPropagation();
+    }
+
+    /**
+     * [onApiInvitationAccepted] "Enforce OAuth2" in the admin: an Admin2 invitation doesn't log its user in, who logs
+     * in with OAuth2 instead (matched by email). The API has created the account already, and gives no tokens.
+     */
+    public function onApiInvitationAccepted(Event $event): void
+    {
+        if ($this->isOAuth2Enforced(true)) {
+            throw new ApiForbiddenException($this->grav['language']->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_INVITATION'));
+        }
+    }
+
+    /**
+     * Whether only OAuth2 logins are allowed on a side: only while it has at least one active provider (the ones the
+     * login page shows), so a provider disabled or not configured can't lock anyone out; for the admin also only while
+     * OAuth2 is enabled there.
+     */
+    protected function isOAuth2Enforced(bool $admin): bool
+    {
+        if ($admin) {
+            $enabled = $this->config->get('plugins.login-oauth2.admin.enabled') && $this->config->get('plugins.login-oauth2.admin.enforce_oauth2');
+        } else {
+            $enabled = (bool)$this->config->get('plugins.login-oauth2.enforce_oauth2');
+        }
+        if (!$enabled) {
+            return false;
+        }
+
+        // Admin logins outside the classic admin come from Admin2 (API): their providers are in the admin service of
+        // the SSO bridge, with the ones of satellite plugins.
+        $oauth2 = $admin && !$this->admin ? $this->ensureAdminOAuth2() : $this->grav['oauth2'];
+
+        return (bool)$oauth2->getProviders();
+    }
 
     public function userLoginAuthenticate(UserLoginEvent $event): void
     {

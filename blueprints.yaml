@@ -227,6 +227,23 @@ form:
 
           fields:
 
+            site_login_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_USER_LOGIN
+              underline: true
+
+            enforce_oauth2:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2
+              help: PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
             site_users_section:
               type: section
               title: PLUGIN_LOGIN_OAUTH2.SECTION_USERS
@@ -298,6 +315,18 @@ form:
               type: toggle
               label: PLUGIN_LOGIN_OAUTH2.ADMIN_ENABLED
               help: PLUGIN_LOGIN_OAUTH2.ADMIN_ENABLED_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
+            admin.enforce_oauth2:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.ADMIN_ENFORCE_OAUTH2
+              help: PLUGIN_LOGIN_OAUTH2.ADMIN_ENFORCE_OAUTH2_HELP
               highlight: 0
               default: 0
               options:
