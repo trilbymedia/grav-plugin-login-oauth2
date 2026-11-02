@@ -145,12 +145,16 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
-     * Add navigation item to the admin plugin
+     * [onLoginPage] Adds the login buttons. With "Enforce OAuth2" in effect, also turns the Login plugin's password
+     * form off (password_login, hidden by Login versions that have the setting).
      */
     public function onLoginPage(): void
     {
         if ($this->grav['oauth2']->getProviders()) {
             $this->grav['login']->addProviderLoginTemplate('login-oauth2/login-oauth2.html.twig');
+        }
+        if ($this->isOAuth2Enforced($this->admin)) {
+            $this->config->set('plugins.login.password_login', false);
         }
     }
 
@@ -578,6 +582,12 @@ class LoginOauth2Plugin extends Plugin
             ];
         }
         $event['providers'] = $providers;
+
+        // "Enforce OAuth2" in effect: the admin login screen hides its password form (password_login, reported by
+        // API versions that have the setting).
+        if ($this->isOAuth2Enforced(true)) {
+            $event['password_login'] = false;
+        }
     }
 
     /**
