@@ -5,6 +5,7 @@
     * The Callback URIs section has a provider select and shows the callback URIs of the selected provider, by default the first provider enabled with a client ID
     * Generic provider: an option to turn the certificate checks of the token and userinfo endpoints off for testing (Security section)
     * Enforce OAuth2: options to deny logins with a password on the site and in the admin (Admin2 and classic admin); Admin2 invitations then create the account without logging in
+    * CLI commands (`bin/plugin login-oauth2`): `status`, `enforce-oauth2 on|off|status` (e.g. to get back in when locked out) and `provider enable|disable|verify-certificate`
 1. [](#bugfix)
     * The Admin Callback URI shows the URI Admin2 logins use (the SSO callback of the API plugin, one per provider) instead of the site's; with the classic admin it's still the admin path
 

@@ -409,6 +409,9 @@ It is not advised to provide any `admin` access via OAuth2 accounts, but if you 
 With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (one its login page shows): logins with a password, magic links and logins after registration are denied. The password forms stay visible, and Admin2 answers "Invalid username or password.". On the site, logins with a "remember me" cookie still work.
 
 Don't use Admin2 invitations with `admin.enforce_oauth2`: accepting one creates the account but doesn't log in, its user logs in with OAuth2 instead (matched by email).
+
+If you're locked out, e.g. while the identity provider is unreachable, run `bin/plugin login-oauth2 enforce-oauth2 off` in Grav's folder on the server (see [CLI Commands](#cli-commands)), or set `admin.enforce_oauth2: false` (and `enforce_oauth2: false` for the site) in `user/config/plugins/login-oauth2.yaml`. Then log in with your password.
+
 ### Admin Notes
 
 New in version `2.0` is the support for OAuth2 providers to be able to login via the admin.  After careful consideration, we decided to provide configuration options for both `Site` and `Admin` as there are some providers that need to have a unique **OAuth2 Application** setup for each unique callback.  This is important because by default, Grav uses a different session for both `Site` and `Admin`.  Therefore you need a unique callback, one that goes to the frontend site, and one to the admin.  This means we have to provide a way to have unique application settings for both `Site` and `Admin`.
@@ -429,6 +432,24 @@ For admin logins to be useful, you need to ensure you set `store_grav_user: true
 ```
 
 Of course adjust this `access.admin:` settings to whatever you need, but **NEVER** set this in the `default_access_levels:` setting for the plugin, or every user will have admin access.  You want to maintain control over who can access and who can't, especially those logging in with OAuth2 providers as there is no control over 'who' can sign in.
+
+### CLI Commands
+
+Without `--site` or `--admin`, a command applies to both sides; changes go to `user/config/plugins/login-oauth2.yaml`, or with `--env` to that environment's config file.
+
+```text
+bin/plugin login-oauth2 status
+bin/plugin login-oauth2 enforce-oauth2 <on|off|status>
+bin/plugin login-oauth2 provider <enable|disable> <name>
+bin/plugin login-oauth2 provider verify-certificate <name> [on|off|status]
+```
+
+* `status` shows, for the site and the admin, whether "Enforce OAuth2" is on and applies, every provider (active, or why not) with "Verify Certificate" where it has it, and the account settings. It changes nothing.
+* `enforce-oauth2 off` turns "Enforce OAuth2" off, in the main config file and in every environment's that turns it on (with `--env` only in that one). `on` refuses a side without an active provider, as it wouldn't apply there, unless you add `--force`.
+* `provider enable` and `provider disable` enable or disable one of this plugin's providers, e.g. `generic`. Providers of other plugins, e.g. login-oauth2-extras, are set in their own plugin's settings.
+* `provider verify-certificate` shows or changes "Verify Certificate" of a provider that has the setting (Generic). Turn it off only for testing.
+
+Grav uses a change from the next request on, and each change is written to the Grav log.
 
 ### Troubleshooting
 
