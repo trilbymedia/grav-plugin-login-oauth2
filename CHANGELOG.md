@@ -3,6 +3,7 @@
 
 1. [](#improved)
     * The Callback URIs section has a provider select and shows the callback URIs of the selected provider, by default the first provider enabled with a client ID
+    * Generic provider: an option to turn the certificate checks of the token and userinfo endpoints off for testing (Security section)
 1. [](#bugfix)
     * The Admin Callback URI shows the URI Admin2 logins use (the SSO callback of the API plugin, one per provider) instead of the site's; with the classic admin it's still the admin path
 

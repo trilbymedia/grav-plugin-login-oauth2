@@ -531,6 +531,18 @@ form:
                                 S256: S256 (recommended)
                                 plain: plain (not recommended)
 
+                            providers.generic.verify_peer:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
+
                         generic_advanced_left:
                           type: fieldset
                           title: PLUGIN_LOGIN_OAUTH2.ADVANCED
@@ -773,6 +785,18 @@ form:
                                 '': Disabled
                                 S256: S256 (recommended)
                                 plain: plain (not recommended)
+
+                            admin.providers.generic.verify_peer:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
 
                         generic_advanced_right:
                           type: fieldset

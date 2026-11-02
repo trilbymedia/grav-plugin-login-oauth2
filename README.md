@@ -101,6 +101,7 @@ providers:
     token_endpoint: ''
     userinfo_endpoint: ''
     enforce_email_verified: true
+    verify_peer: true
     userdata_id: 'sub'
     userdata_login: 'preferred_username'
     userdata_fullname: 'name'
@@ -176,6 +177,7 @@ admin:
       token_endpoint: ''
       userinfo_endpoint: ''
       enforce_email_verified: true
+      verify_peer: true
       userdata_id: 'sub'
       userdata_login: 'preferred_username'
       userdata_fullname: 'name'
@@ -264,6 +266,7 @@ Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using 
 | token_endpoint          | The token endpoint of the provider                                                                                                                                                                                  | e.g. `https://idp.example.com/token`            |
 | userinfo_endpoint       | The endpoint returning the details of the logged in user (OpenID Connect: userinfo endpoint)                                                                                                                        | e.g. `https://idp.example.com/userinfo`         |
 | enforce_email_verified  | Deny the login unless the provider confirms the email address as verified (`userdata_email_verified`); without it, anyone registering there with someone else's email could log in as the Grav user with that email | [default: `true`] \| `false`                    |
+| verify_peer             | Verify the TLS certificates of the token and userinfo endpoints; disable only for testing, as anyone who can intercept the connection could then read the secrets and log in as any user                            | [default: `true`] \| `false`                    |
 | userdata_id             | The claim with the user's unique ID in the userinfo response                                                                                                                                                        | [default: `sub`] \| `<string>`                  |
 | userdata_login          | The claim with the username in the userinfo response                                                                                                                                                                | [default: `preferred_username`] \| `<string>`   |
 | userdata_fullname       | The claim with the full name in the userinfo response                                                                                                                                                               | [default: `name`] \| `<string>`                 |
@@ -279,6 +282,8 @@ Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using 
 | scope                   | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions                                                                                         | e.g. `['openid', 'email', 'profile']`           |
 | scope_separator         | The separator of the scopes in the authorization request                                                                                                                                                            | [default: `space`] \| `comma`                   |
 | pkce_method             | The PKCE (Proof Key for Code Exchange) method, `plain` is **not** recommended and should only be used if the provider supports nothing else                                                                         | [default: `S256`] \| `plain` \| `''` (disabled) |
+
+> NOTE: Logins failing with `cURL error 60: SSL certificate problem: self-signed certificate` work with `verify_peer: false`, for testing only.
 
 Besides `login`, `fullname` and `email`, only `email_verified` and, with `avatar_from_picture`, the `avatar_url` are stored under the `generic` key (empty if not available), not the whole resource owner details.
 

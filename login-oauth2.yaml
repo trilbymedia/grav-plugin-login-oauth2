@@ -20,6 +20,7 @@ providers:
     token_endpoint: ''
     userinfo_endpoint: ''
     enforce_email_verified: true
+    verify_peer: true
     userdata_id: 'sub'
     userdata_login: 'preferred_username'
     userdata_fullname: 'name'
@@ -93,6 +94,7 @@ admin:
       token_endpoint: ''
       userinfo_endpoint: ''
       enforce_email_verified: true
+      verify_peer: true
       userdata_id: 'sub'
       userdata_login: 'preferred_username'
       userdata_fullname: 'name'

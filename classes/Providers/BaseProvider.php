@@ -6,6 +6,7 @@ use Grav\Common\Data\Data;
 use Grav\Common\Grav;
 use Grav\Common\Utils;
 use Grav\Plugin\Login\OAuth2\OAuth2;
+use GuzzleHttp\Client;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -62,6 +63,16 @@ abstract class BaseProvider implements ProviderInterface
         // URI for the classic flow, which passes no redirectUri.
         $options['redirectUri'] = $options['redirectUri'] ?? static::getCallbackUri();
         $this->provider = new $this->classname($options);
+
+        // Certificate checks of the token and userinfo requests, for providers with getHttpVerifyOption(). League
+        // passes "verify" to its HTTP client only along with a proxy, hence a new client (keeping timeout and proxy).
+        if (method_exists($this, 'getHttpVerifyOption')) {
+            $verify = $this->getHttpVerifyOption();
+            if ($verify !== true) {
+                $client_options = ['verify' => $verify] + array_intersect_key($options, array_flip(['timeout', 'proxy']));
+                $this->provider->setHttpClient(new Client($client_options));
+            }
+        }
     }
 
     /**
