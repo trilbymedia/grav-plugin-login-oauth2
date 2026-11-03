@@ -406,7 +406,11 @@ It is not advised to provide any `admin` access via OAuth2 accounts, but if you 
 
 #### Enforce OAuth2
 
-With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (one its login page shows): logins with a password, magic links and logins after registration are denied. The password forms stay visible, and Admin2 answers "Invalid username or password.". On the site, logins with a "remember me" cookie still work.
+With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (enabled and with its client ID): logins with a password, magic links and logins after registration are denied. The site's login page hides the password form and the "Login by link" button, and magic links can't be requested; the Admin2 login screen hides its password form (API 1.1.11 and Admin2 2.2.8 or newer), and answers "Invalid username or password." to one sent anyway. On the site, logins with a "remember me" cookie still work.
+
+With `admin.enforce_oauth2`, accounts with admin access (`admin.login`, `admin.super`, `api.access` or `api.super`) can't log in on the site without OAuth2 either, also not with a "remember me" cookie: their site session would open the admin too (Admin2 accepts it).
+
+"Remember me" cookies from password logins made before you turned it on keep working, and the Login plugin renews them on every use. To end them, delete the folder `user/data/rememberme`: everyone logged in with "remember me" has to log in again.
 
 Don't use Admin2 invitations with `admin.enforce_oauth2`: accepting one creates the account but doesn't log in, its user logs in with OAuth2 instead (matched by email).
 
@@ -435,7 +439,7 @@ Of course adjust this `access.admin:` settings to whatever you need, but **NEVER
 
 ### CLI Commands
 
-Without `--site` or `--admin`, a command applies to both sides; changes go to `user/config/plugins/login-oauth2.yaml`, or with `--env` to that environment's config file.
+Without `--site` or `--admin`, a command applies to both sides; changes go to `user/config/plugins/login-oauth2.yaml`, or with `--env` (or `GRAV_ENVIRONMENT`) to that environment's config file. A command names the environments whose config files override a change of the main file.
 
 ```text
 bin/plugin login-oauth2 status
@@ -445,7 +449,7 @@ bin/plugin login-oauth2 provider verify-certificate <name> [on|off|status]
 ```
 
 * `status` shows, for the site and the admin, whether "Enforce OAuth2" is on and applies, every provider (active, or why not) with "Verify Certificate" where it has it, and the account settings. It changes nothing.
-* `enforce-oauth2 off` turns "Enforce OAuth2" off, in the main config file and in every environment's that turns it on (with `--env` only in that one). `on` refuses a side without an active provider, as it wouldn't apply there, unless you add `--force`.
+* `enforce-oauth2 off` turns "Enforce OAuth2" off, in the main config file and in every environment's that turns it on (with `--env` only in that one). `on` only turns it on where it applies (an active provider): a side chosen with `--site` or `--admin` is refused otherwise, and of both sides the other one is left as it is, unless you add `--force`.
 * `provider enable` and `provider disable` enable or disable one of this plugin's providers, e.g. `generic`. Providers of other plugins, e.g. login-oauth2-extras, are set in their own plugin's settings.
 * `provider verify-certificate` shows or changes "Verify Certificate" of a provider that has the setting (Generic). Turn it off only for testing.
 

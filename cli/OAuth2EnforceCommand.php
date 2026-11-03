@@ -31,7 +31,8 @@ class OAuth2EnforceCommand extends ConsoleCommand
                 "  <info>bin/plugin login-oauth2 enforce-oauth2 on --admin</info>     only OAuth2 logins in the admin\n" .
                 "  <info>bin/plugin login-oauth2 enforce-oauth2 status</info>\n\n" .
                 "<info>off</info> turns it off in the main configuration and in every environment that turns it on (or only in --env).\n" .
-                "<info>on</info> refuses a side without an active provider, as it wouldn't apply there (unless --force)."
+                "<info>on</info> only turns it on where it applies (an active provider): a side chosen with --site or --admin is refused\n" .
+                "otherwise, of both sides the other one is left as it is. --force turns it on anyway."
             );
     }
 
@@ -60,7 +61,7 @@ class OAuth2EnforceCommand extends ConsoleCommand
             }
         }
 
-        $settings = new Settings(Grav::instance());
+        $settings = new Settings(Grav::instance(), $this->input);
         $sides = Settings::sides($this->input);
         if ($error = $settings->missingEnvironment($this->input)) {
             $io->error($error);
@@ -99,20 +100,23 @@ class OAuth2EnforceCommand extends ConsoleCommand
     }
 
     /**
-     * Turns it off in every config file that turns it on, or only in the environment's file with --env.
+     * Turns it off in every config file that turns it on, or only in the environment's file with --env. Without --env
+     * it then checks the files again: the main one (with the plugin's default) and those of the environments.
      *
      * @param string[] $sides
      */
     protected function off(SymfonyStyle $io, Settings $settings, array $sides): int
     {
         $env = $this->input->hasParameterOption('--env');
+        $main = $settings->mainFile();
         $changes = [];
-        foreach ($env ? [$settings->file()] : $settings->files() as $file) {
+        foreach ($env ? [$settings->file()] : array_unique(array_merge([$main], $settings->files())) as $file) {
             $values = [];
             foreach ($sides as $side) {
                 $key = Settings::key($side, 'enforce_oauth2');
                 // With --env also where only the main configuration turns it on: the environment's file overrides it.
-                if ($env ? $settings->get($key) : $settings->read($file, $key)) {
+                // In the main file also where only the plugin's default turns it on (an edited login-oauth2.yaml).
+                if ($env ? $settings->get($key) : ($settings->read($file, $key) || ($file === $main && $settings->get($key)))) {
                     $values[$key] = false;
                 }
             }
@@ -121,15 +125,28 @@ class OAuth2EnforceCommand extends ConsoleCommand
             }
         }
 
+        foreach ($changes as $change) {
+            $io->text('  ' . $change . ' => off');
+        }
+        $stillOn = [];
+        foreach ($env ? [] : $sides as $side) {
+            $key = Settings::key($side, 'enforce_oauth2');
+            foreach ($settings->stillOn($key) as $file) {
+                $stillOn[] = "{$file}: {$key}";
+            }
+        }
+        if ($stillOn) {
+            $io->error(array_merge(["'Enforce OAuth2' is still on in:"], $stillOn, ["Set it to false there by hand, then check with 'bin/plugin login-oauth2 enforce-oauth2 status'."]));
+
+            return 1;
+        }
+
         if (!$changes) {
             $io->success(sprintf("'Enforce OAuth2' is already off (%s).", implode(', ', $sides)));
 
             return 0;
         }
 
-        foreach ($changes as $change) {
-            $io->text('  ' . $change . ' => off');
-        }
         $io->success(sprintf(
             "'Enforce OAuth2' is off (%s%s): logins with a password work again.",
             implode(', ', $sides),
@@ -140,36 +157,69 @@ class OAuth2EnforceCommand extends ConsoleCommand
     }
 
     /**
-     * Turns it on in the config file (of the environment with --env), only for sides where it applies, unless --force.
+     * Turns it on in the config file (of the environment with --env), only for sides where it applies, unless --force:
+     * a side chosen with --site or --admin is refused then, of both sides only the ones where it applies are turned on.
+     * Names the environments whose files override the change.
      *
      * @param string[] $sides
      */
     protected function on(SymfonyStyle $io, Settings $settings, array $sides): int
     {
         $force = (bool)$this->input->getOption('force');
+        $chosen = (bool)$this->input->getOption('site') !== (bool)$this->input->getOption('admin');
         $values = [];
-        $refused = [];
+        $skipped = [];
+        $notApplying = [];
         foreach ($sides as $side) {
-            if (!$force && ($why = $settings->notApplying($side))) {
-                $refused[] = ucfirst($side) . ": {$why}, so it wouldn't apply.";
+            $why = $settings->notApplying($side);
+            if ($why && !$force) {
+                $skipped[$side] = $why;
+                continue;
             }
             $values[Settings::key($side, 'enforce_oauth2')] = true;
+            if ($why) {
+                $notApplying[$side] = $why;
+            }
         }
-        if ($refused) {
-            $io->error(array_merge($refused, ['Nothing changed. Enable and configure a provider first, or use --force.']));
+        if ($skipped && ($chosen || !$values)) {
+            $refused = [];
+            foreach ($skipped as $side => $why) {
+                $refused[] = ucfirst($side) . ": {$why}, so it wouldn't apply.";
+            }
+            $refused[] = 'Nothing changed. Enable and configure a provider first, or add --force to turn it on anyway'
+                . ($chosen ? '' : ' (with --site or --admin for one side only)') . '.';
+            $io->error($refused);
 
             return 1;
         }
 
-        $change = $settings->save($settings->file(), $values, 'turned Enforce OAuth2 on');
+        $file = $settings->file();
+        $on = array_values(array_diff($sides, array_keys($skipped)));
+        $change = $settings->save($file, $values, 'turned Enforce OAuth2 on');
+        if ($change) {
+            $io->text('  ' . $change . ' => on');
+        }
+        foreach ($skipped as $side => $why) {
+            $io->note(ucfirst($side) . ": {$why}, so it wouldn't apply: left as it is.");
+        }
+        foreach ($notApplying as $side => $why) {
+            $io->warning(ucfirst($side) . ": it's on, but doesn't apply yet: {$why}.");
+        }
+        if ($overrides = $settings->overrides($file, $values)) {
+            $io->warning(array_merge(['These environments override it (change them with --env=<environment>):'], $overrides));
+        }
+
+        $applying = array_values(array_diff($on, array_keys($notApplying)));
         if (!$change) {
-            $io->success(sprintf("'Enforce OAuth2' is already on (%s).", implode(', ', $sides)));
+            $io->success(sprintf("'Enforce OAuth2' is already on (%s).", implode(', ', $on)));
 
             return 0;
         }
-
-        $io->text('  ' . $change . ' => on');
-        $io->success(sprintf("'Enforce OAuth2' is on (%s): only OAuth2 logins work. To undo: bin/plugin login-oauth2 enforce-oauth2 off", implode(', ', $sides)));
+        $io->success(sprintf(
+            "'Enforce OAuth2' is on (%s)%s. To undo: bin/plugin login-oauth2 enforce-oauth2 off",
+            implode(', ', $on),
+            $applying ? ': only OAuth2 logins work' . ($applying !== $on ? ' (' . implode(', ', $applying) . ')' : '') . ($overrides ? ', except in the environments above' : '') : ''
+        ));
 
         return 0;
     }

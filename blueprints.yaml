@@ -33,6 +33,12 @@ form:
       validate:
         type: bool
 
+    # While the Login plugin's "Remember Me" is on and OAuth2 logins are in use; without content Admin2 shows nothing.
+    remember_me_notice:
+      type: display
+      style: vertical
+      data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::rememberMeNotice']
+
     oauth2_tabs:
       type: tabs
 

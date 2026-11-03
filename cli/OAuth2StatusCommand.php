@@ -43,7 +43,7 @@ class OAuth2StatusCommand extends ConsoleCommand
             $io->warning('The plugins could not be initialized, providers of other plugins are missing: ' . $e->getMessage());
         }
 
-        $settings = new Settings(Grav::instance());
+        $settings = new Settings(Grav::instance(), $this->input);
         $onOff = static function ($value): string {
             return $value ? 'on' : 'off';
         };
@@ -55,7 +55,8 @@ class OAuth2StatusCommand extends ConsoleCommand
         ));
 
         foreach (Settings::sides($this->input) as $side) {
-            $active = $settings->activeProviders($side);
+            $registered = $settings->registeredProviders($side);
+            $active = array_filter($registered, [OAuth2::class, 'isConfigured']);
             $oauth2 = new OAuth2($side === 'admin');
             // The admin follows the site's account settings until set itself.
             $follows = $side === 'admin' ? ' (follows the site)' : '';
@@ -79,11 +80,11 @@ class OAuth2StatusCommand extends ConsoleCommand
                 }
                 $reason = isset($active[$provider]) ? null : $settings->inactiveReason($side, $provider);
                 $rows[] = [$provider, $reason === null ? 'on' : ($reason === 'disabled' ? 'off' : "on, but {$reason}"), $verify];
-                unset($active[$provider]);
+                unset($registered[$provider]);
             }
-            // Added by satellite plugins.
-            foreach (array_keys($active) as $provider) {
-                $rows[] = [$provider, 'on (other plugin)', ''];
+            // Added by satellite plugins as soon as they're enabled: active with their client ID.
+            foreach (array_keys($registered) as $provider) {
+                $rows[] = [$provider, isset($active[$provider]) ? 'on (other plugin)' : 'on, but missing client_id (other plugin)', ''];
             }
             $io->table(['Provider', 'State', 'Verify Certificate'], $rows);
         }

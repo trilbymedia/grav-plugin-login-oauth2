@@ -21,7 +21,7 @@ class OAuth2ProviderCommand extends ConsoleCommand
             ->setName('provider')
             ->addArgument('action', InputArgument::REQUIRED, 'enable, disable or verify-certificate')
             ->addArgument('name', InputArgument::REQUIRED, 'The provider, e.g. generic')
-            ->addArgument('value', InputArgument::OPTIONAL, 'For verify-certificate: on, off or status', 'status')
+            ->addArgument('value', InputArgument::OPTIONAL, 'For verify-certificate: on, off or status (the default)')
             ->addOption('site', null, InputOption::VALUE_NONE, 'Only the site')
             ->addOption('admin', null, InputOption::VALUE_NONE, 'Only the admin')
             ->setDescription('Enables or disables a provider, or changes its settings')
@@ -49,7 +49,7 @@ class OAuth2ProviderCommand extends ConsoleCommand
             $io->warning('The plugins could not be initialized, providers of other plugins are missing: ' . $e->getMessage());
         }
 
-        $settings = new Settings(Grav::instance());
+        $settings = new Settings(Grav::instance(), $this->input);
         $sides = Settings::sides($this->input);
         if ($error = $settings->missingEnvironment($this->input)) {
             $io->error($error);
@@ -69,11 +69,18 @@ class OAuth2ProviderCommand extends ConsoleCommand
             return 1;
         }
 
+        $value = $this->input->getArgument('value');
         if ($action === 'enable' || $action === 'disable') {
+            if ($value !== null) {
+                $io->error("Too many arguments: '{$action}' takes one provider, '{$value}' wasn't expected. Nothing changed.");
+
+                return 1;
+            }
+
             return $this->enable($io, $settings, $sides, $name, $action === 'enable');
         }
         if ($action === 'verify-certificate') {
-            return $this->verifyCertificate($io, $settings, $sides, $name, strtolower((string)$this->input->getArgument('value')));
+            return $this->verifyCertificate($io, $settings, $sides, $name, strtolower((string)($value ?? 'status')));
         }
 
         $io->error("Unknown action '{$action}': use enable, disable or verify-certificate.");
@@ -92,16 +99,17 @@ class OAuth2ProviderCommand extends ConsoleCommand
         }
 
         $state = $enable ? 'enabled' : 'disabled';
-        $change = $settings->save($settings->file(), $values, "{$state} provider {$name}");
-        if (!$change) {
+        $file = $settings->file();
+        $change = $settings->save($file, $values, "{$state} provider {$name}");
+        if ($change) {
+            $io->text('  ' . $change);
+            $io->success(sprintf("'%s' is %s (%s).", $name, $state, implode(', ', $sides)));
+        } else {
             $io->success(sprintf("'%s' is already %s (%s).", $name, $state, implode(', ', $sides)));
-
-            return 0;
         }
-        $io->text('  ' . $change);
-        $io->success(sprintf("'%s' is %s (%s).", $name, $state, implode(', ', $sides)));
+        $this->overrides($io, $settings, $file, $values);
 
-        // What it means for the logins, with the new settings.
+        // What it means for the logins, with the new settings (also if it was already set: e.g. not configured).
         foreach ($sides as $side) {
             $active = $settings->activeProviders($side);
             if ($enable && !isset($active[$name])) {
@@ -132,10 +140,13 @@ class OAuth2ProviderCommand extends ConsoleCommand
         }
 
         if ($value === 'status') {
+            $current = [];
             foreach ($sides as $side) {
-                $on = $settings->get(Settings::key($side, "providers.{$name}.verify_peer"), true);
-                $io->text(sprintf("%s: 'Verify Certificate' of '%s' is <info>%s</info>", ucfirst($side), $name, $on ? 'on' : 'off'));
+                $key = Settings::key($side, "providers.{$name}.verify_peer");
+                $current[$key] = (bool)$settings->get($key, true);
+                $io->text(sprintf("%s: 'Verify Certificate' of '%s' is <info>%s</info>", ucfirst($side), $name, Settings::show($current[$key])));
             }
+            $this->overrides($io, $settings, $settings->file(), $current);
 
             return 0;
         }
@@ -149,18 +160,33 @@ class OAuth2ProviderCommand extends ConsoleCommand
         foreach ($sides as $side) {
             $values[Settings::key($side, "providers.{$name}.verify_peer")] = $value === 'on';
         }
-        $change = $settings->save($settings->file(), $values, "turned Verify Certificate {$value} for provider {$name}");
+        $file = $settings->file();
+        $change = $settings->save($file, $values, "turned Verify Certificate {$value} for provider {$name}");
         if (!$change) {
             $io->success(sprintf("'Verify Certificate' of '%s' is already %s (%s).", $name, $value, implode(', ', $sides)));
+            $this->overrides($io, $settings, $file, $values);
 
             return 0;
         }
         $io->text('  ' . $change);
         $io->success(sprintf("'Verify Certificate' of '%s' is %s (%s).", $name, $value, implode(', ', $sides)));
+        $this->overrides($io, $settings, $file, $values);
         if ($value === 'off') {
             $io->warning('Only for testing: without the check, anyone who can intercept the connection to the provider can read the client secret and tokens, and log in as any user.');
         }
 
         return 0;
+    }
+
+    /**
+     * Warns about the environments whose config files override a change of the main file.
+     *
+     * @param array $values Key => value
+     */
+    protected function overrides(SymfonyStyle $io, Settings $settings, string $file, array $values): void
+    {
+        if ($overrides = $settings->overrides($file, $values)) {
+            $io->warning(array_merge(['These environments override it (change them with --env=<environment>):'], $overrides));
+        }
     }
 }

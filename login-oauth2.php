@@ -11,6 +11,7 @@ use Grav\Common\Plugin;
 use Grav\Common\Session;
 use Grav\Common\Uri;
 use Grav\Common\User\Interfaces\UserCollectionInterface;
+use Grav\Common\User\Interfaces\UserInterface;
 use Grav\Plugin\Api\Exceptions\ForbiddenException as ApiForbiddenException;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
@@ -36,6 +37,9 @@ class LoginOauth2Plugin extends Plugin
     /** @var OAuth2|null Admin-mode service built for the headless SSO path. */
     private $adminOAuth2;
 
+    /** @var OAuth2|null Admin providers for the "Enforce OAuth2" check outside the SSO path, beside the site's service. */
+    private $adminProviders;
+
     /**
      * @return array
      *
@@ -50,7 +54,8 @@ class LoginOauth2Plugin extends Plugin
     {
         return [
             'onPluginsInitialized' => [
-                ['onPluginsInitialized', 0]
+                ['onPluginsInitialized', 0],
+                ['disableMagicLinkRoutes', -1000],
             ],
         ];
     }
@@ -108,11 +113,13 @@ class LoginOauth2Plugin extends Plugin
                 'onTask.login.oauth2'       => ['loginRedirect', 0],
                 'onTask.callback.oauth2'    => ['loginCallback', 0],
                 'onTask.delete.oauth2'      => ['loginDataDelete', 0],
+                'onTask.login.magicRequest' => ['denyMagicLinkRequest', 10],
                 'onTwigLoader'              => ['onTwigLoader', 0],
                 'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
                 'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
                 'onLoginPage'               => ['onLoginPage', 10],
                 'onUserLoginAuthenticate'   => [['userLoginEnforceOAuth2', 20000], ['userLoginAuthenticate', 1000]],
+                'onUserLoginAuthorize'      => ['userLoginEnforceAdminOAuth2', 10],
                 'onUserLoginFailure'        => ['userLoginFailure', 0],
                 'onUserLogin'               => ['userLogin', 0],
                 'onUserLogout'              => ['userLogout', 0],
@@ -145,19 +152,60 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
-     * [onLoginPage] Adds the login buttons. With "Enforce OAuth2" in effect, also turns the Login plugin's password
-     * form off (password_login, hidden by Login versions that have the setting), and its "Login by link" button, as
-     * magic-link logins are denied too.
+     * [onLoginPage] Adds the login buttons. With "Enforce OAuth2" in effect on the site, also turns the Login plugin's
+     * password form off (show_password_form, set only where the Login config has that key: without it the form shows
+     * anyway, and so the "or" above it), and its "Login by link" button, as magic-link logins are denied too.
+     * Not in the classic admin: it ignores show_password_form, and its Login settings form would show and save the changes
+     * (the Login plugin fires this event on every page).
      */
     public function onLoginPage(): void
     {
         if ($this->grav['oauth2']->getProviders()) {
             $this->grav['login']->addProviderLoginTemplate('login-oauth2/login-oauth2.html.twig');
         }
-        if ($this->isOAuth2Enforced($this->admin)) {
-            $this->config->set('plugins.login.password_login', false);
+        if (!$this->admin && $this->isOAuth2Enforced(false)) {
+            if ($this->config->get('plugins.login.show_password_form') !== null) {
+                $this->config->set('plugins.login.show_password_form', false);
+            }
             $this->config->set('plugins.login.magic_link.enabled', false);
         }
+    }
+
+    /**
+     * [onPluginsInitialized:-1000] "Enforce OAuth2" on the site: turns magic links off on the Login plugin's magic-link
+     * routes before it reads the setting (onPagesInitialized), once the satellite plugins have added their providers.
+     * The request page then redirects to the login page, and an emailed link is refused before it's used. Only on these
+     * routes, so the settings forms of the admins (classic admin, Admin2) never show or save the change.
+     */
+    public function disableMagicLinkRoutes(): void
+    {
+        if ($this->isAdmin() || !isset($this->grav['oauth2'], $this->grav['login'])) {
+            return;
+        }
+
+        /** @var Login $login */
+        $login = $this->grav['login'];
+        // Compared as the Login plugin routes them (LoginPlugin::initializeLogin()).
+        $path = $this->grav['uri']->path();
+        if (($path === $login->getRoute('magic') || $path === $login->getRoute('magic_login')) && $this->isOAuth2Enforced(false)) {
+            $this->config->set('plugins.login.magic_link.enabled', false);
+        }
+    }
+
+    /**
+     * [onTask.login.magicRequest:10] "Enforce OAuth2" on the site: refuses a magic-link request before the Login plugin
+     * handles it, which with magic links off would still answer that a link was sent.
+     */
+    public function denyMagicLinkRequest(Event $event): void
+    {
+        if ($this->isAdmin() || !$this->isOAuth2Enforced(false)) {
+            return;
+        }
+
+        $this->grav['log']->notice('Login OAuth2: denied a magic-link request (Enforce OAuth2)');
+        $this->grav['messages']->add($this->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_MAGIC_LINK_DENIED'), 'error');
+        $event->stopPropagation();
+        $this->grav->redirectLangSafe($this->grav['login']->getRoute('login') ?: '/');
     }
 
     /**
@@ -349,6 +397,49 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
+     * [onUserLoginAuthorize:10] "Enforce OAuth2" in the admin: also denies site logins without OAuth2 (password, magic
+     * link, "remember me") of accounts with admin or API access. Their site session would open the admin anyway: the
+     * API accepts it (session passthrough), as does the classic admin with a shared session (system.session.split off).
+     */
+    public function userLoginEnforceAdminOAuth2(UserLoginEvent $event): void
+    {
+        if ($this->admin || $event->getOption('admin') || $event->getOption('oauth2') || !$this->isOAuth2Enforced(true)) {
+            return;
+        }
+        $user = $event->getUser();
+        if (!$user || !static::hasAdminAccess($user)) {
+            return;
+        }
+
+        $this->grav['log']->notice('Login OAuth2: denied a site login without OAuth2 of an account with admin access (Enforce OAuth2 in the admin)');
+        $event->setMessage($this->grav['language']->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_ADMIN_ACCOUNT'), 'error');
+        $event->setStatus($event::AUTHORIZATION_DENIED);
+        $event->stopPropagation();
+    }
+
+    /**
+     * Whether an account can use the admin: the classic admin (admin.login, admin.super) or the API that Admin2 uses
+     * (api.access, api.super). Asked as if its login were authorized already: until then Grav only answers login
+     * actions (and its "test" scope, which would skip that, only exists for Flex accounts).
+     */
+    protected static function hasAdminAccess(UserInterface $user): bool
+    {
+        $authorized = $user->authorized;
+        $user->authorized = true;
+        try {
+            foreach (['admin.login', 'admin.super', 'api.access', 'api.super'] as $action) {
+                if ($user->authorize($action)) {
+                    return true;
+                }
+            }
+
+            return false;
+        } finally {
+            $user->authorized = $authorized;
+        }
+    }
+
+    /**
      * [onApiInvitationAccepted] "Enforce OAuth2" in the admin: an Admin2 invitation doesn't log its user in, who logs
      * in with OAuth2 instead (matched by email). The API has created the account already, and gives no tokens.
      */
@@ -360,9 +451,10 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
-     * Whether only OAuth2 logins are allowed on a side: only while it has at least one active provider (the ones the
-     * login page shows), so a provider disabled or not configured can't lock anyone out; for the admin also only while
-     * OAuth2 is enabled there.
+     * Whether only OAuth2 logins are allowed on a side: only while it has at least one active provider (enabled and
+     * with its client ID), so a provider disabled or not configured can't lock anyone out; for the admin also only
+     * while OAuth2 is enabled there. Satellite plugins (e.g. login-oauth2-extras) add their providers as soon as
+     * they're enabled, so the client ID is checked here.
      */
     protected function isOAuth2Enforced(bool $admin): bool
     {
@@ -375,11 +467,29 @@ class LoginOauth2Plugin extends Plugin
             return false;
         }
 
-        // Admin logins outside the classic admin come from Admin2 (API): their providers are in the admin service of
-        // the SSO bridge, with the ones of satellite plugins.
-        $oauth2 = $admin && !$this->admin ? $this->ensureAdminOAuth2() : $this->grav['oauth2'];
+        // Admin logins outside the classic admin come from Admin2 (API): their providers are the admin ones, with the
+        // ones of satellite plugins.
+        $oauth2 = $admin && !$this->admin ? $this->adminProviders() : $this->grav['oauth2'];
 
-        return (bool)$oauth2->getProviders();
+        return (bool)$oauth2->getConfiguredProviders();
+    }
+
+    /**
+     * The admin providers outside the classic admin: the service of the SSO bridge once it's built, else one of its
+     * own, so the site's service stays in place (e.g. for a site login checked against the admin's "Enforce OAuth2").
+     */
+    private function adminProviders(): OAuth2
+    {
+        if ($this->adminOAuth2 instanceof OAuth2) {
+            return $this->adminOAuth2;
+        }
+        if (!$this->adminProviders instanceof OAuth2) {
+            $this->adminProviders = new OAuth2(true);
+            $this->adminProviders->addEnabledProviders();
+            $this->grav->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $this->adminProviders]));
+        }
+
+        return $this->adminProviders;
     }
 
     public function userLoginAuthenticate(UserLoginEvent $event): void
@@ -585,10 +695,10 @@ class LoginOauth2Plugin extends Plugin
         }
         $event['providers'] = $providers;
 
-        // "Enforce OAuth2" in effect: the admin login screen hides its password form (password_login, reported by
+        // "Enforce OAuth2" in effect: the admin login screen hides its password form (show_password_form, reported by
         // API versions that have the setting).
         if ($this->isOAuth2Enforced(true)) {
-            $event['password_login'] = false;
+            $event['show_password_form'] = false;
         }
     }
 
