@@ -11,7 +11,7 @@ Currently the core plugin supports the following providers:
 * **Instagram** - <https://www.instagram.com/developer/authentication/>
 * **LinkedIn** - <https://developer.linkedin.com/docs/oauth2>
 
-It's also possible to extend this plugin an create a new AOauth2 for specific providers.
+It's also possible to extend this plugin an create a new OAuth2 for specific providers.
 
 ## Callback URL
 
