@@ -146,7 +146,8 @@ class LoginOauth2Plugin extends Plugin
 
     /**
      * [onLoginPage] Adds the login buttons. With "Enforce OAuth2" in effect, also turns the Login plugin's password
-     * form off (password_login, hidden by Login versions that have the setting).
+     * form off (password_login, hidden by Login versions that have the setting), and its "Login by link" button, as
+     * magic-link logins are denied too.
      */
     public function onLoginPage(): void
     {
@@ -155,6 +156,7 @@ class LoginOauth2Plugin extends Plugin
         }
         if ($this->isOAuth2Enforced($this->admin)) {
             $this->config->set('plugins.login.password_login', false);
+            $this->config->set('plugins.login.magic_link.enabled', false);
         }
     }
 

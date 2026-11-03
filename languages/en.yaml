@@ -28,7 +28,7 @@ PLUGIN_LOGIN_OAUTH2:
   ADMIN_REQUIRE_GRAV_USER: "Require Existing Grav user"
   ADMIN_REQUIRE_GRAV_USER_HELP: "Denies admin logins of users without a Grav account, e.g. so that only accounts you created can use the admin login and no accounts are saved for others. Until set here, it follows 'Require Existing Grav user' in the Site tab."
   ENFORCE_OAUTH2: "Enforce OAuth2"
-  ENFORCE_OAUTH2_HELP: "Denies site logins with a password: only OAuth2 logins work ('remember me' too). Takes effect only while at least one provider is enabled and configured in its Site column (OAuth2 Providers tab). The login form stays visible. For admin logins see 'Enforce OAuth2' in the Admin tab."
+  ENFORCE_OAUTH2_HELP: "Denies site logins with a password or a magic link: only OAuth2 logins work ('remember me' too). Takes effect only while at least one provider is enabled and configured in its Site column (OAuth2 Providers tab). The login page then hides the password form and the 'Login by link' button. For admin logins see 'Enforce OAuth2' in the Admin tab."
   ADMIN_ENFORCE_OAUTH2: "Enforce OAuth2"
   ADMIN_ENFORCE_OAUTH2_HELP: "Denies admin logins with a password (Admin2 and classic admin): only OAuth2 logins work. Takes effect only while 'Enabled in Admin' (above) is on and at least one provider is enabled and configured in its Admin column (OAuth2 Providers tab). Locked out? See <a href=\"https://github.com/trilbymedia/grav-plugin-login-oauth2/blob/develop/README.md#enforce-oauth2\" target=\"_blank\" rel=\"noopener\">Enforce OAuth2</a> in the documentation."
   ENFORCE_OAUTH2_DENIED: "Logins with a password are disabled, please log in with one of the login buttons."
