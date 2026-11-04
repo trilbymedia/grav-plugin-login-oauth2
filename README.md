@@ -406,11 +406,16 @@ It is not advised to provide any `admin` access via OAuth2 accounts, but if you 
 
 #### Enforce OAuth2
 
-With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (enabled and with its client ID): logins with a password, magic links and logins after registration are denied. The site's login page hides the password form and the "Login by link" button, and magic links can't be requested; the Admin2 login screen hides its password form (API 1.1.11 and Admin2 2.2.8 or newer), and answers "Invalid username or password." to one sent anyway. On the site, logins with a "remember me" cookie still work.
+With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (enabled and with its client ID): logins with a password, magic links and logins after registration are denied. The site's login page hides the password form (Login 3.12.1 or newer) and the "Login by link" button, and magic links can't be requested; the Admin2 login screen hides its password form (API 1.1.11 and Admin2 2.2.8 or newer), and answers "Invalid username or password." to one sent anyway. On the site, logins with a "remember me" cookie still work.
 
-With `admin.enforce_oauth2`, accounts with admin access (`admin.login`, `admin.super`, `api.access` or `api.super`) can't log in on the site without OAuth2 either, also not with a "remember me" cookie: their site session would open the admin too (Admin2 accepts it).
+With `admin.enforce_oauth2`, accounts with admin access (`admin.login`, `admin.super`, `api.access` or `api.super`) can't log in on the site with a password or magic link either, as Admin2 accepts their site session. "Remember me" cookies still work.
 
-"Remember me" cookies from password logins made before you turned it on keep working, and the Login plugin renews them on every use. To end them, delete the folder `user/data/rememberme`: everyone logged in with "remember me" has to log in again.
+If a setting is on but doesn't apply (no active provider, or `admin.enabled` off), a notice below its toggle says why, as does `bin/plugin login-oauth2 status`.
+
+Turning it on doesn't sign anyone out: open sessions, "remember me" cookies (renewed on every use, and for admin accounts also valid in Admin2), Admin2 tokens (renewed while in use) and API keys keep working. To end them:
+
+* For one account, change its password (Login 3.11.0 or newer), and revoke its API keys in Admin2.
+* For everyone, delete `user/data/rememberme` ("remember me" cookies) and `user/config/plugins/api-private.php` (Admin2 tokens), and change `system.session.name` (sessions).
 
 Don't use Admin2 invitations with `admin.enforce_oauth2`: accepting one creates the account but doesn't log in, its user logs in with OAuth2 instead (matched by email).
 

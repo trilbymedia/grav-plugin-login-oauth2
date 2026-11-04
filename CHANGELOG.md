@@ -4,10 +4,11 @@
 1. [](#new)
     * Generic provider: an option to turn the certificate checks of the token and userinfo endpoints off for testing (Security section)
     * Enforce OAuth2: options to deny logins with a password on the site and in the admin (Admin2 and classic admin); Admin2 invitations then create the account without logging in
-    * Enforce OAuth2 also hides the password form (`show_password_form`): on the site's login page, and on the Admin2 login screen with API 1.1.11 and Admin2 2.2.8 or newer
+    * Enforce OAuth2 also hides the password form (`show_password_form`): on the site's login page with Login 3.12.1 or newer, and on the Admin2 login screen with API 1.1.11 and Admin2 2.2.8 or newer
     * Enforce OAuth2 on the site also turns magic links off: the login page hides the "Login by link" button, the magic-link page and emailed links redirect to the login page, and magic-link requests are refused
     * CLI commands (`bin/plugin login-oauth2`): `status`, `enforce-oauth2 on|off|status` (e.g. to get back in when locked out) and `provider enable|disable|verify-certificate`
 1. [](#improved)
+    * A notice below each "Enforce OAuth2" toggle shows while it's on but doesn't apply (no active provider, or "Enabled in Admin" off)
     * A notice above the settings tabs suggests turning off the Login plugin's "Remember me" while OAuth2 logins are in use: its cookie logs users back in without asking the identity provider
     * The Callback URIs section has a provider select and shows the callback URIs of the selected provider, by default the first provider enabled with a client ID
 1. [](#bugfix)

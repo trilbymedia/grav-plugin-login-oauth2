@@ -116,7 +116,7 @@ class OAuth2EnforceCommand extends ConsoleCommand
                 $key = Settings::key($side, 'enforce_oauth2');
                 // With --env also where only the main configuration turns it on: the environment's file overrides it.
                 // In the main file also where only the plugin's default turns it on (an edited login-oauth2.yaml).
-                if ($env ? $settings->get($key) : ($settings->read($file, $key) || ($file === $main && $settings->get($key)))) {
+                if ($env ? $settings->get($key) : ($file === $main ? $settings->mainValue($key) : $settings->read($file, $key))) {
                     $values[$key] = false;
                 }
             }
@@ -166,7 +166,6 @@ class OAuth2EnforceCommand extends ConsoleCommand
     protected function on(SymfonyStyle $io, Settings $settings, array $sides): int
     {
         $force = (bool)$this->input->getOption('force');
-        $chosen = (bool)$this->input->getOption('site') !== (bool)$this->input->getOption('admin');
         $values = [];
         $skipped = [];
         $notApplying = [];
@@ -181,13 +180,14 @@ class OAuth2EnforceCommand extends ConsoleCommand
                 $notApplying[$side] = $why;
             }
         }
-        if ($skipped && ($chosen || !$values)) {
+        // Every side skipped: a side chosen with --site or --admin, or both.
+        if (!$values) {
             $refused = [];
             foreach ($skipped as $side => $why) {
                 $refused[] = ucfirst($side) . ": {$why}, so it wouldn't apply.";
             }
             $refused[] = 'Nothing changed. Enable and configure a provider first, or add --force to turn it on anyway'
-                . ($chosen ? '' : ' (with --site or --admin for one side only)') . '.';
+                . (count($sides) === 1 ? '' : ' (with --site or --admin for one side only)') . '.';
             $io->error($refused);
 
             return 1;
@@ -214,6 +214,9 @@ class OAuth2EnforceCommand extends ConsoleCommand
             $io->success(sprintf("'Enforce OAuth2' is already on (%s).", implode(', ', $on)));
 
             return 0;
+        }
+        if ($applying) {
+            $io->note("It doesn't sign anyone out: open sessions, 'remember me' cookies and Admin2's tokens keep working until they expire. To end them, see 'Enforce OAuth2' in the README.");
         }
         $io->success(sprintf(
             "'Enforce OAuth2' is on (%s)%s. To undo: bin/plugin login-oauth2 enforce-oauth2 off",

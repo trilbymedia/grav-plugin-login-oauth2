@@ -397,13 +397,15 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
-     * [onUserLoginAuthorize:10] "Enforce OAuth2" in the admin: also denies site logins without OAuth2 (password, magic
-     * link, "remember me") of accounts with admin or API access. Their site session would open the admin anyway: the
-     * API accepts it (session passthrough), as does the classic admin with a shared session (system.session.split off).
+     * [onUserLoginAuthorize:10] "Enforce OAuth2" in the admin: also denies site logins with a password or a magic link
+     * of accounts with admin or API access. Their site session would open the admin anyway: the API accepts it (session
+     * passthrough), as does the classic admin with a shared session (system.session.split off). Logins with a "remember
+     * me" cookie still pass, as on the site (userLoginEnforceOAuth2()).
      */
     public function userLoginEnforceAdminOAuth2(UserLoginEvent $event): void
     {
-        if ($this->admin || $event->getOption('admin') || $event->getOption('oauth2') || !$this->isOAuth2Enforced(true)) {
+        if ($this->admin || $event->getOption('admin') || $event->getOption('oauth2') || $event->getOption('remember_me_login')
+            || !$this->isOAuth2Enforced(true)) {
             return;
         }
         $user = $event->getUser();
@@ -451,19 +453,15 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
-     * Whether only OAuth2 logins are allowed on a side: only while it has at least one active provider (enabled and
-     * with its client ID), so a provider disabled or not configured can't lock anyone out; for the admin also only
-     * while OAuth2 is enabled there. Satellite plugins (e.g. login-oauth2-extras) add their providers as soon as
-     * they're enabled, so the client ID is checked here.
+     * Whether only OAuth2 logins are allowed on a side: while its setting is on and it applies (OAuth2::
+     * enforceNotApplying()), i.e. only while the side has at least one active provider (enabled and with its client
+     * ID), so a provider disabled or not configured can't lock anyone out; for the admin also only while OAuth2 is
+     * enabled there. Satellite plugins (e.g. login-oauth2-extras) add their providers as soon as they're enabled, so
+     * the client ID is checked there.
      */
     protected function isOAuth2Enforced(bool $admin): bool
     {
-        if ($admin) {
-            $enabled = $this->config->get('plugins.login-oauth2.admin.enabled') && $this->config->get('plugins.login-oauth2.admin.enforce_oauth2');
-        } else {
-            $enabled = (bool)$this->config->get('plugins.login-oauth2.enforce_oauth2');
-        }
-        if (!$enabled) {
+        if (!$this->config->get('plugins.login-oauth2.' . ($admin ? 'admin.' : '') . 'enforce_oauth2')) {
             return false;
         }
 
@@ -471,7 +469,7 @@ class LoginOauth2Plugin extends Plugin
         // ones of satellite plugins.
         $oauth2 = $admin && !$this->admin ? $this->adminProviders() : $this->grav['oauth2'];
 
-        return (bool)$oauth2->getConfiguredProviders();
+        return OAuth2::enforceNotApplying($admin, (array)$this->config->get('plugins.login-oauth2'), $oauth2->getProviders()) === null;
     }
 
     /**
@@ -484,9 +482,7 @@ class LoginOauth2Plugin extends Plugin
             return $this->adminOAuth2;
         }
         if (!$this->adminProviders instanceof OAuth2) {
-            $this->adminProviders = new OAuth2(true);
-            $this->adminProviders->addEnabledProviders();
-            $this->grav->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $this->adminProviders]));
+            $this->adminProviders = OAuth2::registered(true);
         }
 
         return $this->adminProviders;
@@ -854,21 +850,17 @@ class LoginOauth2Plugin extends Plugin
             return $this->adminOAuth2;
         }
 
+        $this->adminOAuth2 = new OAuth2(true);
         unset($this->grav['oauth2']);
-        $this->grav['oauth2'] = static function () {
-            $oauth2 = new OAuth2(true);
-            $oauth2->addEnabledProviders();
+        $oauth2 = $this->adminOAuth2;
+        $this->grav['oauth2'] = static function () use ($oauth2) {
             return $oauth2;
         };
 
-        // Resolve before firing: satellite handlers (and the provider classes
+        // Register after the swap: satellite handlers (and the provider classes
         // they construct) read `grav['oauth2']->isAdmin()` to pick their config
-        // subtree, so the admin instance has to be in place and settled first.
-        $this->adminOAuth2 = $this->grav['oauth2'];
-
-        $this->grav->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $this->adminOAuth2]));
-
-        return $this->adminOAuth2;
+        // subtree, so the admin instance has to be in place first.
+        return $this->adminOAuth2->registerProviders();
     }
 
     /**

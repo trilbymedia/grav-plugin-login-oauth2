@@ -9,8 +9,8 @@
         {% endfor %}
         <input type="hidden" name="task" value="login.oauth2" />
     </form>
-    {# "or" only above the password form: the Login plugin hides it without show_password_form, the classic admin doesn't #}
-    {% if (config.plugins.login.show_password_form ?? true) or grav.oauth2.isAdmin() %}
+    {# "or" only above the password form: the classic admin always shows it, the site as Login decides (showPasswordForm(), Login 3.12.1 or newer; always before) #}
+    {% if grav.oauth2.isAdmin() or grav.login.showPasswordForm is not defined or grav.login.showPasswordForm() %}
     <div class="oauth2-or">
         <span class="line"></span>
         <span class="or">{{ 'PLUGIN_LOGIN_OAUTH2.OR'|t }}</span>

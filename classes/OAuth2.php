@@ -93,8 +93,9 @@ class OAuth2
 
     /**
      * The notice above the plugin's tabs (blueprint: data-content@) while the Login plugin's "Remember Me" is on and
-     * OAuth2 logins are in use: an active provider on the site, or in the admin with "Enabled in Admin". OAuth2 logins
-     * get its cookie too, which logs users back in without the identity provider. Empty otherwise, which hides it.
+     * OAuth2 logins that get its cookie are in use: an active provider on the site, or in the classic admin with
+     * "Enabled in Admin" (Admin2's logins, through the API, get none). The cookie logs users back in without the
+     * identity provider. Empty otherwise, which hides it.
      */
     public static function rememberMeNotice(): string
     {
@@ -108,14 +109,10 @@ class OAuth2
 
             $inUse = false;
             foreach ([false, true] as $admin) {
-                if ($admin && !$config->get('plugins.login-oauth2.admin.enabled')) {
+                if ($admin && !($config->get('plugins.login-oauth2.admin.enabled') && $config->get('plugins.admin.enabled'))) {
                     continue;
                 }
-                $oauth2 = new static($admin);
-                $oauth2->addEnabledProviders();
-                // Satellite plugins (e.g. login-oauth2-extras) add theirs on this event.
-                $grav->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $oauth2]));
-                if ($oauth2->getConfiguredProviders()) {
+                if (static::registered($admin)->getConfiguredProviders()) {
                     $inUse = true;
                     break;
                 }
@@ -132,6 +129,65 @@ class OAuth2
                 static::duration((int)$config->get('system.session.timeout', 1800)),
                 htmlspecialchars($admin . '/plugins/login#options', ENT_QUOTES),
                 htmlspecialchars($admin . '/config/system#session', ENT_QUOTES),
+            ]);
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Why "Enforce OAuth2" doesn't apply on a side, null if it applies: the one rule of the login checks
+     * (LoginOauth2Plugin::isOAuth2Enforced()), the settings notice (enforceNotice()) and the CLI. "disabled": the
+     * plugin is off; "admin_disabled": "Enabled in Admin" is off; "no_provider": none of the side's providers has its
+     * client ID. Whether the setting itself is on, its callers ask first.
+     *
+     * @param bool $admin
+     * @param array $config The plugin's settings (plugins.login-oauth2)
+     * @param array $providers The side's providers, name => settings (e.g. getProviders() of registered())
+     * @return string|null
+     */
+    public static function enforceNotApplying(bool $admin, array $config, array $providers): ?string
+    {
+        if (empty($config['enabled'])) {
+            return 'disabled';
+        }
+        if ($admin && empty($config['admin']['enabled'])) {
+            return 'admin_disabled';
+        }
+
+        return static::configured($providers) ? null : 'no_provider';
+    }
+
+    /**
+     * The notice below a side's "Enforce OAuth2" toggle (blueprint: data-content@) while it's on but doesn't apply
+     * (enforceNotApplying()), so logins with a password still work there. Empty otherwise, which hides it. As the form,
+     * it shows the saved settings.
+     *
+     * @param mixed $admin The admin's toggle, else the site's
+     */
+    public static function enforceNotice($admin = false): string
+    {
+        // Never take the settings page down.
+        try {
+            $grav = Grav::instance();
+            $admin = (bool)$admin;
+            $config = (array)($grav['config']->get('plugins.login-oauth2') ?? []);
+            $on = $admin ? ($config['admin']['enforce_oauth2'] ?? false) : ($config['enforce_oauth2'] ?? false);
+            $why = $on ? static::enforceNotApplying($admin, $config, static::registered($admin)->getProviders()) : null;
+            if ($why === null) {
+                return '';
+            }
+
+            $reason = [
+                'disabled' => 'ENFORCE_OAUTH2_REASON_DISABLED',
+                'admin_disabled' => 'ENFORCE_OAUTH2_REASON_ADMIN_DISABLED',
+                'no_provider' => $admin ? 'ENFORCE_OAUTH2_REASON_NO_ADMIN_PROVIDER' : 'ENFORCE_OAUTH2_REASON_NO_SITE_PROVIDER',
+            ][$why];
+            $language = $grav['language'];
+
+            return (string)$language->translate([
+                'PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_NOT_APPLYING',
+                $language->translate('PLUGIN_LOGIN_OAUTH2.' . $reason),
             ]);
         } catch (\Throwable $e) {
             return '';
@@ -179,6 +235,39 @@ class OAuth2
         return !empty($options['client_id']) || !empty($options['app_id']);
     }
 
+    /**
+     * The providers of a side's login: a service with this plugin's enabled providers and the ones satellite plugins
+     * add (registerProviders()).
+     *
+     * @return static
+     */
+    public static function registered(bool $admin): self
+    {
+        return (new static($admin))->registerProviders();
+    }
+
+    /**
+     * Adds this plugin's enabled providers, then lets satellite plugins (e.g. login-oauth2-extras) add theirs on
+     * onOAuth2ProvidersRegister, which they listen to from their onPluginsInitialized.
+     *
+     * @return $this
+     */
+    public function registerProviders(): self
+    {
+        $this->addEnabledProviders();
+        Grav::instance()->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $this]));
+
+        return $this;
+    }
+
+    /**
+     * The providers that have their client ID, of a name => settings list.
+     */
+    public static function configured(array $providers): array
+    {
+        return array_filter($providers, [static::class, 'isConfigured']);
+    }
+
     public function addEnabledProviders(): void
     {
         if ($this->admin) {
@@ -214,7 +303,7 @@ class OAuth2
      */
     public function getConfiguredProviders(): array
     {
-        return array_filter($this->providers, [static::class, 'isConfigured']);
+        return static::configured($this->providers);
     }
 
     /**

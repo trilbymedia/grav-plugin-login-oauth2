@@ -56,11 +56,11 @@ class OAuth2StatusCommand extends ConsoleCommand
 
         foreach (Settings::sides($this->input) as $side) {
             $registered = $settings->registeredProviders($side);
-            $active = array_filter($registered, [OAuth2::class, 'isConfigured']);
+            $active = $settings->activeProviders($side, $registered);
             $oauth2 = new OAuth2($side === 'admin');
             // The admin follows the site's account settings until set itself.
             $follows = $side === 'admin' ? ' (follows the site)' : '';
-            $why = $settings->notApplying($side, $active);
+            $why = $settings->notApplying($side, $registered);
             $io->section(ucfirst($side));
 
             $list = [];

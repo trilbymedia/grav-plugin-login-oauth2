@@ -7,7 +7,6 @@ use Grav\Common\Filesystem\Folder;
 use Grav\Common\Grav;
 use Grav\Common\Utils;
 use Grav\Plugin\Login\OAuth2\OAuth2;
-use RocketTheme\Toolbox\Event\Event;
 use Symfony\Component\Console\Input\InputInterface;
 
 /**
@@ -25,6 +24,10 @@ class Settings
     protected $input;
     /** @var array|null The plugin's default configuration, read once */
     protected $defaults;
+    /** @var array File => content, each config file read once (save() keeps it current) */
+    protected $contents = [];
+    /** @var string[]|null The plugin's existing config files, found once (save() can add one) */
+    protected $files;
 
     public function __construct(Grav $grav, InputInterface $input)
     {
@@ -88,13 +91,22 @@ class Settings
     }
 
     /**
-     * The main config file, which the files of the environments override.
+     * The main config file, which the files of the environments override: in the folder of the config stream that is
+     * neither the environment's nor Grav's own, as Grav loads it (user/config, unless setup.php changes the stream).
      *
      * @return string
      */
     public function mainFile(): string
     {
-        return $this->grav['locator']->findResource('user://', true) . static::FILE;
+        $locator = $this->grav['locator'];
+        $other = [$locator->findResource('environment://config', true), $locator->findResource('system://config', true)];
+        foreach ($locator->findResources('config://', true) as $folder) {
+            if (!in_array($folder, $other, true)) {
+                return $folder . '/plugins/login-oauth2.yaml';
+            }
+        }
+
+        return $locator->findResource('user://', true) . static::FILE;
     }
 
     /**
@@ -123,6 +135,10 @@ class Settings
      */
     public function files(): array
     {
+        if ($this->files !== null) {
+            return $this->files;
+        }
+
         // Grav has no API to list its environments.
         $locator = $this->grav['locator'];
         $user = (string)$locator->findResource('user://', true);
@@ -148,7 +164,7 @@ class Settings
             }
         }
 
-        return array_values($found);
+        return $this->files = array_values($found);
     }
 
     /**
@@ -193,8 +209,7 @@ class Settings
     public function stillOn(string $key): array
     {
         $main = $this->mainFile();
-        $mainValue = is_file($main) ? $this->read($main, $key) : null;
-        $on = ($mainValue ?? Utils::getDotNotation($this->defaults(), $key)) ? [Folder::getRelativePath($main)] : [];
+        $on = $this->mainValue($key) ? [Folder::getRelativePath($main)] : [];
         foreach ($this->files() as $file) {
             if ($file !== $main && $this->read($file, $key)) {
                 $on[] = Folder::getRelativePath($file);
@@ -217,11 +232,23 @@ class Settings
     }
 
     /**
+     * A setting as the main configuration gives it, without the environments: the main config file's, else the
+     * plugin's default (e.g. an edited login-oauth2.yaml).
+     *
+     * @param string $key
+     * @return mixed
+     */
+    public function mainValue(string $key)
+    {
+        return $this->read($this->mainFile(), $key) ?? Utils::getDotNotation($this->defaults(), $key);
+    }
+
+    /**
      * Saves settings to a config file, which is created if needed, only those that change: a value not set in the
-     * file that Grav already uses (e.g. the plugin's default) is left out. Grav saves the file as YAML again, without
-     * comments (as the admin does). Grav's compiled configuration is removed, so the next request reads the file again
-     * (Grav only checks for changed config files every few seconds). The configuration of this command gets the
-     * values too.
+     * file that it already gets from below (the main file from the plugin's default, an environment's file from the
+     * main configuration) is left out. Grav saves the file as YAML again, without comments (as the admin does). Grav's
+     * compiled configuration is removed, so the next request reads the file again (Grav only checks for changed config
+     * files every few seconds). The configuration of this command gets the values too.
      *
      * @param string $file
      * @param array $values Key => value
@@ -230,12 +257,13 @@ class Settings
      */
     public function save(string $file, array $values, string $what): ?string
     {
-        $yaml = CompiledYamlFile::instance($file);
-        $content = (array)$yaml->content();
+        $content = $this->content($file);
+        $main = $file === $this->mainFile();
         $changed = [];
         foreach ($values as $key => $value) {
             $previous = Utils::getDotNotation($content, $key);
-            if ($previous === $value || ($previous === null && $this->get($key) === $value)) {
+            $inherited = $main ? Utils::getDotNotation($this->defaults(), $key) : $this->mainValue($key);
+            if ($previous === $value || ($previous === null && $inherited === $value)) {
                 continue;
             }
             Utils::setDotNotation($content, $key, $value);
@@ -243,13 +271,14 @@ class Settings
             $changed[] = $key;
         }
         if (!$changed) {
-            $yaml->free();
-
             return null;
         }
 
+        $yaml = CompiledYamlFile::instance($file);
         $yaml->save($content);
         $yaml->free();
+        $this->contents[$file] = $content;
+        $this->files = null;
         $compiled = $this->grav['locator']->findResource('cache://compiled/config', true, true);
         foreach (is_dir($compiled) ? scandir($compiled) : [] as $name) {
             if (substr($name, -4) === '.php') {
@@ -268,11 +297,12 @@ class Settings
      * registered ones that have their client ID.
      *
      * @param string $side
+     * @param array|null $registered The side's registeredProviders(), if known
      * @return array Name => settings
      */
-    public function activeProviders(string $side): array
+    public function activeProviders(string $side, ?array $registered = null): array
     {
-        return array_filter($this->registeredProviders($side), [OAuth2::class, 'isConfigured']);
+        return OAuth2::configured($registered ?? $this->registeredProviders($side));
     }
 
     /**
@@ -286,10 +316,7 @@ class Settings
      */
     public function registeredProviders(string $side): array
     {
-        $oauth2 = new OAuth2($side === 'admin');
-        $oauth2->addEnabledProviders();
-        $this->grav->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $oauth2]));
-        $providers = $oauth2->getProviders();
+        $providers = OAuth2::registered($side === 'admin')->getProviders();
 
         if ($side === 'site' && isset($this->grav['oauth2']) && !$this->grav['oauth2']->isAdmin()) {
             foreach ($this->grav['oauth2']->getProviders() as $name => $options) {
@@ -304,23 +331,23 @@ class Settings
     }
 
     /**
-     * Why "Enforce OAuth2" doesn't apply on a side although it's on, null if it applies: the same conditions as the
-     * plugin's login check (LoginOauth2Plugin::isOAuth2Enforced()).
+     * Why "Enforce OAuth2" doesn't apply on a side although it's on, null if it applies: the plugin's rule
+     * (OAuth2::enforceNotApplying()), in words.
      *
      * @param string $side
-     * @param array|null $active The side's active providers, if known
+     * @param array|null $providers The side's registeredProviders(), if known
      * @return string|null
      */
-    public function notApplying(string $side, ?array $active = null): ?string
+    public function notApplying(string $side, ?array $providers = null): ?string
     {
-        if (!$this->get('enabled')) {
-            return 'the plugin is disabled';
-        }
-        if ($side === 'admin' && !$this->get('admin.enabled')) {
-            return "'Enabled in Admin' is off";
-        }
+        $config = (array)($this->grav['config']->get('plugins.login-oauth2') ?? []);
+        $why = OAuth2::enforceNotApplying($side === 'admin', $config, $providers ?? $this->registeredProviders($side));
 
-        return ($active ?? $this->activeProviders($side)) ? null : 'no active provider';
+        return $why === null ? null : [
+            'disabled' => 'the plugin is disabled',
+            'admin_disabled' => "'Enabled in Admin' is off",
+            'no_provider' => 'no active provider',
+        ][$why];
     }
 
     /**
@@ -390,11 +417,17 @@ class Settings
      */
     protected function content(string $file): array
     {
-        $yaml = CompiledYamlFile::instance($file);
-        $content = (array)$yaml->content();
-        $yaml->free();
+        if (!isset($this->contents[$file])) {
+            $content = [];
+            if (is_file($file)) {
+                $yaml = CompiledYamlFile::instance($file);
+                $content = (array)$yaml->content();
+                $yaml->free();
+            }
+            $this->contents[$file] = $content;
+        }
 
-        return $content;
+        return $this->contents[$file];
     }
 
     /**
@@ -425,7 +458,7 @@ class Settings
         // As Grav loads it: the main config file, completed with the plugin's defaults.
         $file = $this->mainFile();
         $config = $this->grav['config'];
-        $config->set('plugins.login-oauth2', is_file($file) ? $this->content($file) : []);
+        $config->set('plugins.login-oauth2', $this->content($file));
         $config->joinDefaults('plugins.login-oauth2', $this->defaults());
     }
 

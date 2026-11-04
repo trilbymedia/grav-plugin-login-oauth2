@@ -250,6 +250,12 @@ form:
               validate:
                 type: bool
 
+            # While it's on but doesn't apply (OAuth2::enforceNotice()); without content nothing shows.
+            enforce_oauth2_notice:
+              type: display
+              style: vertical
+              data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceNotice', false]
+
             site_users_section:
               type: section
               title: PLUGIN_LOGIN_OAUTH2.SECTION_USERS
@@ -340,6 +346,12 @@ form:
                 0: Disabled
               validate:
                 type: bool
+
+            # While it's on but doesn't apply (OAuth2::enforceNotice()); without content nothing shows.
+            admin_enforce_oauth2_notice:
+              type: display
+              style: vertical
+              data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceNotice', true]
 
             admin_users_section:
               type: section
