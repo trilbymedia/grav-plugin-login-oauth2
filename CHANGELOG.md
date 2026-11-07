@@ -1,3 +1,21 @@
+# v2.4.0
+## 11/03/2026
+
+1. [](#new)
+    * Generic provider: an option to turn the certificate checks of the token and userinfo endpoints off for testing (Security section)
+    * Enforce OAuth2: options to deny logins with a password on the site and in the admin (Admin2 and classic admin); Admin2 invitations then create the account without logging in
+    * Enforce OAuth2 also hides the password form (`show_password_form`): on the site's login page with Login 3.12.1 or newer, and on the Admin2 login screen with API 1.1.11 and Admin2 2.2.8 or newer
+    * Enforce OAuth2 on the site also turns magic links off: the login page hides the "Login by link" button, the magic-link page and emailed links redirect to the login page, and magic-link requests are refused
+    * CLI commands (`bin/plugin login-oauth2`): `status`, `enforce-oauth2 on|off|status` (e.g. to get back in when locked out) and `provider enable|disable|verify-certificate`
+    * Enforce OAuth2 requires the Login plugin's "Remember me" off, and in the admin also the API plugin's Session Authentication, as both let users in without OAuth2: turning it on is refused otherwise (settings and `enforce-oauth2 on`; `--force` turns it on anyway). The plugin never changes them itself
+1. [](#improved)
+    * Below each "Enforce OAuth2" toggle, Admin2 shows the settings it requires with their state and why, while the toggle is on in the form, and why it doesn't apply yet (no active provider, or "Enabled in Admin" off); the classic admin shows the latter
+    * A red warning in the settings and on Admin2's dashboard while "Enforce OAuth2" is on but a setting it requires off is on
+    * Admin2's links to other settings pages use Admin2's route also when the classic admin is installed
+    * The Callback URIs section has a provider select and shows the callback URIs of the selected provider, by default the first provider enabled with a client ID
+1. [](#bugfix)
+    * The Admin Callback URI shows the URI Admin2 logins use (the SSO callback of the API plugin, one per provider) instead of the site's; with the classic admin it's still the admin path
+
 # v2.3.0
 ## 11/01/2026
 

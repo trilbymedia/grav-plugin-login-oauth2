@@ -67,6 +67,21 @@ class GenericProvider extends BaseProvider
     }
 
     /**
+     * The certificate checks of the token and userinfo requests (Security section), as the HTTP client's "verify"
+     * option, which BaseProvider::initProvider() sets: false without checks, else true (the system's CA certificates).
+     *
+     * @return bool
+     */
+    protected function getHttpVerifyOption()
+    {
+        if (!$this->config->get('providers.generic.verify_peer', true)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @return string
      */
     public function getAuthorizationUrl(): string

@@ -11,6 +11,9 @@ use Grav\Common\Plugin;
 use Grav\Common\Session;
 use Grav\Common\Uri;
 use Grav\Common\User\Interfaces\UserCollectionInterface;
+use Grav\Common\User\Interfaces\UserInterface;
+use Grav\Plugin\Api\Exceptions\ForbiddenException as ApiForbiddenException;
+use Grav\Plugin\Api\Exceptions\ValidationException as ApiValidationException;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\OAuth2;
@@ -35,6 +38,9 @@ class LoginOauth2Plugin extends Plugin
     /** @var OAuth2|null Admin-mode service built for the headless SSO path. */
     private $adminOAuth2;
 
+    /** @var OAuth2|null Admin providers for the "Enforce OAuth2" check outside the SSO path, beside the site's service. */
+    private $adminProviders;
+
     /**
      * @return array
      *
@@ -49,8 +55,12 @@ class LoginOauth2Plugin extends Plugin
     {
         return [
             'onPluginsInitialized' => [
-                ['onPluginsInitialized', 0]
+                ['onPluginsInitialized', 0],
+                ['disableMagicLinkRoutes', -1000],
             ],
+            // Also while "Enabled in Admin" is off, which onPluginsInitialized() stops at in the classic admin.
+            'onAdminSave' => ['onAdminSave', 0],
+            'onApiDashboardNotifications' => ['onApiDashboardNotifications', 0],
         ];
     }
 
@@ -91,6 +101,101 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
+     * [onAdminSave] Refuses to turn "Enforce OAuth2" on for a side while a setting it requires off is on
+     * (OAuth2::enforceRequirements()). Admin2 (through the API) gets the reasons at the toggle, and nothing is saved;
+     * the classic admin saves the rest with the toggle left off, and shows the reasons. Saves that leave it as it was or
+     * turn it off pass, also while requirements aren't met: the settings then show a red warning.
+     *
+     * @param Event $event
+     * @return void
+     */
+    public function onAdminSave(Event $event): void
+    {
+        $object = $event['object'] ?? null;
+        if (!$object instanceof Data || !$this->isOwnConfig($object)) {
+            return;
+        }
+
+        $refused = [];
+        foreach (['enforce_oauth2' => false, 'admin.enforce_oauth2' => true] as $key => $admin) {
+            if (!$object->get($key) || $this->config->get('plugins.login-oauth2.' . $key)) {
+                continue;
+            }
+            if ($unmet = OAuth2::enforceUnmet($admin)) {
+                $refused[$key] = (string)$this->grav['language']->translate([
+                    'PLUGIN_LOGIN_OAUTH2.ENFORCE_REQUIREMENTS_REFUSED' . (count($unmet) > 1 ? '_PLURAL' : ''),
+                    OAuth2::requirementNames($unmet),
+                ]);
+            }
+        }
+        if (!$refused) {
+            return;
+        }
+
+        $admin = $this->grav['admin'] ?? null;
+        if (!$admin instanceof \Grav\Plugin\Admin\Admin && class_exists(ApiValidationException::class)) {
+            $errors = [];
+            foreach ($refused as $field => $message) {
+                $errors[] = ['field' => $field, 'message' => $message];
+            }
+
+            throw new ApiValidationException(implode(' ', $refused), $errors);
+        }
+
+        foreach ($refused as $key => $message) {
+            $object->set($key, false);
+            if ($admin) {
+                $admin->setMessage($message, 'error');
+            }
+        }
+    }
+
+    /**
+     * Whether the settings being saved are this plugin's: by their file (user/config/plugins/login-oauth2.yaml, or an
+     * environment's), else by the admin's route (Admin2's saves through the API set it to /plugins/login-oauth2).
+     */
+    protected function isOwnConfig(Data $object): bool
+    {
+        $file = $object->file();
+        if ($file) {
+            $name = str_replace('\\', '/', (string)$file->filename());
+
+            return substr($name, -strlen('/plugins/login-oauth2.yaml')) === '/plugins/login-oauth2.yaml';
+        }
+
+        $admin = $this->grav['admin'] ?? null;
+
+        return is_object($admin) && isset($admin->route) && trim((string)$admin->route, '/') === 'plugins/login-oauth2';
+    }
+
+    /**
+     * [onApiDashboardNotifications] The notice at the top of Admin2's dashboard while "Enforce OAuth2" is on with
+     * requirements not met: the same as the red warning in the settings (OAuth2::enforceWarning()).
+     *
+     * @param Event $event
+     * @return void
+     */
+    public function onApiDashboardNotifications(Event $event): void
+    {
+        $message = OAuth2::enforceDashboardNotice();
+        if ($message === null) {
+            return;
+        }
+
+        $notifications = $event['notifications'] ?? [];
+        $notifications['top'][] = [
+            'id' => 'login-oauth2-enforce-unmet',
+            'date' => date('c'),
+            'level' => 'error',
+            'icon' => 'shield-alert',
+            'location' => ['top'],
+            'message' => $message,
+            'reappear_after' => '+1 day',
+        ];
+        $event['notifications'] = $notifications;
+    }
+
+    /**
      * Initialize the plugin
      */
     public function onPluginsInitialized(): void
@@ -107,11 +212,13 @@ class LoginOauth2Plugin extends Plugin
                 'onTask.login.oauth2'       => ['loginRedirect', 0],
                 'onTask.callback.oauth2'    => ['loginCallback', 0],
                 'onTask.delete.oauth2'      => ['loginDataDelete', 0],
+                'onTask.login.magicRequest' => ['denyMagicLinkRequest', 10],
                 'onTwigLoader'              => ['onTwigLoader', 0],
                 'onTwigTemplatePaths'       => ['onTwigTemplatePaths', 0],
                 'onTwigSiteVariables'       => ['onTwigSiteVariables', 0],
                 'onLoginPage'               => ['onLoginPage', 10],
-                'onUserLoginAuthenticate'   => ['userLoginAuthenticate', 1000],
+                'onUserLoginAuthenticate'   => [['userLoginEnforceOAuth2', 20000], ['userLoginAuthenticate', 1000]],
+                'onUserLoginAuthorize'      => ['userLoginEnforceAdminOAuth2', 10],
                 'onUserLoginFailure'        => ['userLoginFailure', 0],
                 'onUserLogin'               => ['userLogin', 0],
                 'onUserLogout'              => ['userLogout', 0],
@@ -122,6 +229,7 @@ class LoginOauth2Plugin extends Plugin
                 'onApiLoginProviders'       => ['onApiLoginProviders', 0],
                 'onApiLoginStart'           => ['onApiLoginStart', 0],
                 'onApiLoginCallback'        => ['onApiLoginCallback', 0],
+                'onApiInvitationAccepted'   => ['onApiInvitationAccepted', 0],
             ]
         );
 
@@ -143,13 +251,60 @@ class LoginOauth2Plugin extends Plugin
     }
 
     /**
-     * Add navigation item to the admin plugin
+     * [onLoginPage] Adds the login buttons. With "Enforce OAuth2" in effect on the site, also turns the Login plugin's
+     * password form off (show_password_form, set only where the Login config has that key: without it the form shows
+     * anyway, and so the "or" above it), and its "Login by link" button, as magic-link logins are denied too.
+     * Not in the classic admin: it ignores show_password_form, and its Login settings form would show and save the changes
+     * (the Login plugin fires this event on every page).
      */
     public function onLoginPage(): void
     {
         if ($this->grav['oauth2']->getProviders()) {
             $this->grav['login']->addProviderLoginTemplate('login-oauth2/login-oauth2.html.twig');
         }
+        if (!$this->admin && $this->isOAuth2Enforced(false)) {
+            if ($this->config->get('plugins.login.show_password_form') !== null) {
+                $this->config->set('plugins.login.show_password_form', false);
+            }
+            $this->config->set('plugins.login.magic_link.enabled', false);
+        }
+    }
+
+    /**
+     * [onPluginsInitialized:-1000] "Enforce OAuth2" on the site: turns magic links off on the Login plugin's magic-link
+     * routes before it reads the setting (onPagesInitialized), once the satellite plugins have added their providers.
+     * The request page then redirects to the login page, and an emailed link is refused before it's used. Only on these
+     * routes, so the settings forms of the admins (classic admin, Admin2) never show or save the change.
+     */
+    public function disableMagicLinkRoutes(): void
+    {
+        if ($this->isAdmin() || !isset($this->grav['oauth2'], $this->grav['login'])) {
+            return;
+        }
+
+        /** @var Login $login */
+        $login = $this->grav['login'];
+        // Compared as the Login plugin routes them (LoginPlugin::initializeLogin()).
+        $path = $this->grav['uri']->path();
+        if (($path === $login->getRoute('magic') || $path === $login->getRoute('magic_login')) && $this->isOAuth2Enforced(false)) {
+            $this->config->set('plugins.login.magic_link.enabled', false);
+        }
+    }
+
+    /**
+     * [onTask.login.magicRequest:10] "Enforce OAuth2" on the site: refuses a magic-link request before the Login plugin
+     * handles it, which with magic links off would still answer that a link was sent.
+     */
+    public function denyMagicLinkRequest(Event $event): void
+    {
+        if ($this->isAdmin() || !$this->isOAuth2Enforced(false)) {
+            return;
+        }
+
+        $this->grav['log']->notice('Login OAuth2: denied a magic-link request (Enforce OAuth2)');
+        $this->grav['messages']->add($this->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_MAGIC_LINK_DENIED'), 'error');
+        $event->stopPropagation();
+        $this->grav->redirectLangSafe($this->grav['login']->getRoute('login') ?: '/');
     }
 
     /**
@@ -322,6 +477,115 @@ class LoginOauth2Plugin extends Plugin
         $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
     }
 
+    /**
+     * [onUserLoginAuthenticate:20000] "Enforce OAuth2": denies every login but an OAuth2 one on that side (site, or
+     * admin with Admin2), before the Login plugin checks passwords, magic links or logins after registration. Logins
+     * with a "remember me" cookie still pass, as OAuth2 logins set it too.
+     */
+    public function userLoginEnforceOAuth2(UserLoginEvent $event): void
+    {
+        $admin = (bool)$event->getOption('admin');
+        if ($event->getOption('oauth2') || $event->getOption('remember_me_login') || !$this->isOAuth2Enforced($admin)) {
+            return;
+        }
+
+        $this->grav['log']->notice('Login OAuth2: denied ' . ($admin ? 'an admin' : 'a site') . ' login without OAuth2 (Enforce OAuth2)');
+        $event->setMessage($this->grav['language']->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_DENIED'), 'error');
+        $event->setStatus($event::AUTHENTICATION_FAILURE);
+        $event->stopPropagation();
+    }
+
+    /**
+     * [onUserLoginAuthorize:10] "Enforce OAuth2" in the admin: also denies site logins with a password or a magic link
+     * of accounts with admin or API access. Their site session would open the admin anyway: the API accepts it (session
+     * passthrough), as does the classic admin with a shared session (system.session.split off). Logins with a "remember
+     * me" cookie still pass, as on the site (userLoginEnforceOAuth2()).
+     */
+    public function userLoginEnforceAdminOAuth2(UserLoginEvent $event): void
+    {
+        if ($this->admin || $event->getOption('admin') || $event->getOption('oauth2') || $event->getOption('remember_me_login')
+            || !$this->isOAuth2Enforced(true)) {
+            return;
+        }
+        $user = $event->getUser();
+        if (!$user || !static::hasAdminAccess($user)) {
+            return;
+        }
+
+        $this->grav['log']->notice('Login OAuth2: denied a site login without OAuth2 of an account with admin access (Enforce OAuth2 in the admin)');
+        $event->setMessage($this->grav['language']->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_ADMIN_ACCOUNT'), 'error');
+        $event->setStatus($event::AUTHORIZATION_DENIED);
+        $event->stopPropagation();
+    }
+
+    /**
+     * Whether an account can use the admin: the classic admin (admin.login, admin.super) or the API that Admin2 uses
+     * (api.access, api.super). Asked as if its login were authorized already: until then Grav only answers login
+     * actions (and its "test" scope, which would skip that, only exists for Flex accounts).
+     */
+    protected static function hasAdminAccess(UserInterface $user): bool
+    {
+        $authorized = $user->authorized;
+        $user->authorized = true;
+        try {
+            foreach (['admin.login', 'admin.super', 'api.access', 'api.super'] as $action) {
+                if ($user->authorize($action)) {
+                    return true;
+                }
+            }
+
+            return false;
+        } finally {
+            $user->authorized = $authorized;
+        }
+    }
+
+    /**
+     * [onApiInvitationAccepted] "Enforce OAuth2" in the admin: an Admin2 invitation doesn't log its user in, who logs
+     * in with OAuth2 instead (matched by email). The API has created the account already, and gives no tokens.
+     */
+    public function onApiInvitationAccepted(Event $event): void
+    {
+        if ($this->isOAuth2Enforced(true)) {
+            throw new ApiForbiddenException($this->grav['language']->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_INVITATION'));
+        }
+    }
+
+    /**
+     * Whether only OAuth2 logins are allowed on a side: while its setting is on and it applies (OAuth2::
+     * enforceNotApplying()), i.e. only while the side has at least one active provider (enabled and with its client
+     * ID), so a provider disabled or not configured can't lock anyone out; for the admin also only while OAuth2 is
+     * enabled there. Satellite plugins (e.g. login-oauth2-extras) add their providers as soon as they're enabled, so
+     * the client ID is checked there.
+     */
+    protected function isOAuth2Enforced(bool $admin): bool
+    {
+        if (!$this->config->get('plugins.login-oauth2.' . ($admin ? 'admin.' : '') . 'enforce_oauth2')) {
+            return false;
+        }
+
+        // Admin logins outside the classic admin come from Admin2 (API): their providers are the admin ones, with the
+        // ones of satellite plugins.
+        $oauth2 = $admin && !$this->admin ? $this->adminProviders() : $this->grav['oauth2'];
+
+        return OAuth2::enforceNotApplying($admin, (array)$this->config->get('plugins.login-oauth2'), $oauth2->getProviders()) === null;
+    }
+
+    /**
+     * The admin providers outside the classic admin: the service of the SSO bridge once it's built, else one of its
+     * own, so the site's service stays in place (e.g. for a site login checked against the admin's "Enforce OAuth2").
+     */
+    private function adminProviders(): OAuth2
+    {
+        if ($this->adminOAuth2 instanceof OAuth2) {
+            return $this->adminOAuth2;
+        }
+        if (!$this->adminProviders instanceof OAuth2) {
+            $this->adminProviders = OAuth2::registered(true);
+        }
+
+        return $this->adminProviders;
+    }
 
     public function userLoginAuthenticate(UserLoginEvent $event): void
     {
@@ -525,6 +789,12 @@ class LoginOauth2Plugin extends Plugin
             ];
         }
         $event['providers'] = $providers;
+
+        // "Enforce OAuth2" in effect: the admin login screen hides its password form (show_password_form, reported by
+        // API versions that have the setting).
+        if ($this->isOAuth2Enforced(true)) {
+            $event['show_password_form'] = false;
+        }
     }
 
     /**
@@ -679,21 +949,17 @@ class LoginOauth2Plugin extends Plugin
             return $this->adminOAuth2;
         }
 
+        $this->adminOAuth2 = new OAuth2(true);
         unset($this->grav['oauth2']);
-        $this->grav['oauth2'] = static function () {
-            $oauth2 = new OAuth2(true);
-            $oauth2->addEnabledProviders();
+        $oauth2 = $this->adminOAuth2;
+        $this->grav['oauth2'] = static function () use ($oauth2) {
             return $oauth2;
         };
 
-        // Resolve before firing: satellite handlers (and the provider classes
+        // Register after the swap: satellite handlers (and the provider classes
         // they construct) read `grav['oauth2']->isAdmin()` to pick their config
-        // subtree, so the admin instance has to be in place and settled first.
-        $this->adminOAuth2 = $this->grav['oauth2'];
-
-        $this->grav->fireEvent('onOAuth2ProvidersRegister', new Event(['oauth2' => $this->adminOAuth2]));
-
-        return $this->adminOAuth2;
+        // subtree, so the admin instance has to be in place first.
+        return $this->adminOAuth2->registerProviders();
     }
 
     /**
