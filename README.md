@@ -244,8 +244,8 @@ admin:
 | enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`                           |
 | built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`                           |
 | button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`                           |
-| enforce_oauth2               | Deny site logins with a password (also magic links) while a site provider is active: only OAuth2 logins, remember me          | `true` \| [default: `false`]                           |
-| admin.enforce_oauth2         | Deny admin logins with a password (Admin2, classic admin) while `admin.enabled` is on and an admin provider is active         | `true` \| [default: `false`]                           |
+| enforce_oauth2               | Deny site logins with a password (also magic links) while a site provider is active; needs Login's remember me off            | `true` \| [default: `false`]                           |
+| admin.enforce_oauth2         | Deny admin logins with a password while `admin.enabled` and an admin provider are on; needs remember me, API session auth off | `true` \| [default: `false`]                           |
 | require_grav_user            | Allow oauth login only for existing users (site logins; admin logins: `admin.require_grav_user`)                              | `true` \| [default: `false`]                           |
 | admin.require_grav_user      | Like `require_grav_user`, for admin logins, e.g. so only accounts you created can use the admin login                         | `true` \| `false` \| [default: as `require_grav_user`] |
 | save_grav_user               | Store the grav user account as a local YAML account (site logins; admin logins: `admin.save_grav_user`)                       | `true` \| [default: `false`]                           |
@@ -406,16 +406,24 @@ It is not advised to provide any `admin` access via OAuth2 accounts, but if you 
 
 #### Enforce OAuth2
 
-With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (enabled and with its client ID): logins with a password, magic links and logins after registration are denied. The site's login page hides the password form (Login 3.12.1 or newer) and the "Login by link" button, and magic links can't be requested; the Admin2 login screen hides its password form (API 1.1.11 and Admin2 2.2.8 or newer), and answers "Invalid username or password." to one sent anyway. On the site, logins with a "remember me" cookie still work.
+With `enforce_oauth2` (site logins) or `admin.enforce_oauth2` (admin logins, only while `admin.enabled` is on), only OAuth2 logins work on that side, as long as it has at least one active provider (enabled and with its client ID): logins with a password, magic links, passkeys and logins after registration are denied, as are logins of other plugins that sign in through the Login plugin, such as Login LDAP. Plugins that sign users in on their own, such as the older Login OAuth plugin, aren't affected. The site's login page hides the password form (Login 3.12.1 or newer) and the "Login by link" button, and magic links can't be requested; the Admin2 login screen hides its password form (API 1.1.11 and Admin2 2.2.8 or newer), and answers "Invalid username or password." to one sent anyway.
 
-With `admin.enforce_oauth2`, accounts with admin access (`admin.login`, `admin.super`, `api.access` or `api.super`) can't log in on the site with a password or magic link either, as Admin2 accepts their site session. "Remember me" cookies still work.
+With `admin.enforce_oauth2`, accounts with admin access (`admin.login`, `admin.super`, `api.access` or `api.super`) can't log in on the site in any of these ways either, as Admin2 accepts their site session.
 
-If a setting is on but doesn't apply (no active provider, or `admin.enabled` off), a notice below its toggle says why, as does `bin/plugin login-oauth2 status`.
+Both need settings of other plugins off, as these let users in without OAuth2:
+
+* The Login plugin's "Remember me" (`plugins.login.rememberme.enabled`): its cookie logs users back in without the identity provider, also after their access there was removed.
+* For `admin.enforce_oauth2` also the API plugin's Session Authentication (`plugins.api.auth.session_enabled`): with it, Admin2 accepts a site session, also one from a login "Enforce OAuth2" doesn't cover.
+
+Turning it on is refused while one of them is on, in the settings and with `enforce-oauth2 on` (`--force` turns it on anyway). This plugin doesn't change them itself. While it's on and one of them is on, e.g. after an update or a change by hand, the settings and Admin2's dashboard show a red warning.
+
+In Admin2, switching a toggle on shows a block right below it with these settings and their state, and why it doesn't apply yet, if so (no active provider, or `admin.enabled` off). The classic admin shows the latter below the toggle while it's saved on. `bin/plugin login-oauth2 status` shows both.
 
 Turning it on doesn't sign anyone out: open sessions, "remember me" cookies (renewed on every use, and for admin accounts also valid in Admin2), Admin2 tokens (renewed while in use) and API keys keep working. To end them:
 
 * For one account, change its password (Login 3.11.0 or newer), and revoke its API keys in Admin2.
 * For everyone, delete `user/data/rememberme` ("remember me" cookies) and `user/config/plugins/api-private.php` (Admin2 tokens), and change `system.session.name` (sessions).
+* With a Login plugin that has it: `bin/plugin login sign-out --all`, or **Sign out everyone** under Plugins → Login → Options → Sessions in Admin2 (one account: **Sign out everywhere** on its page). It ends sessions, "remember me" cookies and Admin2 tokens; API keys keep working.
 
 Don't use Admin2 invitations with `admin.enforce_oauth2`: accepting one creates the account but doesn't log in, its user logs in with OAuth2 instead (matched by email).
 
@@ -453,8 +461,8 @@ bin/plugin login-oauth2 provider <enable|disable> <name>
 bin/plugin login-oauth2 provider verify-certificate <name> [on|off|status]
 ```
 
-* `status` shows, for the site and the admin, whether "Enforce OAuth2" is on and applies, every provider (active, or why not) with "Verify Certificate" where it has it, and the account settings. It changes nothing.
-* `enforce-oauth2 off` turns "Enforce OAuth2" off, in the main config file and in every environment's that turns it on (with `--env` only in that one). `on` only turns it on where it applies (an active provider): a side chosen with `--site` or `--admin` is refused otherwise, and of both sides the other one is left as it is, unless you add `--force`.
+* `status` shows, for the site and the admin, whether "Enforce OAuth2" is on and applies, the settings it requires off, every provider (active, or why not) with "Verify Certificate" where it has it, and the account settings. It changes nothing.
+* `enforce-oauth2 off` turns "Enforce OAuth2" off, in the main config file and in every environment's that turns it on (with `--env` only in that one). `on` only turns it on where it applies (an active provider) and the settings it requires off are off (see [Enforce OAuth2](#enforce-oauth2)): a side chosen with `--site` or `--admin` is refused otherwise, and of both sides the other one is left as it is, unless you add `--force`.
 * `provider enable` and `provider disable` enable or disable one of this plugin's providers, e.g. `generic`. Providers of other plugins, e.g. login-oauth2-extras, are set in their own plugin's settings.
 * `provider verify-certificate` shows or changes "Verify Certificate" of a provider that has the setting (Generic). Turn it off only for testing.
 

@@ -33,11 +33,11 @@ form:
       validate:
         type: bool
 
-    # While the Login plugin's "Remember Me" is on and OAuth2 logins are in use; without content Admin2 shows nothing.
-    remember_me_notice:
+    # While "Enforce OAuth2" is on with requirements not met (OAuth2::enforceWarning()); without content nothing shows.
+    enforce_oauth2_warning:
       type: display
       style: vertical
-      data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::rememberMeNotice']
+      data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceWarning']
 
     oauth2_tabs:
       type: tabs
@@ -250,7 +250,19 @@ form:
               validate:
                 type: bool
 
-            # While it's on but doesn't apply (OAuth2::enforceNotice()); without content nothing shows.
+            # Admin2 shows it while the toggle is on in the form: the requirements and whether it applies
+            # (OAuth2::enforceConditionsNotice()). The classic admin evaluates the condition without the form's values
+            # and doesn't show it; it shows the notice below instead.
+            enforce_oauth2_conditions:
+              type: conditional
+              condition: enforce_oauth2
+              fields:
+                enforce_oauth2_conditions_notice:
+                  type: display
+                  style: vertical
+                  data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceConditionsNotice', false]
+
+            # Classic admin: while it's on but doesn't apply (OAuth2::enforceNotice()); without content nothing shows.
             enforce_oauth2_notice:
               type: display
               style: vertical
@@ -347,7 +359,19 @@ form:
               validate:
                 type: bool
 
-            # While it's on but doesn't apply (OAuth2::enforceNotice()); without content nothing shows.
+            # Admin2 shows it while the toggle is on in the form: the requirements and whether it applies
+            # (OAuth2::enforceConditionsNotice()). The classic admin evaluates the condition without the form's values
+            # and doesn't show it; it shows the notice below instead.
+            admin_enforce_oauth2_conditions:
+              type: conditional
+              condition: admin.enforce_oauth2
+              fields:
+                admin_enforce_oauth2_conditions_notice:
+                  type: display
+                  style: vertical
+                  data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceConditionsNotice', true]
+
+            # Classic admin: while it's on but doesn't apply (OAuth2::enforceNotice()); without content nothing shows.
             admin_enforce_oauth2_notice:
               type: display
               style: vertical

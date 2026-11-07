@@ -13,6 +13,7 @@ use Grav\Common\Uri;
 use Grav\Common\User\Interfaces\UserCollectionInterface;
 use Grav\Common\User\Interfaces\UserInterface;
 use Grav\Plugin\Api\Exceptions\ForbiddenException as ApiForbiddenException;
+use Grav\Plugin\Api\Exceptions\ValidationException as ApiValidationException;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
 use Grav\Plugin\Login\OAuth2\OAuth2;
@@ -57,6 +58,9 @@ class LoginOauth2Plugin extends Plugin
                 ['onPluginsInitialized', 0],
                 ['disableMagicLinkRoutes', -1000],
             ],
+            // Also while "Enabled in Admin" is off, which onPluginsInitialized() stops at in the classic admin.
+            'onAdminSave' => ['onAdminSave', 0],
+            'onApiDashboardNotifications' => ['onApiDashboardNotifications', 0],
         ];
     }
 
@@ -94,6 +98,101 @@ class LoginOauth2Plugin extends Plugin
             ($this->admin && $this->config->get('plugins.login-oauth2.admin.built_in_css'))) {
             $this->grav['assets']->add('plugin://login-oauth2/css/login-oauth2.css');
         }
+    }
+
+    /**
+     * [onAdminSave] Refuses to turn "Enforce OAuth2" on for a side while a setting it requires off is on
+     * (OAuth2::enforceRequirements()). Admin2 (through the API) gets the reasons at the toggle, and nothing is saved;
+     * the classic admin saves the rest with the toggle left off, and shows the reasons. Saves that leave it as it was or
+     * turn it off pass, also while requirements aren't met: the settings then show a red warning.
+     *
+     * @param Event $event
+     * @return void
+     */
+    public function onAdminSave(Event $event): void
+    {
+        $object = $event['object'] ?? null;
+        if (!$object instanceof Data || !$this->isOwnConfig($object)) {
+            return;
+        }
+
+        $refused = [];
+        foreach (['enforce_oauth2' => false, 'admin.enforce_oauth2' => true] as $key => $admin) {
+            if (!$object->get($key) || $this->config->get('plugins.login-oauth2.' . $key)) {
+                continue;
+            }
+            if ($unmet = OAuth2::enforceUnmet($admin)) {
+                $refused[$key] = (string)$this->grav['language']->translate([
+                    'PLUGIN_LOGIN_OAUTH2.ENFORCE_REQUIREMENTS_REFUSED' . (count($unmet) > 1 ? '_PLURAL' : ''),
+                    OAuth2::requirementNames($unmet),
+                ]);
+            }
+        }
+        if (!$refused) {
+            return;
+        }
+
+        $admin = $this->grav['admin'] ?? null;
+        if (!$admin instanceof \Grav\Plugin\Admin\Admin && class_exists(ApiValidationException::class)) {
+            $errors = [];
+            foreach ($refused as $field => $message) {
+                $errors[] = ['field' => $field, 'message' => $message];
+            }
+
+            throw new ApiValidationException(implode(' ', $refused), $errors);
+        }
+
+        foreach ($refused as $key => $message) {
+            $object->set($key, false);
+            if ($admin) {
+                $admin->setMessage($message, 'error');
+            }
+        }
+    }
+
+    /**
+     * Whether the settings being saved are this plugin's: by their file (user/config/plugins/login-oauth2.yaml, or an
+     * environment's), else by the admin's route (Admin2's saves through the API set it to /plugins/login-oauth2).
+     */
+    protected function isOwnConfig(Data $object): bool
+    {
+        $file = $object->file();
+        if ($file) {
+            $name = str_replace('\\', '/', (string)$file->filename());
+
+            return substr($name, -strlen('/plugins/login-oauth2.yaml')) === '/plugins/login-oauth2.yaml';
+        }
+
+        $admin = $this->grav['admin'] ?? null;
+
+        return is_object($admin) && isset($admin->route) && trim((string)$admin->route, '/') === 'plugins/login-oauth2';
+    }
+
+    /**
+     * [onApiDashboardNotifications] The notice at the top of Admin2's dashboard while "Enforce OAuth2" is on with
+     * requirements not met: the same as the red warning in the settings (OAuth2::enforceWarning()).
+     *
+     * @param Event $event
+     * @return void
+     */
+    public function onApiDashboardNotifications(Event $event): void
+    {
+        $message = OAuth2::enforceDashboardNotice();
+        if ($message === null) {
+            return;
+        }
+
+        $notifications = $event['notifications'] ?? [];
+        $notifications['top'][] = [
+            'id' => 'login-oauth2-enforce-unmet',
+            'date' => date('c'),
+            'level' => 'error',
+            'icon' => 'shield-alert',
+            'location' => ['top'],
+            'message' => $message,
+            'reappear_after' => '+1 day',
+        ];
+        $event['notifications'] = $notifications;
     }
 
     /**

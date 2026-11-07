@@ -23,7 +23,7 @@ class OAuth2EnforceCommand extends ConsoleCommand
             ->addArgument('action', InputArgument::REQUIRED, 'on, off or status')
             ->addOption('site', null, InputOption::VALUE_NONE, 'Only the site')
             ->addOption('admin', null, InputOption::VALUE_NONE, 'Only the admin')
-            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Turn it on even if it wouldn\'t apply yet (no active provider)')
+            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Turn it on even if it wouldn\'t apply yet (no active provider) or a setting it requires off is on')
             ->setDescription("Turns 'Enforce OAuth2' on or off, e.g. when locked out")
             ->setHelp(
                 "The <info>enforce-oauth2</info> command turns 'Enforce OAuth2' (only OAuth2 logins) on or off, for the site and the admin.\n\n" .
@@ -31,8 +31,10 @@ class OAuth2EnforceCommand extends ConsoleCommand
                 "  <info>bin/plugin login-oauth2 enforce-oauth2 on --admin</info>     only OAuth2 logins in the admin\n" .
                 "  <info>bin/plugin login-oauth2 enforce-oauth2 status</info>\n\n" .
                 "<info>off</info> turns it off in the main configuration and in every environment that turns it on (or only in --env).\n" .
-                "<info>on</info> only turns it on where it applies (an active provider): a side chosen with --site or --admin is refused\n" .
-                "otherwise, of both sides the other one is left as it is. --force turns it on anyway."
+                "<info>on</info> only turns it on where it applies (an active provider) and the settings that let users in without OAuth2\n" .
+                "are off: the Login plugin's 'Remember me', and for the admin the API plugin's Session Authentication. A side chosen\n" .
+                "with --site or --admin is refused otherwise, of both sides the other one is left as it is. --force turns it on anyway.\n" .
+                "<info>status</info> shows both sides, why one doesn't apply, and those settings."
             );
     }
 
@@ -87,6 +89,9 @@ class OAuth2EnforceCommand extends ConsoleCommand
             $on = (bool)$settings->get($key);
             $why = $on ? $settings->notApplying($side) : null;
             $io->text(sprintf('%s: <info>%s</info>%s', ucfirst($side), $on ? 'on' : 'off', $why ? ", but doesn't apply: {$why}" : ''));
+            foreach ($settings->requirements($side) as $requirement => $met) {
+                $io->text(sprintf('  %s: %s', $requirement, $met ? 'off' : ($on ? '<error>on</error>, must be off: users can still log in without OAuth2' : 'on, must be off to turn it on')));
+            }
 
             foreach ($files as $file) {
                 $value = $settings->read($file, $key);
@@ -157,6 +162,22 @@ class OAuth2EnforceCommand extends ConsoleCommand
     }
 
     /**
+     * Why a side isn't turned on: settings it requires off that are on, and why it wouldn't apply.
+     */
+    protected function reasons(?string $why, ?string $requirements): string
+    {
+        $reasons = [];
+        if ($requirements) {
+            $reasons[] = "{$requirements} must be off first, otherwise users can still log in without OAuth2.";
+        }
+        if ($why) {
+            $reasons[] = "{$why}, so it wouldn't apply.";
+        }
+
+        return implode(' ', $reasons);
+    }
+
+    /**
      * Turns it on in the config file (of the environment with --env), only for sides where it applies, unless --force:
      * a side chosen with --site or --admin is refused then, of both sides only the ones where it applies are turned on.
      * Names the environments whose files override the change.
@@ -169,24 +190,29 @@ class OAuth2EnforceCommand extends ConsoleCommand
         $values = [];
         $skipped = [];
         $notApplying = [];
+        $unmet = [];
         foreach ($sides as $side) {
             $why = $settings->notApplying($side);
-            if ($why && !$force) {
-                $skipped[$side] = $why;
+            $requirements = $settings->unmetRequirements($side);
+            if (($why || $requirements) && !$force) {
+                $skipped[$side] = $this->reasons($why, $requirements);
                 continue;
             }
             $values[Settings::key($side, 'enforce_oauth2')] = true;
             if ($why) {
                 $notApplying[$side] = $why;
             }
+            if ($requirements) {
+                $unmet[$side] = $requirements;
+            }
         }
         // Every side skipped: a side chosen with --site or --admin, or both.
         if (!$values) {
             $refused = [];
-            foreach ($skipped as $side => $why) {
-                $refused[] = ucfirst($side) . ": {$why}, so it wouldn't apply.";
+            foreach ($skipped as $side => $reasons) {
+                $refused[] = ucfirst($side) . ': ' . $reasons;
             }
-            $refused[] = 'Nothing changed. Enable and configure a provider first, or add --force to turn it on anyway'
+            $refused[] = 'Nothing changed. Fix that first, or add --force to turn it on anyway'
                 . (count($sides) === 1 ? '' : ' (with --site or --admin for one side only)') . '.';
             $io->error($refused);
 
@@ -199,24 +225,28 @@ class OAuth2EnforceCommand extends ConsoleCommand
         if ($change) {
             $io->text('  ' . $change . ' => on');
         }
-        foreach ($skipped as $side => $why) {
-            $io->note(ucfirst($side) . ": {$why}, so it wouldn't apply: left as it is.");
+        foreach ($skipped as $side => $reasons) {
+            $io->note(ucfirst($side) . ': ' . $reasons . ' Left as it is.');
         }
         foreach ($notApplying as $side => $why) {
             $io->warning(ucfirst($side) . ": it's on, but doesn't apply yet: {$why}.");
+        }
+        foreach ($unmet as $side => $requirements) {
+            $io->warning(ucfirst($side) . ": it's on, but users can still log in without OAuth2 while these are on: {$requirements}.");
         }
         if ($overrides = $settings->overrides($file, $values)) {
             $io->warning(array_merge(['These environments override it (change them with --env=<environment>):'], $overrides));
         }
 
-        $applying = array_values(array_diff($on, array_keys($notApplying)));
+        $applying = array_values(array_diff($on, array_keys($notApplying), array_keys($unmet)));
         if (!$change) {
             $io->success(sprintf("'Enforce OAuth2' is already on (%s).", implode(', ', $on)));
 
             return 0;
         }
         if ($applying) {
-            $io->note("It doesn't sign anyone out: open sessions, 'remember me' cookies and Admin2's tokens keep working until they expire. To end them, see 'Enforce OAuth2' in the README.");
+            $io->note("It doesn't sign anyone out: open sessions, 'remember me' cookies and Admin2's tokens keep working until they expire. "
+                . (method_exists('Grav\Plugin\Login\Login', 'signOutEverywhere') ? 'To end them: bin/plugin login sign-out --all' : "To end them, see 'Enforce OAuth2' in the README."));
         }
         $io->success(sprintf(
             "'Enforce OAuth2' is on (%s)%s. To undo: bin/plugin login-oauth2 enforce-oauth2 off",

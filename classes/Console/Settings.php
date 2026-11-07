@@ -351,6 +351,35 @@ class Settings
     }
 
     /**
+     * The settings "Enforce OAuth2" on a side requires off (OAuth2::enforceRequirements()): name => whether it's off.
+     *
+     * @param string $side
+     * @return array<string, bool>
+     */
+    public function requirements(string $side): array
+    {
+        $requirements = [];
+        foreach (OAuth2::enforceRequirements($side === 'admin') as $requirement => $met) {
+            $requirements[OAuth2::requirementNames([$requirement])] = $met;
+        }
+
+        return $requirements;
+    }
+
+    /**
+     * The settings "Enforce OAuth2" on a side requires off that are on, in words ("A and B"); null if none.
+     *
+     * @param string $side
+     * @return string|null
+     */
+    public function unmetRequirements(string $side): ?string
+    {
+        $unmet = OAuth2::enforceUnmet($side === 'admin');
+
+        return $unmet ? OAuth2::requirementNames($unmet) : null;
+    }
+
+    /**
      * This plugin's providers (the ones its default configuration has).
      *
      * @return string[]
