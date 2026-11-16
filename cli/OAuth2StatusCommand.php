@@ -48,12 +48,12 @@ class OAuth2StatusCommand extends SettingsCommand
         ));
 
         foreach (Settings::sides($this->input) as $side) {
+            $report = $settings->inspect($side);
             $registered = $settings->registeredProviders($side);
             $active = $settings->activeProviders($side, $registered);
             $oauth2 = new OAuth2($side === 'admin');
             // The admin follows the site's account settings until set itself.
             $follows = $side === 'admin' ? ' (follows the site)' : '';
-            $why = $settings->notApplying($side, $registered);
             $io->section(ucfirst($side));
 
             $list = [];
@@ -64,10 +64,9 @@ class OAuth2StatusCommand extends SettingsCommand
             $enforced = (bool)$settings->get($key);
             // Off here, but environments may turn it on.
             $elsewhere = $enforced ? [] : $settings->stillOn($key);
-            // On, but not applying here: with the environments where it does (e.g. with their own provider).
-            $list[] = ['Enforce OAuth2' => !$enforced ? 'off' . ($elsewhere ? ' (on in ' . implode(', ', $elsewhere) . ')' : '') : ($why ? "on, but doesn't apply: {$why}" . static::appliesIn($settings, $side) : 'on')];
+            $list[] = ['Enforce OAuth2' => static::enforcementState($settings, $side, $report) . ($elsewhere ? ' (on in ' . implode(', ', $elsewhere) . ')' : '')];
             // The settings it requires off (they let users in without OAuth2).
-            foreach ($settings->requirements($side) as $requirement => $where) {
+            foreach ($report['requirements'] as $requirement => $where) {
                 $list[] = ['  ' . $requirement => Settings::requirementState($where)];
             }
             $list[] = ['Require Existing Grav user' => $onOff($oauth2->requireGravUser()) . ($settings->get(Settings::key($side, 'require_grav_user')) === null ? $follows : '')];

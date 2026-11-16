@@ -98,17 +98,7 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /**
-     * [onAdminSave] Refuses to turn "Enforce OAuth2" on for a side while a setting it requires off is on
-     * (OAuth2::enforceRequirements()). Admin2 (through the API) gets the reasons at the toggle, and nothing is saved;
-     * the classic admin saves the rest with the toggle left off, and shows the reasons. Saves that leave it as it was or
-     * turn it off pass, also while requirements aren't met: the settings then show a red warning. All of it in the
-     * configuration the save goes to (OAuth2::formConfig()), which needn't be this request's; a save of the main
-     * configuration also in the environments that get the setting from it (unmetInEnvironments()), as the command does.
-     *
-     * @param Event $event
-     * @return void
-     */
+    /** Refuse newly enabled enforcement with unmet requirements; check inherited environments for main saves. */
     public function onAdminSave(Event $event): void
     {
         $object = $event['object'] ?? null;
@@ -130,8 +120,7 @@ class LoginOauth2Plugin extends Plugin
                 );
                 continue;
             }
-            $settings = $settings ?? $this->saveSettings($object);
-            if ($unmet = $this->unmetInEnvironments($settings, $admin)) {
+            if ($unmet = $this->unmetInEnvironments($object, $admin, $settings)) {
                 $refused[$key] = $this->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_REQUIREMENTS_REFUSED_ENVIRONMENTS', $unmet);
             }
         }
@@ -157,57 +146,25 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /**
-     * The settings as a save of the main config file is about to make them, to check it in the environments too
-     * (unmetInEnvironments()); false for a save of an environment's file, which only reaches that one, checked already.
-     *
-     * @return EnvironmentSettings|false
-     */
-    protected function saveSettings(Data $object)
+    /** Check inherited environments once the pending main configuration is available. */
+    protected function unmetInEnvironments(Data $object, bool $admin, &$settings): ?string
     {
-        $file = $object->file();
-        if (!$file) {
-            return false;
-        }
-
         try {
-            return EnvironmentSettings::ofSave($this->grav, (string)$file->filename(), $object->toArray()) ?? false;
+            if ($settings === null) {
+                $file = $object->file();
+                $settings = $file ? EnvironmentSettings::ofSave($this->grav, (string)$file->filename(), $object->toArray()) : null;
+                $settings = $settings ?? false;
+            }
+
+            return $settings ? $settings->inspect($admin ? 'admin' : 'site')['unmet'] : null;
         } catch (\Throwable $e) {
-            $this->grav['log']->warning('Login OAuth2: the environments could not be read to check a save of Enforce OAuth2: ' . $e->getMessage());
-
-            return false;
-        }
-    }
-
-    /**
-     * The settings "Enforce OAuth2" on a side requires off that are on in an environment that gets it from the main
-     * configuration and where it would apply, with the files that turn them on (EnvironmentSettings::
-     * unmetRequirements()), e.g. "Login → Remember me (user/env/example.com/config/plugins/login.yaml)"; null if none.
-     * A save of the main file turns it on there too, as `bin/plugin login-oauth2 enforce-oauth2 on` does, which refuses
-     * it for the same reason.
-     *
-     * @param EnvironmentSettings|false $settings saveSettings()
-     */
-    protected function unmetInEnvironments($settings, bool $admin): ?string
-    {
-        if (!$settings) {
-            return null;
-        }
-
-        try {
-            return $settings->unmetRequirements($admin ? 'admin' : 'site');
-        } catch (\Throwable $e) {
-            // E.g. a side's providers can't be registered: as before the check, the save isn't refused for that.
             $this->grav['log']->warning('Login OAuth2: the environments could not be checked for a save of Enforce OAuth2: ' . $e->getMessage());
 
             return null;
         }
     }
 
-    /**
-     * Whether the settings being saved are this plugin's: by their file (user/config/plugins/login-oauth2.yaml, or an
-     * environment's), else by the admin's route (Admin2's saves through the API set it to /plugins/login-oauth2).
-     */
+    /** Identify this plugin's settings by file, or the classic admin route. */
     protected function isOwnConfig(Data $object): bool
     {
         $file = $object->file();
@@ -222,13 +179,7 @@ class LoginOauth2Plugin extends Plugin
         return is_object($admin) && isset($admin->route) && trim((string)$admin->route, '/') === 'plugins/login-oauth2';
     }
 
-    /**
-     * [onApiDashboardNotifications] The notice at the top of Admin2's dashboard while "Enforce OAuth2" is on with
-     * requirements not met: the same as the red warning in the settings (OAuth2::enforceWarning()).
-     *
-     * @param Event $event
-     * @return void
-     */
+    /** Add the enforcement warning to Admin2's dashboard. */
     public function onApiDashboardNotifications(Event $event): void
     {
         $message = OAuth2::enforceDashboardNotice();
@@ -304,14 +255,7 @@ class LoginOauth2Plugin extends Plugin
         };
     }
 
-    /**
-     * [onLoginPage] Adds the login buttons. With "Enforce OAuth2" in effect on the site, also turns the Login plugin's
-     * password form off (show_password_form, set only where the Login config has that key: without it the form shows
-     * anyway, and so the "or" above it), its "Login by link" button and, for visitors who aren't logged in, its "Sign
-     * in with a passkey" button, as magic-link and passkey logins are denied too (users who are logged in keep the
-     * passkeys of their profile). Not in the classic admin: it ignores show_password_form, and its Login settings form
-     * would show and save the changes (the Login plugin fires this event on every page).
-     */
+    /** Add OAuth2 buttons and hide site login methods denied by enforcement. */
     public function onLoginPage(): void
     {
         if ($this->grav['oauth2']->getProviders()) {
@@ -329,13 +273,7 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /**
-     * [onPluginsInitialized:-1000] "Enforce OAuth2": closes the routes of logins it denies, once the satellite plugins
-     * have added their providers. On the site, the Login plugin's magic-link routes: the request page, and an emailed
-     * link before it's used, redirect to the login page (redirectMagicLinkRoute()). In the admin, the API's passkey
-     * sign-in of Admin2 (/auth/passkey…): the Login plugin's passkeys are off for these requests, so Admin2's login
-     * screen doesn't offer a passkey that would be denied. Only for them, so no settings form shows or saves it.
-     */
+    /** Redirect denied magic-link routes and hide Admin2's passkey sign-in. */
     public function closeDeniedLoginRoutes(): void
     {
         if ($this->isAdmin() || !isset($this->grav['oauth2'], $this->grav['login'])) {
@@ -364,24 +302,13 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /**
-     * [onPagesInitialized:1000] "Enforce OAuth2" on the site, on the Login plugin's magic-link routes: redirects to
-     * the login page, with 302; to the home page if the Login plugin has no login route (it then shows its form on
-     * the protected pages), as denyMagicLinkRequest() and the Login plugin do. Without a code Grav uses the site's
-     * default one, which can be 301: browsers keep following that after "Enforce OAuth2" is turned off.
-     */
+    /** Use a temporary redirect so disabling enforcement restores these routes. */
     public function redirectMagicLinkRoute(): void
     {
         $this->grav->redirectLangSafe($this->grav['login']->getRoute('login') ?: '/', 302);
     }
 
-    /**
-     * [onTask.login.magicRequest:10] "Enforce OAuth2" on the site: refuses a magic-link request before the Login plugin
-     * handles it, and redirects to the login page (303: a form was posted; without a code Grav uses the site's
-     * default one, which can be 301). Not with a Login plugin before 3.5.0, which has no magic links to deny, nor the
-     * getRoute() this needs (closeDeniedLoginRoutes()). Only a request the Login plugin would send a link for
-     * (magicLinkRequested()): it answers the others itself.
-     */
+    /** Deny a valid magic-link request before Login sends mail. */
     public function denyMagicLinkRequest(Event $event): void
     {
         /** @var Login $login */
@@ -396,12 +323,7 @@ class LoginOauth2Plugin extends Plugin
         $this->grav->redirectLangSafe($login->getRoute('login') ?: '/', 303);
     }
 
-    /**
-     * Whether a magic-link request is one the Login plugin would send a link for: its magic links are on, and the
-     * form's nonce is right, as the Login plugin checks it (LoginPlugin::loginController()). Without them it sends
-     * nothing, so there is nothing to deny, and a request anyone can post (e.g. a bot, without the form) gets no
-     * log line and no message.
-     */
+    /** Match Login's enabled setting and nonce check before denying the request. */
     private function magicLinkRequested(): bool
     {
         $nonce = $_POST['magic-form-nonce'] ?? null;
@@ -579,11 +501,7 @@ class LoginOauth2Plugin extends Plugin
         $this->debug("provider: $provider_name - redirect: $login_redirect - is_valid: $is_valid");
     }
 
-    /**
-     * [onUserLoginAuthenticate:20000] "Enforce OAuth2": denies every login but an OAuth2 one on that side (site, or
-     * admin with Admin2), before the Login plugin checks passwords, magic links or logins after registration. Logins
-     * with a "remember me" cookie still pass, as OAuth2 logins set it too.
-     */
+    /** Deny non-OAuth2 logins; existing remember-me cookies still pass. */
     public function userLoginEnforceOAuth2(UserLoginEvent $event): void
     {
         $admin = (bool)$event->getOption('admin');
@@ -597,15 +515,7 @@ class LoginOauth2Plugin extends Plugin
         $event->stopPropagation();
     }
 
-    /**
-     * [onUserLoginAuthorize:10] "Enforce OAuth2" in the admin: also denies site logins with a password or a magic link
-     * of accounts with admin or API access. Their site session would open the admin anyway: the API accepts it (session
-     * passthrough), as does the classic admin with a shared session (system.session.split off). Logins with a "remember
-     * me" cookie still pass, as on the site (userLoginEnforceOAuth2()). A login with a password is denied as a wrong
-     * password is: here, once the Login plugin checked it (so it takes as long), and without a message of its own
-     * (the Login plugin then says that the login failed). The answer would otherwise tell that the password is right
-     * and that the account has admin access.
-     */
+    /** Deny site logins of admin accounts after authentication, without revealing correct passwords. */
     public function userLoginEnforceAdminOAuth2(UserLoginEvent $event): void
     {
         if ($this->admin || $event->getOption('admin') || $event->getOption('oauth2') || $event->getOption('remember_me_login')
@@ -626,10 +536,7 @@ class LoginOauth2Plugin extends Plugin
         $event->stopPropagation();
     }
 
-    /**
-     * [onApiInvitationAccepted] "Enforce OAuth2" in the admin: an Admin2 invitation doesn't log its user in, who logs
-     * in with OAuth2 instead (matched by email). The API has created the account already, and gives no tokens.
-     */
+    /** Keep the invited account but require an OAuth2 login instead of issuing tokens. */
     public function onApiInvitationAccepted(Event $event): void
     {
         if ($this->isOAuth2Enforced(true)) {
@@ -637,17 +544,7 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /**
-     * Whether only OAuth2 logins are allowed on a side: while its setting is on and it applies (OAuth2::
-     * enforceNotApplying()), i.e. only while the side has at least one active provider (enabled and with its client
-     * ID), so a provider disabled or not configured can't lock anyone out; for the admin also only while OAuth2 is
-     * enabled there. This plugin's own providers decide it where they can, without asking another plugin. Only a side
-     * without an active one of them counts those of satellite plugins (e.g. login-oauth2-extras), which add theirs
-     * as soon as they're enabled, so the client ID is checked there. If they can't be registered then (e.g. a
-     * satellite plugin fails), it stays in effect: whether one of them is active can't be told, and a plugin that
-     * fails must not turn "Enforce OAuth2" off. The way back in is `bin/plugin login-oauth2 enforce-oauth2 off`,
-     * which works without the plugins.
-     */
+    /** Check built-in providers first; a failing satellite plugin must not disable enforcement. */
     protected function isOAuth2Enforced(bool $admin): bool
     {
         $config = (array)$this->config->get('plugins.login-oauth2');
@@ -673,11 +570,7 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /**
-     * The admin's service outside the classic admin, with its providers: for the "Enforce OAuth2" check, beside the
-     * site's service, which stays in place (e.g. for a site login checked against the admin's "Enforce OAuth2"), and
-     * for the SSO bridge (ensureAdminOAuth2()). Registered once per request: if that fails, the next call tries again.
-     */
+    /** Register admin providers once, preserving the site's service. */
     private function adminProviders(): OAuth2
     {
         if (!$this->adminOAuth2 instanceof OAuth2) {

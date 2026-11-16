@@ -91,15 +91,7 @@ class OAuth2ProviderCommand extends SettingsCommand
         }
 
         $state = $enable ? 'enabled' : 'disabled';
-        $file = $settings->file();
-        $change = $settings->save($file, $values, "{$state} provider {$name}");
-        if ($change) {
-            $io->text('  ' . $change);
-            $io->success(sprintf("'%s' is %s (%s).", $name, $state, implode(', ', $sides)));
-        } else {
-            $io->success(sprintf("'%s' is already %s (%s).", $name, $state, implode(', ', $sides)));
-        }
-        $this->overrides($io, $settings, $file, $values);
+        $this->saveProvider($io, $settings, $sides, $values, "{$state} provider {$name}", "'{$name}'", $state);
 
         // What it means for the logins, with the new settings (also if it was already set: e.g. not configured).
         foreach ($sides as $side) {
@@ -115,7 +107,7 @@ class OAuth2ProviderCommand extends SettingsCommand
             }
             // It was turned on before (e.g. with --force) and waited for a provider: from now on it denies the other logins.
             if (in_array($side, $dormant, true) && $settings->notApplying($side) === null) {
-                $requirements = $settings->unmetRequirements($side);
+                $requirements = $settings->inspect($side)['unmet'];
                 $io->warning(ucfirst($side) . ": 'Enforce OAuth2' is on and applies now that the side has an active provider: only OAuth2 logins work."
                     . ($requirements ? " Users can still log in without OAuth2 until you turn off {$requirements}." : ''));
             }
@@ -158,17 +150,9 @@ class OAuth2ProviderCommand extends SettingsCommand
         foreach ($sides as $side) {
             $values[Settings::key($side, "providers.{$name}.verify_peer")] = $value === 'on';
         }
-        $file = $settings->file();
-        $change = $settings->save($file, $values, "turned Verify Certificate {$value} for provider {$name}");
-        if (!$change) {
-            $io->success(sprintf("'Verify Certificate' of '%s' is already %s (%s).", $name, $value, implode(', ', $sides)));
-            $this->overrides($io, $settings, $file, $values);
-
+        if (!$this->saveProvider($io, $settings, $sides, $values, "turned Verify Certificate {$value} for provider {$name}", "'Verify Certificate' of '{$name}'", $value)) {
             return 0;
         }
-        $io->text('  ' . $change);
-        $io->success(sprintf("'Verify Certificate' of '%s' is %s (%s).", $name, $value, implode(', ', $sides)));
-        $this->overrides($io, $settings, $file, $values);
         if ($value === 'off') {
             $io->warning('For testing only: without this check, anyone who can intercept the connection to the provider can read the client secret and tokens, and log in as any user.');
         }

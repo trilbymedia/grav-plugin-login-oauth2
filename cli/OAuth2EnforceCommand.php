@@ -86,11 +86,10 @@ class OAuth2EnforceCommand extends SettingsCommand
     {
         $files = $settings->files();
         foreach ($sides as $side) {
+            $report = $settings->inspect($side);
             $key = Settings::key($side, 'enforce_oauth2');
-            $on = (bool)$settings->get($key);
-            $why = $on ? $settings->notApplying($side) : null;
-            $io->text(sprintf('%s: <info>%s</info>%s', ucfirst($side), $on ? 'on' : 'off', $why ? ", but doesn't apply: {$why}" . static::appliesIn($settings, $side) : ''));
-            foreach ($settings->requirements($side) as $requirement => $where) {
+            $io->text(ucfirst($side) . ': <info>' . static::enforcementState($settings, $side, $report) . '</info>');
+            foreach ($report['requirements'] as $requirement => $where) {
                 $io->text(sprintf('  %s: %s', $requirement, Settings::requirementState($where)));
             }
 
@@ -108,13 +107,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return 0;
     }
 
-    /**
-     * Turns it off in every config file that turns it on, or only in the environment's file with --env. Without --env
-     * it then reads the files again: the main one (with the plugin's default) and those of the environments. Fails if
-     * one still turns it on, or a GRAV_CONFIG__ variable does, which no config file can turn off.
-     *
-     * @param string[] $sides
-     */
+    /** Disable every file that enables enforcement, then verify the files and environment variables. */
     protected function off(SymfonyStyle $io, Settings $settings, array $sides): int
     {
         $env = $this->input->hasParameterOption('--env');
@@ -190,9 +183,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return 0;
     }
 
-    /**
-     * Why a side isn't turned on: settings it requires off that are on, and why it wouldn't apply.
-     */
+    /** Explain why enabling enforcement was refused. */
     protected function reasons(?string $why, ?string $requirements): string
     {
         $reasons = [];
@@ -206,15 +197,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return implode(' ', $reasons);
     }
 
-    /**
-     * Turns it on in the config file (of the environment with --env), only for sides where it applies, unless --force:
-     * a side chosen with --site or --admin is refused then, of both sides only the ones where it applies are turned on.
-     * It applies if it does in one of the configurations the change reaches (Settings::appliesNowhere()): the main
-     * one, or an environment with its own settings (e.g. its own provider). Names the environments whose files
-     * override the change.
-     *
-     * @param string[] $sides
-     */
+    /** Enable ready sides, reporting requirements and sign-out scope before making changes. */
     protected function on(SymfonyStyle $io, Settings $settings, array $sides): int
     {
         $force = (bool)$this->input->getOption('force');
@@ -224,13 +207,15 @@ class OAuth2EnforceCommand extends SettingsCommand
         $unmet = [];
         // Sides a GRAV_CONFIG__ variable keeps off above every config file: no change of a file turns them on.
         $keptOff = [];
+        $reports = [];
         foreach ($sides as $side) {
             if ($variable = $settings->overriding(Settings::key($side, 'enforce_oauth2'), false)) {
                 $skipped[$side] = $keptOff[$side] = "the environment variable {$variable} turns it off and overrides every config file: remove it or set it to true where it's defined (.env file, web server or container).";
                 continue;
             }
-            $why = $settings->appliesNowhere($side);
-            $requirements = $settings->unmetRequirements($side);
+            $reports[$side] = $report = $settings->inspect($side);
+            $why = $report['why'];
+            $requirements = $report['unmet'];
             if (($why || $requirements) && !$force) {
                 $skipped[$side] = $this->reasons($why, $requirements);
                 continue;
@@ -298,9 +283,10 @@ class OAuth2EnforceCommand extends SettingsCommand
         }
         $mainOnly = false;
         foreach ($on as $side) {
-            if ($why = $settings->mainNotApplying($side)) {
+            $report = $reports[$side];
+            if ($why = $report['main']) {
                 $mainOnly = true;
-                $io->note(ucfirst($side) . ": it doesn't apply in the main configuration ({$why}), so password logins still work there" . static::appliesIn($settings, $side) . '.');
+                $io->note(ucfirst($side) . ": it doesn't apply in the main configuration ({$why}), so password logins still work there" . static::appliesIn($report) . '.');
             }
         }
         foreach ($unmet as $side => $requirements) {
@@ -346,12 +332,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return 0;
     }
 
-    /**
-     * The command that undoes what `on` changed: `off` for the same config file (--env for one environment's) and
-     * for the side it turned on, if only one. `off` alone turns both sides off, in the main file and every environment.
-     *
-     * @param string[] $changed The keys `on` changed
-     */
+    /** Undo only the sides and environment changed by this command. */
     protected function undo(Settings $settings, array $changed): string
     {
         $command = 'bin/plugin login-oauth2 enforce-oauth2 off';
@@ -365,10 +346,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return $command . (count($sides) === 1 ? ' --' . reset($sides) : '');
     }
 
-    /**
-     * The sign-out option given, null if none: "--sign-out-all-environments", which includes --sign-out, or
-     * "--sign-out".
-     */
+    /** The broader sign-out option includes --sign-out. */
     protected function signOutOption(): ?string
     {
         if ($this->input->getOption('sign-out-all-environments')) {
@@ -378,18 +356,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return $this->input->getOption('sign-out') ? '--sign-out' : null;
     }
 
-    /**
-     * Whom a sign-out reaches beyond the users it's for, null if nobody: accounts and the Login plugin's sign-out
-     * are shared by all environments, so it also signs out the users of configurations where "Enforce OAuth2"
-     * doesn't apply for them (a change of one environment's file; environments that turn it off themselves or where
-     * it doesn't apply, Settings::keptOff(); or the main configuration, while it only applies in environments,
-     * Settings::mainNotApplying()). --sign-out is refused for them, --sign-out-all-environments signs them out too.
-     * With the site among the sides everyone is signed out (signOut()), so only the site's configurations count: the
-     * admin's add nobody.
-     *
-     * @param string[] $sides The sides that would be signed out
-     * @return string[]|null Who they are, to follow "also signs out", then the configurations, one per line
-     */
+    /** Accounts are shared: report users signed out beyond the environments using enforcement. */
     protected function signedOutBeyond(Settings $settings, array $sides): ?array
     {
         $shared = 'because accounts are shared by all environments';
@@ -399,21 +366,18 @@ class OAuth2EnforceCommand extends SettingsCommand
 
         $side = in_array('site', $sides, true) ? 'site' : 'admin';
         $where = [];
-        if ($why = $settings->mainNotApplying($side)) {
+        $report = $settings->inspect($side);
+        if ($why = $report['main']) {
             $where[] = 'main configuration: ' . $why;
         }
-        foreach ($settings->keptOff($side) as $folder => $why) {
+        foreach ($report['excluded'] as $folder => $why) {
             $where[] = Folder::getRelativePath($folder) . ': ' . $why;
         }
 
         return $where ? array_merge(["users where 'Enforce OAuth2' ({$side}) doesn't apply, {$shared}"], $where) : null;
     }
 
-    /**
-     * Why the Login plugin can't sign users out (login()).
-     *
-     * @return string
-     */
+    /** Explain why Login cannot sign accounts out. */
     protected function signOutUnavailable(): string
     {
         return isset(Grav::instance()['login'])
@@ -421,12 +385,7 @@ class OAuth2EnforceCommand extends SettingsCommand
             : "the Login plugin isn't loaded";
     }
 
-    /**
-     * The Login plugin's service if it can sign accounts out (Login::signOutAccounts(), signOutEveryone(), and
-     * getAccounts() to find the ones with admin access), else null.
-     *
-     * @return Login|null
-     */
+    /** Older Login versions lack the sign-out methods. */
     protected function login(): ?Login
     {
         $grav = Grav::instance();
@@ -435,16 +394,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return $login instanceof Login && method_exists($login, 'signOutAccounts') && method_exists($login, 'signOutEveryone') && method_exists($login, 'getAccounts') ? $login : null;
     }
 
-    /**
-     * --sign-out, --sign-out-all-environments: signs out the users who could have logged in without OAuth2 on the
-     * sides where it's on and applies, with the Login plugin's sign-out: everyone if the site is one of them (also the
-     * users without an account file), else only the accounts with admin access (OAuth2::hasAdminAccess()). Their
-     * sessions, "remember me" cookies and Admin2 tokens end; API keys keep working. 1 if the sign-out failed for
-     * anyone; 0 if there was nobody to sign out (no account has admin access).
-     *
-     * @param Login $login The Login plugin's service (login())
-     * @param string[] $sides At least one
-     */
+    /** Sign out everyone for site enforcement, or accounts with admin access for admin enforcement. */
     protected function signOut(SymfonyStyle $io, Login $login, array $sides): int
     {
         $by = 'from the command line: login-oauth2 enforce-oauth2 on ' . $this->signOutOption();
@@ -497,14 +447,7 @@ class OAuth2EnforceCommand extends SettingsCommand
         return $failed ? 1 : 0;
     }
 
-    /**
-     * The usernames of the accounts with admin access (OAuth2::hasAdminAccess()), also disabled ones (their cookies and
-     * tokens would work again once enabled), from the Login plugin's list of accounts (Login::getAccounts(), which
-     * skips account files it can't read).
-     *
-     * @param Login $login The Login plugin's service (login())
-     * @return string[]
-     */
+    /** Include disabled accounts, whose saved credentials could work again after enabling them. */
     protected function adminAccounts(Login $login): array
     {
         $admins = [];
