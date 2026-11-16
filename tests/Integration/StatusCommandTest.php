@@ -13,7 +13,7 @@ final class StatusCommandTest extends SiteTestCase
     {
         $this->ready(['enforce_oauth2' => true]);
 
-        $out = $this->cli(['enforce-oauth2', 'status'], 0, ['Site: on', 'Admin: off', 'user/config/plugins/login-oauth2.yaml: on']);
+        $out = $this->cli(['enforce-oauth2', 'status'], 0, ['Site: on (user/config/plugins/login-oauth2.yaml)', 'Admin: off']);
 
         $this->assertStringNotContainsString("doesn't apply", $out);
     }
@@ -48,7 +48,7 @@ final class StatusCommandTest extends SiteTestCase
         $this->ready();
         static::$site->write('user/env/a.example/config/plugins/login-oauth2.yaml', ['enforce_oauth2' => true]);
 
-        $this->cli(['enforce-oauth2', 'status', '--site'], 0, ['user/env/a.example/config/plugins/login-oauth2.yaml: on']);
+        $this->cli(['enforce-oauth2', 'status', '--site'], 0, ['Site: off, but on in user/env/a.example/config/plugins/login-oauth2.yaml']);
     }
 
     public function testStatusLimitedToOneSide(): void

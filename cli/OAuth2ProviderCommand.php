@@ -4,6 +4,7 @@ namespace Grav\Plugin\Console;
 
 use Grav\Plugin\Login\OAuth2\Console\Settings;
 use Grav\Plugin\Login\OAuth2\Console\SettingsCommand;
+use Grav\Plugin\Login\OAuth2\OAuth2;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -46,7 +47,7 @@ class OAuth2ProviderCommand extends SettingsCommand
         $action = strtolower((string)$this->input->getArgument('action'));
         $name = strtolower((string)$this->input->getArgument('name'));
 
-        $providers = $settings->providers();
+        $providers = $settings->ownProviders();
         if (!in_array($name, $providers, true)) {
             $io->error([
                 "Unknown provider '{$name}'. This plugin's providers: " . implode(', ', $providers) . '.',
@@ -75,6 +76,18 @@ class OAuth2ProviderCommand extends SettingsCommand
         return 1;
     }
 
+    /** Saves provider settings in the file the command changes, and says so. */
+    protected function save(SymfonyStyle $io, Settings $settings, array $sides, array $values, string $what, string $subject, string $state): bool
+    {
+        $change = $settings->save($settings->target(), $values, $what);
+        if ($change) {
+            $io->text('  ' . $change);
+        }
+        $io->success(sprintf('%s is %s%s (%s).', $subject, $change ? '' : 'already ', $state, implode(', ', $sides)));
+
+        return (bool)$change;
+    }
+
     /**
      * @param string[] $sides
      */
@@ -91,11 +104,11 @@ class OAuth2ProviderCommand extends SettingsCommand
         }
 
         $state = $enable ? 'enabled' : 'disabled';
-        $this->saveProvider($io, $settings, $sides, $values, "{$state} provider {$name}", "'{$name}'", $state);
+        $this->save($io, $settings, $sides, $values, "{$state} provider {$name}", "'{$name}'", $state);
 
         // What it means for the logins, with the new settings (also if it was already set: e.g. not configured).
         foreach ($sides as $side) {
-            $active = $settings->activeProviders($side);
+            $active = OAuth2::configured($settings->providers($side));
             if ($enable && !isset($active[$name])) {
                 $io->note(ucfirst($side) . ": '{$name}' isn't active yet: " . $settings->inactiveReason($side, $name) . '.');
             }
@@ -107,9 +120,7 @@ class OAuth2ProviderCommand extends SettingsCommand
             }
             // It was turned on before (e.g. with --force) and waited for a provider: from now on it denies the other logins.
             if (in_array($side, $dormant, true) && $settings->notApplying($side) === null) {
-                $requirements = $settings->inspect($side)['unmet'];
-                $io->warning(ucfirst($side) . ": 'Enforce OAuth2' is on and applies now that the side has an active provider: only OAuth2 logins work."
-                    . ($requirements ? " Users can still log in without OAuth2 until you turn off {$requirements}." : ''));
+                $io->warning(ucfirst($side) . ": 'Enforce OAuth2' is on and applies now that the side has an active provider: only OAuth2 logins work.");
             }
         }
 
@@ -130,13 +141,10 @@ class OAuth2ProviderCommand extends SettingsCommand
         }
 
         if ($value === 'status') {
-            $current = [];
             foreach ($sides as $side) {
-                $key = Settings::key($side, "providers.{$name}.verify_peer");
-                $current[$key] = (bool)$settings->get($key, true);
-                $io->text(sprintf("%s: 'Verify Certificate' of '%s' is <info>%s</info>", ucfirst($side), $name, Settings::show($current[$key])));
+                $on = $settings->get(Settings::key($side, "providers.{$name}.verify_peer"), true);
+                $io->text(sprintf("%s: 'Verify Certificate' of '%s' is <info>%s</info>", ucfirst($side), $name, $on ? 'on' : 'off'));
             }
-            $this->overrides($io, $settings, $settings->file(), $current);
 
             return 0;
         }
@@ -150,10 +158,7 @@ class OAuth2ProviderCommand extends SettingsCommand
         foreach ($sides as $side) {
             $values[Settings::key($side, "providers.{$name}.verify_peer")] = $value === 'on';
         }
-        if (!$this->saveProvider($io, $settings, $sides, $values, "turned Verify Certificate {$value} for provider {$name}", "'Verify Certificate' of '{$name}'", $value)) {
-            return 0;
-        }
-        if ($value === 'off') {
+        if ($this->save($io, $settings, $sides, $values, "turned Verify Certificate {$value} for provider {$name}", "'Verify Certificate' of '{$name}'", $value) && $value === 'off') {
             $io->warning('For testing only: without this check, anyone who can intercept the connection to the provider can read the client secret and tokens, and log in as any user.');
         }
 

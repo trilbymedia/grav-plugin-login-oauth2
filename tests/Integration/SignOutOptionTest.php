@@ -96,33 +96,13 @@ final class SignOutOptionTest extends SiteTestCase
         $this->assertSame($al, $this->accountFile('al'));
     }
 
-    public function testRefusedForOneEnvironmentBecauseAccountsAreShared(): void
-    {
-        $this->ready();
-        $this->accounts();
-        mkdir(static::$site->path('user/env/staging/config'), 0777, true);
-        $al = $this->accountFile('al');
-
-        $this->cli(['enforce-oauth2', 'on', '--site', '--sign-out', '--env=staging'], 1, [
-            '--sign-out would also sign out users of every other environment',
-            'Nothing changed',
-            '--sign-out-all-environments',
-        ]);
-
-        $this->assertNull($this->enforced('site', 'user/env/staging/config/plugins/login-oauth2.yaml'));
-        $this->assertSame($al, $this->accountFile('al'));
-    }
-
-    public function testAllEnvironmentsOptionSignsOutAnyway(): void
+    public function testWithEnvItSignsOutTheSharedAccounts(): void
     {
         $this->ready();
         $this->accounts();
         mkdir(static::$site->path('user/env/staging/config'), 0777, true);
 
-        $this->cli(['enforce-oauth2', 'on', '--site', '--sign-out-all-environments', '--env=staging'], 0, [
-            '--sign-out-all-environments also signs out users of every other environment',
-            'Signed out 6 accounts everywhere',
-        ]);
+        $this->cli(['enforce-oauth2', 'on', '--site', '--sign-out', '--env=staging'], 0, ['Signed out 6 accounts everywhere']);
 
         $this->assertTrue($this->enforced('site', 'user/env/staging/config/plugins/login-oauth2.yaml'));
     }

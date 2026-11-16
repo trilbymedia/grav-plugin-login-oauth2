@@ -422,7 +422,7 @@ Two settings of other plugins let users in without OAuth2 and have to be off:
 * Login → "Remember me" (`plugins.login.rememberme.enabled`): its cookie logs users back in without the identity provider, even after their access there was removed.
 * For the admin, API → Session Authentication (`plugins.api.auth.session_enabled`, on unless set to `false`): with it, Admin2 accepts any site session. Turning it off also stops front-end features that call the API as the logged-in visitor.
 
-The plugin never changes them. The settings and `enforce-oauth2 on` refuse to turn "Enforce OAuth2" on while one of them is on (`--force` turns it on anyway). They check the environment you change, or the main configuration together with the environments that inherit from it.
+The plugin never changes them. The settings and `enforce-oauth2 on` refuse to turn "Enforce OAuth2" on while one of them is on (`--force` turns it on anyway). The settings check the configuration of the site you're logged in to. The command checks the main configuration and every environment folder, or with `--env` only that environment, and names the file that turns the setting on.
 
 If one is turned on later, the settings and Admin2's dashboard show a red warning. Below each toggle, the settings list the required settings with their state, and tell you if "Enforce OAuth2" doesn't apply yet. `bin/plugin login-oauth2 status` shows the same.
 
@@ -466,20 +466,19 @@ Of course adjust this `access.admin:` settings to whatever you need, but **NEVER
 
 ```text
 bin/plugin login-oauth2 status
-bin/plugin login-oauth2 enforce-oauth2 <on|off|status> [--sign-out|--sign-out-all-environments]
+bin/plugin login-oauth2 enforce-oauth2 <on|off|status> [--force] [--sign-out]
 bin/plugin login-oauth2 provider <enable|disable> <name>
 bin/plugin login-oauth2 provider verify-certificate <name> [on|off|status]
 ```
 
 `--site` or `--admin` limits a command to that side; without them it covers both. `--env=<environment>` (or `GRAV_ENVIRONMENT`) uses that environment's config file instead of `user/config/plugins/login-oauth2.yaml`.
 
-Changes apply from the next request and are written to the Grav log. A command tells you if an environment overrides its change.
+Changes apply from the next request and are written to the Grav log.
 
-* **`status`** shows, for each side, whether "Enforce OAuth2" is on and applies, the settings it requires off, the providers (active, or why not) and the account settings. It changes nothing.
-* **`enforce-oauth2 off`** turns it off in the main config file and in every environment that turns it on (with `--env` only there). It fails if it's still on afterwards, e.g. because a config file can't be read or a `GRAV_CONFIG__` environment variable turns it on.
+* **`status`** shows, for each side, whether "Enforce OAuth2" is on and in which files, the settings it requires off with the files that turn them on, the providers (active, or why not) and the account settings. It changes nothing. `enforce-oauth2 status` shows only the first two.
+* **`enforce-oauth2 off`** turns it off in the main config file and in every environment that turns it on (with `--env` only there). It works while plugins fail to load, and fails if it's still on afterwards, e.g. because a config file can't be read or a `GRAV_CONFIG__` environment variable turns it on.
 * **`enforce-oauth2 on`** turns it on if the side has an active provider and the [required settings](#required-settings) are off. If not, a side chosen with `--site` or `--admin` is refused; without them, only the side that is ready is turned on. `--force` turns it on anyway, except against a `GRAV_CONFIG__` variable that turns it off.
-* **`enforce-oauth2 on --sign-out`** also signs out the users who may be logged in without OAuth2, even if it was on already: everyone if the site is on, else the accounts with admin access (only those with an account file). Their sessions, "remember me" cookies and Admin2 tokens end; API keys keep working. It needs Login 3.13.0 or newer.
-* **`--sign-out-all-environments`**: accounts are shared by all environments, so `--sign-out` is refused if it would also sign out users of an environment where "Enforce OAuth2" doesn't apply, e.g. when you only change one with `--env`, or when one turns it off or has no active provider. This option signs them out as well and names the environments.
+* **`enforce-oauth2 on --sign-out`** also signs out the users who may be logged in without OAuth2, even if it was on already: everyone if the site is turned on, else the accounts with admin access (only those with an account file). Their sessions, "remember me" cookies and Admin2 tokens end; API keys keep working. Accounts are shared by all environments, so this also applies with `--env`. It needs Login 3.13.0 or newer.
 * **`provider enable|disable`** enables or disables one of this plugin's providers, e.g. `generic`. Providers of other plugins, e.g. login-oauth2-extras, are set in their own settings.
 * **`provider verify-certificate`** shows or changes "Verify Certificate" of the Generic provider. Turn it off only for testing.
 

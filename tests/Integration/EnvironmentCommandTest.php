@@ -6,33 +6,25 @@ use OAuth2Tests\Support\SiteTestCase;
 
 final class EnvironmentCommandTest extends SiteTestCase
 {
-    public function testAnEnvironmentKeepingEnforcementOffIsExcludedFromRequirementsButBlocksSignOut(): void
+    public function testARequirementOnInAnEnvironmentRefusesWhateverThatEnvironmentSetsItself(): void
     {
         $this->ready();
         static::$site->write('user/env/staging/config/plugins/login-oauth2.yaml', ['enforce_oauth2' => false]);
         static::$site->write('user/env/staging/config/plugins/login.yaml', ['rememberme' => ['enabled' => true]]);
 
-        $this->cli(['enforce-oauth2', 'on', '--site'], 0, ['These environments override it']);
-        $this->cli(['enforce-oauth2', 'on', '--site', '--sign-out'], 1, ['Nothing changed', 'user/env/staging: turns it off']);
+        $this->cli(['enforce-oauth2', 'on', '--site'], 1, ['Login → Remember me', 'user/env/staging/config/plugins/login.yaml', 'Nothing changed']);
+        $this->assertNull($this->enforced());
     }
 
-    public function testAnEnvironmentSettingEnforcementItselfDoesNotRefuseAMainFileChange(): void
+    public function testStatusNamesTheEnvironmentThatTurnsARequirementOn(): void
     {
-        $this->ready();
-        static::$site->write('user/env/staging/config/plugins/login-oauth2.yaml', ['enforce_oauth2' => true]);
+        $this->ready(['enforce_oauth2' => true]);
         static::$site->write('user/env/staging/config/plugins/login.yaml', ['rememberme' => ['enabled' => true]]);
 
-        $this->cli(['enforce-oauth2', 'on', '--site'], 0, ["'Enforce OAuth2' is on"]);
-        $this->cli(['enforce-oauth2', 'status', '--site'], 0, ['Remember me: on', 'users can still log in without OAuth2']);
-    }
-
-    public function testAProviderOnlyInAnEnvironmentCanEnableEnforcementThere(): void
-    {
-        $this->ready(['providers' => ['generic' => ['enabled' => false]]]);
-        static::$site->write('user/env/staging/config/plugins/login-oauth2.yaml', ['providers' => ['generic' => static::idp()]]);
-
-        $this->cli(['enforce-oauth2', 'on', '--site'], 0, ["doesn't apply in the main configuration (no active provider)", 'applies in user/env/staging']);
-        $this->cli(['enforce-oauth2', 'on', '--site', '--sign-out'], 1, ['main configuration: no active provider']);
+        $this->cli(['enforce-oauth2', 'status', '--site'], 0, [
+            'Site: on (user/config/plugins/login-oauth2.yaml)',
+            'Login → Remember me: on (user/env/staging/config/plugins/login.yaml): users can still log in without OAuth2',
+        ]);
     }
 
     public function testLegacyDiscoveryExcludesOtherUserStreams(): void

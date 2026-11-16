@@ -48,9 +48,8 @@ class OAuth2StatusCommand extends SettingsCommand
         ));
 
         foreach (Settings::sides($this->input) as $side) {
-            $report = $settings->inspect($side);
-            $registered = $settings->registeredProviders($side);
-            $active = $settings->activeProviders($side, $registered);
+            $registered = $settings->providers($side);
+            $active = OAuth2::configured($registered);
             $oauth2 = new OAuth2($side === 'admin');
             // The admin follows the site's account settings until set itself.
             $follows = $side === 'admin' ? ' (follows the site)' : '';
@@ -60,21 +59,18 @@ class OAuth2StatusCommand extends SettingsCommand
             if ($side === 'admin') {
                 $list[] = ['Enabled in Admin' => $onOff($settings->get('admin.enabled'))];
             }
-            $key = Settings::key($side, 'enforce_oauth2');
-            $enforced = (bool)$settings->get($key);
-            // Off here, but environments may turn it on.
-            $elsewhere = $enforced ? [] : $settings->stillOn($key);
-            $list[] = ['Enforce OAuth2' => static::enforcementState($settings, $side, $report) . ($elsewhere ? ' (on in ' . implode(', ', $elsewhere) . ')' : '')];
+            [$state, $requirements] = static::enforcement($settings, $side);
+            $list[] = ['Enforce OAuth2' => $state];
             // The settings it requires off (they let users in without OAuth2).
-            foreach ($report['requirements'] as $requirement => $where) {
-                $list[] = ['  ' . $requirement => Settings::requirementState($where)];
+            foreach ($requirements as $name => $requirement) {
+                $list[] = ['  ' . $name => $requirement];
             }
             $list[] = ['Require Existing Grav user' => $onOff($oauth2->requireGravUser()) . ($settings->get(Settings::key($side, 'require_grav_user')) === null ? $follows : '')];
             $list[] = ['Save Grav user' => $onOff($oauth2->saveGravUser()) . ($settings->get(Settings::key($side, 'save_grav_user')) === null ? $follows : '')];
             $io->definitionList(...$list);
 
             $rows = [];
-            foreach ($settings->providers() as $provider) {
+            foreach ($settings->ownProviders() as $provider) {
                 $verify = '';
                 if ($settings->defines($side, $provider, 'verify_peer')) {
                     $verify = $settings->get(Settings::key($side, "providers.{$provider}.verify_peer"), true) ? 'on' : 'off';
@@ -89,9 +85,7 @@ class OAuth2StatusCommand extends SettingsCommand
             }
             $io->table(['Provider', 'State', 'Verify Certificate'], $rows);
         }
-        if ($unreadable = static::unreadable($settings)) {
-            $io->warning(array_merge(["Can't read these config files, so their settings are unknown:"], $unreadable));
-        }
+        $this->warnUnreadable($io, $settings);
 
         return 0;
     }
