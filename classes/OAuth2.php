@@ -2,8 +2,11 @@
 
 namespace Grav\Plugin\Login\OAuth2;
 
+use Grav\Common\File\CompiledYamlFile;
 use Grav\Common\Grav;
 use Grav\Common\User\Interfaces\UserInterface;
+use Grav\Common\Utils;
+use Grav\Plugin\Api\Services\ConfigStore as ApiConfigStore;
 use Grav\Plugin\Api\PermissionResolver as ApiPermissionResolver;
 use Grav\Plugin\Login\OAuth2\Providers\BaseProvider;
 use ReflectionClass;
@@ -181,9 +184,9 @@ class OAuth2
     }
 
     /** Names of requirements that are not met. */
-    public static function enforceUnmet(bool $admin): array
+    public static function enforceUnmet(bool $admin, ?callable $get = null): array
     {
-        return array_keys(array_filter(static::enforceRequirements($admin), static function (bool $met) {
+        return array_keys(array_filter(static::enforceRequirements($admin, $get), static function (bool $met) {
             return !$met;
         }));
     }
@@ -236,6 +239,51 @@ class OAuth2
         return $words ? implode(', ', $words) . ' ' . Grav::instance()['language']->translate('PLUGIN_LOGIN_OAUTH2.AND') . ' ' . $last : (string)$last;
     }
 
+    /**
+     * Config of the environment the settings page edits: Admin2's environment selector can pick another one than the
+     * request's. Reads plugin defaults, the main file and that environment's file; never the API's effective config,
+     * which would load this plugin's blueprint again.
+     */
+    public static function formGet(): callable
+    {
+        $grav = Grav::instance();
+        $get = [$grav['config'], 'get'];
+        $request = $grav['request'] ?? null;
+        if (!$request || !$request->hasHeader('X-Config-Environment') || !class_exists(ApiConfigStore::class)) {
+            return $get;
+        }
+        try {
+            $store = new ApiConfigStore($grav);
+            $target = $store->targetFor($request);
+            $folders = [$store->writeDir(null), $target === null ? null : $store->writeDir($target)];
+        } catch (\Throwable $e) {
+            return $get;
+        }
+
+        $plugins = [];
+
+        return static function (string $path) use ($grav, $get, $folders, &$plugins) {
+            [$type, $plugin, $key] = explode('.', $path, 3) + ['', '', ''];
+            if ($type !== 'plugins' || $plugin === '') {
+                return $get($path);
+            }
+            if (!isset($plugins[$plugin])) {
+                $files = [$grav['locator']->findResource("plugins://{$plugin}/{$plugin}.yaml")];
+                foreach (array_filter($folders) as $folder) {
+                    $files[] = "{$folder}/plugins/{$plugin}.yaml";
+                }
+                $plugins[$plugin] = [];
+                foreach ($files as $file) {
+                    if (is_string($file) && is_file($file)) {
+                        $plugins[$plugin] = array_replace_recursive($plugins[$plugin], (array)CompiledYamlFile::instance($file)->content());
+                    }
+                }
+            }
+
+            return $key === '' ? $plugins[$plugin] : Utils::getDotNotation($plugins[$plugin], $key);
+        };
+    }
+
     /** Requirements and applicability below each enforcement toggle. */
     public static function enforceConditionsNotice($admin = false): string
     {
@@ -244,8 +292,9 @@ class OAuth2
             $grav = Grav::instance();
             $admin = (bool)$admin;
             $language = $grav['language'];
-            $config = (array)$grav['config']->get('plugins.login-oauth2');
-            $requirements = static::enforceRequirements($admin);
+            $get = static::formGet();
+            $config = (array)$get('plugins.login-oauth2');
+            $requirements = static::enforceRequirements($admin, $get);
             $unmet = in_array(false, $requirements, true);
             $on = !empty($admin ? ($config['admin']['enforce_oauth2'] ?? false) : ($config['enforce_oauth2'] ?? false));
             try {
@@ -310,7 +359,7 @@ class OAuth2
     public static function enforceWarning(): string
     {
         try {
-            $lines = static::enforceWarningLines();
+            $lines = static::enforceWarningLines(static::formGet());
             if (!$lines) {
                 return '';
             }
@@ -331,14 +380,15 @@ class OAuth2
     }
 
     /** One translated warning per enforced side with unmet requirements. */
-    public static function enforceWarningLines(): array
+    public static function enforceWarningLines(?callable $get = null): array
     {
         $grav = Grav::instance();
+        $get = $get ?? [$grav['config'], 'get'];
         $language = $grav['language'];
         $lines = [];
         foreach (['site' => false, 'admin' => true] as $side => $admin) {
-            $on = $grav['config']->get('plugins.login-oauth2.' . ($admin ? 'admin.' : '') . 'enforce_oauth2');
-            $unmet = $on ? static::enforceUnmet($admin) : [];
+            $on = $get('plugins.login-oauth2.' . ($admin ? 'admin.' : '') . 'enforce_oauth2');
+            $unmet = $on ? static::enforceUnmet($admin, $get) : [];
             if ($unmet) {
                 $lines[] = $language->translate([
                     'PLUGIN_LOGIN_OAUTH2.ENFORCE_WARNING_' . strtoupper($side) . (count($unmet) > 1 ? '_PLURAL' : ''),

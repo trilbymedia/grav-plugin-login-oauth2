@@ -97,7 +97,7 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /** Refuse a save that turns enforcement on while a setting it requires off is on for this request. */
+    /** Refuse a save that turns enforcement on while a setting it requires off is on where the save goes. */
     public function onAdminSave(Event $event): void
     {
         $object = $event['object'] ?? null;
@@ -105,9 +105,11 @@ class LoginOauth2Plugin extends Plugin
             return;
         }
 
+        // The environment the save goes to (Admin2's environment selector), not necessarily this request's.
+        $get = OAuth2::formGet();
         $refused = [];
         foreach (['enforce_oauth2' => false, 'admin.enforce_oauth2' => true] as $key => $admin) {
-            if ($object->get($key) && !$this->config->get('plugins.login-oauth2.' . $key) && ($unmet = OAuth2::enforceUnmet($admin))) {
+            if ($object->get($key) && !$get('plugins.login-oauth2.' . $key) && ($unmet = OAuth2::enforceUnmet($admin, $get))) {
                 $refused[$key] = $this->translate(
                     'PLUGIN_LOGIN_OAUTH2.ENFORCE_REQUIREMENTS_REFUSED' . (count($unmet) > 1 ? '_PLURAL' : ''),
                     OAuth2::requirementNames($unmet)
