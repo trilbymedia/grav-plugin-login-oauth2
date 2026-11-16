@@ -14,10 +14,7 @@ use RocketTheme\Toolbox\Event\Event;
 
 class OAuth2
 {
-    /**
-     * The setting that turns each requirement of "Enforce OAuth2" (enforceRequirements()) on, which has to be off.
-     * Session Authentication only counts while the API plugin is enabled.
-     */
+    /** Settings that must be off for OAuth2 enforcement. */
     public const REQUIREMENT_KEYS = [
         'remember_me' => 'plugins.login.rememberme.enabled',
         'session_passthrough' => 'plugins.api.auth.session_enabled',
@@ -118,11 +115,7 @@ class OAuth2
         return $reader;
     }
 
-    /**
-     * The configuration this request runs with, as a reader of its settings by their config path (formConfig()).
-     *
-     * @return callable
-     */
+    /** Reads the configuration of this request. */
     public static function liveConfig(): callable
     {
         $config = Grav::instance()['config'];
@@ -143,12 +136,7 @@ class OAuth2
         return ($set ? 'admin.' : '') . 'save_grav_user != true';
     }
 
-    /**
-     * The "Admin Callback URI" of the settings form (blueprint: data-content@), for the admin that shows it. Admin2
-     * logins return to the API plugin, which has one URI per provider (BaseProvider::getAdminCallbackUri()): they're
-     * listed for the providers of callbackProviders(), as a table without lines (provider, URI). Classic admin logins
-     * return to the admin's route, the same for every provider.
-     */
+    /** Callback URIs for the classic admin or each Admin2 provider. */
     public static function adminCallbackUris(): string
     {
         // Never take the settings page down.
@@ -160,11 +148,17 @@ class OAuth2
                 return $uri(BaseProvider::getCallbackUri('admin'));
             }
 
+            $providers = static::ownProviders();
+            try {
+                $providers += static::registeredFor(true) + static::registeredFor(false);
+            } catch (\Throwable $e) {
+                // Built-in callback URIs remain available when a satellite plugin fails.
+            }
             $rows = '';
-            foreach (static::callbackProviders() as $provider => $label) {
+            foreach (array_keys($providers) as $provider) {
                 $rows .= sprintf(
                     '<tr><td class="border-0 py-0.5 pe-4 align-top font-medium whitespace-nowrap">%s</td><td class="border-0 py-0.5 align-top">%s</td></tr>',
-                    htmlspecialchars($label, ENT_QUOTES),
+                    htmlspecialchars(static::providerLabel((string)$provider), ENT_QUOTES),
                     $uri(BaseProvider::getAdminCallbackUri((string)$provider))
                 );
             }
@@ -175,36 +169,7 @@ class OAuth2
         }
     }
 
-    /**
-     * The providers the admin callback URIs are listed for (adminCallbackUris()): this plugin's, and the ones
-     * satellite plugins (e.g. login-oauth2-extras) add to the admin's or the site's login in this request, i.e. their
-     * enabled ones.
-     *
-     * @return array<string, string> Name => label
-     */
-    protected static function callbackProviders(): array
-    {
-        $names = array_keys(static::ownProviders());
-        // Never take the settings page down.
-        try {
-            $names = array_merge($names, array_keys(static::registeredFor(true) + static::registeredFor(false)));
-        } catch (\Throwable $e) {
-            // E.g. a satellite plugin fails: this plugin's own are still listed.
-        }
-
-        $providers = [];
-        foreach ($names as $name) {
-            $providers[(string)$name] = static::providerLabel((string)$name);
-        }
-
-        return $providers;
-    }
-
-    /**
-     * This plugin's providers: the ones its settings have (site or admin) that have a provider class.
-     *
-     * @return array<string, mixed> Name => settings
-     */
+    /** Configured provider names with a class supplied by this plugin. */
     protected static function ownProviders(): array
     {
         $config = (array)(Grav::instance()['config']->get('plugins.login-oauth2') ?? []);
@@ -214,15 +179,7 @@ class OAuth2
         }, ARRAY_FILTER_USE_KEY);
     }
 
-    /**
-     * Display label for a provider id.
-     *
-     * Provider classes carry a properly-cased `$name` ('LinkedIn', 'Keycloak'),
-     * which reads better on a button than `ucfirst()` on the config key. Read
-     * as a class default so no provider gets constructed just to render the
-     * login screen — the League provider classes validate their options in the
-     * constructor and would throw here on partially-configured credentials.
-     */
+    /** Read the display name without constructing a provider with incomplete credentials. */
     public static function providerLabel(string $name): string
     {
         $classname = __NAMESPACE__ . '\\Providers\\' . ucfirst($name) . 'Provider';
@@ -241,9 +198,7 @@ class OAuth2
         return ucfirst($name);
     }
 
-    /**
-     * The URL path of the API plugin's routes, e.g. "/api/v1", as the API builds it.
-     */
+    /** The API route, including its version prefix. */
     public static function apiRoute(): string
     {
         $config = Grav::instance()['config'];
@@ -251,17 +206,7 @@ class OAuth2
         return '/' . trim((string)$config->get('plugins.api.route', '/api'), '/') . '/' . trim((string)$config->get('plugins.api.version_prefix', 'v1'), '/');
     }
 
-    /**
-     * Why "Enforce OAuth2" doesn't apply on a side, null if it applies: the one rule of the login checks
-     * (LoginOauth2Plugin::isOAuth2Enforced()), the settings notice (enforceConditionsNotice()) and the CLI. "disabled": the
-     * plugin is off; "admin_disabled": "Enabled in Admin" is off; "no_provider": none of the side's providers has its
-     * client ID. Whether the setting itself is on, its callers ask first.
-     *
-     * @param bool $admin
-     * @param array $config The plugin's settings (plugins.login-oauth2)
-     * @param array $providers The side's providers, name => settings (e.g. getProviders() of registered())
-     * @return string|null
-     */
+    /** Enforcement requires an enabled plugin, an enabled admin when applicable, and a configured provider. */
     public static function enforceNotApplying(bool $admin, array $config, array $providers): ?string
     {
         if (empty($config['enabled'])) {
@@ -274,18 +219,7 @@ class OAuth2
         return static::configured($providers) ? null : 'no_provider';
     }
 
-    /**
-     * The settings of other plugins that "Enforce OAuth2" on a side requires off, as they let users in without OAuth2:
-     * "remember_me", the Login plugin's "Remember me" (its cookie logs users back in without the identity provider),
-     * and for the admin "session_passthrough", the API plugin's Session Authentication (Admin2 then accepts a site
-     * session, also one from a login that "Enforce OAuth2" doesn't cover; on unless set to off, as the API reads it).
-     * Name => whether it's off, in the order to show them. The plugin never changes them itself.
-     *
-     * @param bool $admin
-     * @param callable|null $get Reads a setting by its config path, e.g. of one environment (the CLI); default: Grav's
-     *                           configuration of this request
-     * @return array<string, bool>
-     */
+    /** Remember me must be off; admin enforcement also requires API session authentication off. */
     public static function enforceRequirements(bool $admin, ?callable $get = null): array
     {
         $get = $get ?? static::liveConfig();
@@ -298,13 +232,7 @@ class OAuth2
         return $requirements;
     }
 
-    /**
-     * The requirements of a side that aren't met (enforceRequirements()).
-     *
-     * @param bool $admin
-     * @param callable|null $get Reads a setting by its config path (enforceRequirements())
-     * @return string[]
-     */
+    /** Names of requirements that are not met. */
     public static function enforceUnmet(bool $admin, ?callable $get = null): array
     {
         return array_keys(array_filter(static::enforceRequirements($admin, $get), static function (bool $met) {
@@ -312,18 +240,7 @@ class OAuth2
         }));
     }
 
-    /**
-     * Whether an account can use the admin: the classic admin (admin.login, admin.super) or the API that Admin2 uses
-     * (api.access, api.super). Asked of a copy that is logged in and its login authorized, so the account itself stays
-     * as it is: until then Grav only answers login actions, and an account loaded from its file (e.g. by a command)
-     * answers nothing (Grav's "test" scope, which would skip both, only exists for Flex accounts). With $anyState the
-     * copy is also enabled (Grav answers nothing for a disabled account either), e.g. to sign a disabled account out
-     * before it's enabled again. An account the API lets in counts too (apiGrantsAccess()).
-     *
-     * @param UserInterface $user
-     * @param bool $anyState
-     * @return bool
-     */
+    /** Check a logged-in copy, optionally enabling disabled accounts for sign-out. */
     public static function hasAdminAccess(UserInterface $user, bool $anyState = false): bool
     {
         $copy = clone $user;
@@ -338,23 +255,13 @@ class OAuth2
             }
         }
 
-        return static::apiGrantsAccess($copy);
-    }
-
-    /**
-     * Whether the API plugin gives an account "api.access", asked as the API itself decides it (its PermissionResolver,
-     * while the plugin is enabled): also from a parent key, i.e. a blanket "api: true" of the account or one of its
-     * groups, which Grav doesn't count for regular accounts (only for Flex accounts). Not for a disabled account, which
-     * the resolver doesn't look at.
-     */
-    protected static function apiGrantsAccess(UserInterface $user): bool
-    {
-        if (!class_exists(ApiPermissionResolver::class) || $user->get('state', 'enabled') !== 'enabled') {
+        // The API also accepts inherited blanket permissions such as api: true.
+        if (!class_exists(ApiPermissionResolver::class) || $copy->get('state', 'enabled') !== 'enabled') {
             return false;
         }
 
         try {
-            return (new ApiPermissionResolver())->resolve($user, 'api.access') === true;
+            return (new ApiPermissionResolver())->resolve($copy, 'api.access') === true;
         } catch (\Throwable $e) {
             // An API version that resolves it another way: what Grav answered above stands.
             Grav::instance()['log']->warning('Login OAuth2: the API plugin could not be asked for the access of an account: ' . $e->getMessage());
@@ -363,12 +270,7 @@ class OAuth2
         }
     }
 
-    /**
-     * The names of requirements (enforceRequirements()) in words, e.g. "Login → 'Remember me' and API → Session
-     * Authentication".
-     *
-     * @param string[] $requirements
-     */
+    /** Translated requirement names joined as a list. */
     public static function requirementNames(array $requirements): string
     {
         $language = Grav::instance()['language'];
@@ -378,11 +280,7 @@ class OAuth2
         }, $requirements));
     }
 
-    /**
-     * Words as a list: "A", "A and B", "A, B and C".
-     *
-     * @param string[] $words
-     */
+    /** Join words with commas and a translated conjunction. */
     public static function andList(array $words): string
     {
         $last = array_pop($words);
@@ -390,18 +288,7 @@ class OAuth2
         return $words ? implode(', ', $words) . ' ' . Grav::instance()['language']->translate('PLUGIN_LOGIN_OAUTH2.AND') . ' ' . $last : (string)$last;
     }
 
-    /**
-     * The block below a side's "Enforce OAuth2" toggle (blueprint: data-content@), in both admins: each requirement
-     * (enforceRequirements()) with its state, why it's needed and where to change it; and why it doesn't apply yet,
-     * if so (enforceNotApplying()). While the toggle is off it's plain: what turning it on needs (it's refused while a
-     * requirement isn't met, see LoginOauth2Plugin::onAdminSave()). While it's on: green when it all holds, red while
-     * a requirement isn't met, amber while it only doesn't apply. Red too in Admin2 while the admin has no active
-     * provider of this plugin and those of satellite plugins can't be registered: the checks of Admin2's logins then
-     * keep it in effect (LoginOauth2Plugin::isOAuth2Enforced()). The states are the saved settings of the
-     * configuration the form shows (formConfig()).
-     *
-     * @param mixed $admin The admin's toggle, else the site's
-     */
+    /** Requirements and applicability below each enforcement toggle. */
     public static function enforceConditionsNotice($admin = false): string
     {
         // Never take the settings page down.
@@ -409,7 +296,15 @@ class OAuth2
             $grav = Grav::instance();
             $admin = (bool)$admin;
             $language = $grav['language'];
+            static $reader, $notices = [];
             $get = static::formConfig();
+            if ($reader !== $get) {
+                $reader = $get;
+                $notices = [];
+            }
+            if (isset($notices[(int)$admin])) {
+                return $notices[(int)$admin];
+            }
             $config = (array)($get('plugins.login-oauth2') ?? []);
             $requirements = static::enforceRequirements($admin, $get);
             $unmet = in_array(false, $requirements, true);
@@ -476,29 +371,31 @@ class OAuth2
                 $html .= '<p class="mt-2">' . $language->translate(['PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_NOT_APPLYING_YET', static::notApplyingReason($admin, $notApplying)]) . '</p>';
             }
 
-            return $html . '</div>';
+            return $notices[(int)$admin] = $html . '</div>';
         } catch (\Throwable $e) {
             return '';
         }
     }
 
-    /**
-     * The red warning at the top of the settings (blueprint: data-content@) while "Enforce OAuth2" is on for a side
-     * whose requirements aren't all met (enforceRequirements()), e.g. turned on before they existed, by hand, with the
-     * CLI's --force, or one turned on again later. Empty otherwise, which hides it.
-     */
+    /** Red settings warning when enforcement has unmet requirements. */
     public static function enforceWarning(): string
     {
-        // Never take the settings page down.
+        static $reader, $html = '';
+        $get = static::formConfig();
+        if ($reader === $get) {
+            return $html;
+        }
+        $reader = $get;
+        $html = '';
         try {
-            $lines = static::enforceWarningLines();
+            $lines = static::enforceWarningLines($get);
             if (!$lines) {
                 return '';
             }
 
             $language = Grav::instance()['language'];
 
-            return sprintf(
+            return $html = sprintf(
                 '<div class="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300"><strong>%s</strong><ul class="mt-1 space-y-1">%s</ul><p class="mt-2">%s</p></div>',
                 $language->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_WARNING'),
                 implode('', array_map(static function (string $line) {
@@ -511,14 +408,7 @@ class OAuth2
         }
     }
 
-    /**
-     * For each side with "Enforce OAuth2" on and requirements not met: "In the admin, API → Session Authentication is
-     * still on."
-     *
-     * @param callable|null $get Reads a setting by its config path; default: the configuration the form shows
-     *                           (formConfig())
-     * @return string[]
-     */
+    /** One translated warning per enforced side with unmet requirements. */
     public static function enforceWarningLines(?callable $get = null): array
     {
         $get = $get ?? static::formConfig();
@@ -538,12 +428,7 @@ class OAuth2
         return $lines;
     }
 
-    /**
-     * The notice of Admin2's dashboard (LoginOauth2Plugin::onApiDashboardNotifications()) while "Enforce OAuth2" is on
-     * with requirements not met, as the red warning of the settings (enforceWarning()), in Markdown with a link to the
-     * settings. Null otherwise. For the configuration this request runs with, as the site's logins do: the dashboard
-     * has no form, and the environment chosen in Admin2's selector may be another one.
-     */
+    /** Dashboard warning for the live environment, independent of the form selector. */
     public static function enforceDashboardNotice(): ?string
     {
         $lines = static::enforceWarningLines(static::liveConfig());
@@ -558,15 +443,7 @@ class OAuth2
         ]);
     }
 
-    /**
-     * Why "Enforce OAuth2" doesn't apply on a side (enforceNotApplying()), in words: for the settings form, which
-     * tells where to change it there, or in short for the commands, which name the side themselves. The one list of
-     * the reasons, so a new one gets both wordings here.
-     *
-     * @param bool $admin
-     * @param string $why
-     * @param bool $short For the commands, else for the settings form
-     */
+    /** Translated settings explanation or short CLI wording. */
     public static function notApplyingReason(bool $admin, string $why, bool $short = false): string
     {
         // Reason => its language key (settings form), its words for the commands.
@@ -579,10 +456,7 @@ class OAuth2
         return $short ? $words : (string)Grav::instance()['language']->translate('PLUGIN_LOGIN_OAUTH2.' . $key);
     }
 
-    /**
-     * Whether the settings form is shown by the classic admin, which renders it itself; Admin2 loads it through the API
-     * (whose stand-in for the admin is Grav\Plugin\Api\AdminProxy).
-     */
+    /** Admin2 uses an AdminProxy instead of the classic Admin service. */
     protected static function classicAdmin(): bool
     {
         $grav = Grav::instance();
@@ -590,11 +464,7 @@ class OAuth2
         return isset($grav['admin']) && $grav['admin'] instanceof \Grav\Plugin\Admin\Admin;
     }
 
-    /**
-     * The URL path of the admin that shows the settings form: the classic admin (which renders the form itself), else
-     * Admin2 (which loads it through the API). Both serve the pages below it at the same paths, e.g. /plugins/login;
-     * Admin2 opens the tab named in the URL's hash (e.g. #session).
-     */
+    /** Link to the admin displaying the settings. */
     protected static function adminUrl(): string
     {
         $grav = Grav::instance();
@@ -605,9 +475,7 @@ class OAuth2
         return rtrim($grav['uri']->rootUrl(false), '/') . '/' . trim((string)($route ?: 'admin'), '/');
     }
 
-    /**
-     * A duration in its largest whole unit, e.g. "1 week" or "30 minutes" (Grav's NICETIME units).
-     */
+    /** Format a duration using Grav's translated time units. */
     protected static function duration(int $seconds): string
     {
         $language = Grav::instance()['language'];
@@ -622,38 +490,19 @@ class OAuth2
         return $seconds . ' ' . $language->translate('GRAV.NICETIME.SECOND_PLURAL');
     }
 
-    /**
-     * Whether a provider's settings have its client ID. Facebook names it "app_id".
-     *
-     * @param mixed $options
-     */
+    /** Facebook uses app_id; other providers use client_id. */
     public static function isConfigured($options): bool
     {
         return !empty($options['client_id']) || !empty($options['app_id']);
     }
 
-    /**
-     * The providers of a side's login: a service with this plugin's enabled providers and the ones satellite plugins
-     * add (registerProviders()). Afterwards Grav's "oauth2" service is the request's own again, which may be the other
-     * side's (e.g. the admin's "Enforce OAuth2" checked on a site login).
-     *
-     * @return self
-     */
+    /** Register a side's providers while preserving the request's OAuth2 service. */
     public static function registered(bool $admin): self
     {
         return (new self($admin))->registerProviders();
     }
 
-    /**
-     * A side's providers for the notice of the settings form, as its login checks count them: this plugin's as the
-     * form's configuration has them (formConfig()), and those of satellite plugins (registeredFor()). If those can't
-     * be registered (a satellite plugin fails), the ones the request's service has for that side, and why in $failed.
-     *
-     * @param bool $admin
-     * @param array $config The plugin's settings in the form's configuration
-     * @param string|null $failed
-     * @return array Name => settings
-     */
+    /** Use the form's own providers and this request's satellite providers. */
     protected static function noticeProviders(bool $admin, array $config, ?string &$failed = null): array
     {
         $own = (array)($config['providers'] ?? []) + (array)($config['admin']['providers'] ?? []);
@@ -669,21 +518,7 @@ class OAuth2
         return static::enabledProviders($admin, $config) + array_diff_key($others, $own);
     }
 
-    /**
-     * The providers a side's login gets in this request, also the ones of satellite plugins that aren't configured
-     * yet: the one list for the settings form and the commands (EnvironmentSettings::registeredProviders()).
-     *
-     * For the site, where the request's own service is the site's (the site, Admin2, the commands): this plugin's
-     * from the current settings, which a command may have changed since, and from that service the ones satellite
-     * plugins added in their own onPluginsInitialized, as its login page and login checks count them. Without
-     * onOAuth2ProvidersRegister: up to 2.3.0 it only fired for the admin's service, so a handler may add its admin
-     * providers without looking at the side, and they would count for the site.
-     *
-     * For the admin, and for the site where the request's service is the admin's (classic admin) or there is none:
-     * the ones registered with that event (registered()).
-     *
-     * @return array Name => settings
-     */
+    /** Site providers come from the request's service; admin providers use the registration event. */
     public static function registeredFor(bool $admin): array
     {
         $grav = Grav::instance();
@@ -696,16 +531,7 @@ class OAuth2
         return static::registered($admin)->getProviders();
     }
 
-    /**
-     * Adds this plugin's enabled providers, then lets satellite plugins (e.g. login-oauth2-extras) add theirs on
-     * onOAuth2ProvidersRegister, which they listen to from their onPluginsInitialized. The event carries this service
-     * ("oauth2"): they add to it, and its isAdmin() tells them the side. While the event fires, it's also Grav's
-     * "oauth2" service, for handlers that take that one, and for the provider classes they construct, which read its
-     * isAdmin() to pick their settings (BaseProvider). Afterwards the request's own service is back, also if a handler
-     * throws.
-     *
-     * @return $this
-     */
+    /** Temporarily install this service for handlers and provider constructors that read it from Grav. */
     public function registerProviders(): self
     {
         $this->addEnabledProviders();
@@ -727,18 +553,13 @@ class OAuth2
         return $this;
     }
 
-    /**
-     * The providers that have their client ID, of a name => settings list.
-     */
+    /** Providers with their client ID. */
     public static function configured(array $providers): array
     {
         return array_filter($providers, [static::class, 'isConfigured']);
     }
 
-    /**
-     * Adds this plugin's enabled providers of the side (enabledProviders()). One the settings enable that this plugin
-     * doesn't have is left out, with a warning in the log (once a day, warnOnce()).
-     */
+    /** Add valid providers; log unknown enabled names once a day. */
     public function addEnabledProviders(): void
     {
         foreach (static::enabledProviders($this->admin, $this->config, $unknown) as $provider => $options) {
@@ -753,11 +574,7 @@ class OAuth2
         }
     }
 
-    /**
-     * Logs a warning about something that stays as it is until the settings change, once a day instead of on every
-     * request: a file in Grav's cache folder tells when it was logged last (not Grav's cache, which a site can turn
-     * off). If the file can't be written, it's logged every time.
-     */
+    /** A cache file limits repeated warnings to once a day, even when Grav's cache is off. */
     protected static function warnOnce(string $message): void
     {
         $grav = Grav::instance();
@@ -773,16 +590,7 @@ class OAuth2
         $grav['log']->warning($message);
     }
 
-    /**
-     * This plugin's providers that are enabled on a side, with the settings they need (their checkIfActive()), from
-     * the plugin's settings: the one list for the logins, the notices of the settings form and the commands. A name
-     * without a provider class (e.g. a typo) is no provider: it's left out, and named in $unknown if it's enabled.
-     *
-     * @param bool $admin
-     * @param array $config The plugin's settings (plugins.login-oauth2)
-     * @param string[] $unknown
-     * @return array<string, array> Name => settings
-     */
+    /** Validate configured provider classes and collect unknown enabled names. */
     public static function enabledProviders(bool $admin, array $config, ?array &$unknown = null): array
     {
         $unknown = [];
