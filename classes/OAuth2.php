@@ -77,49 +77,45 @@ class OAuth2
         return $this->admin ? (bool)($this->config['admin'][$key] ?? $site) : $site;
     }
 
-    /**
-     * The configuration the settings form shows and saves, as a reader of its settings by their config path (e.g.
-     * "plugins.login.rememberme.enabled", or "plugins.login" for all of a plugin's). The classic admin shows and saves
-     * this request's configuration. Admin2 shows and saves the environment chosen in its selector (it sends
-     * X-Config-Environment with every request, "Default" for the main configuration), which needn't be the one this
-     * request runs in: its settings come from the API's ConfigStore, as its config endpoint reads them (API 1.0.50 or
-     * newer; this request's configuration without it, or if it fails). The notices of the form and the check of a
-     * save (LoginOauth2Plugin::onAdminSave()) read the same one, so they agree.
-     *
-     * @return callable
-     */
+    /** Reads the form's selected YAML layers once per request, without loading blueprints. */
     public static function formConfig(): callable
     {
+        static $reader, $config, $request;
         $grav = Grav::instance();
-        $live = static::liveConfig();
-        if (static::classicAdmin() || !class_exists(ApiConfigStore::class) || !isset($grav['request'])) {
-            return $live;
+        $currentRequest = $grav['request'] ?? null;
+        if ($reader !== null && $config === $grav['config'] && $request === $currentRequest) {
+            return $reader;
+        }
+        $config = $grav['config'];
+        $request = $currentRequest;
+        $reader = static::liveConfig();
+        if (static::classicAdmin() || !class_exists(ApiConfigStore::class) || !$request) {
+            return $reader;
         }
 
         try {
             $store = new ApiConfigStore($grav);
-            $target = $store->targetFor($grav['request']);
+            $target = $store->targetFor($request);
+            $folder = $target === null ? null : dirname($store->writeDir($target));
+            $settings = new EnvironmentSettings($grav);
         } catch (\Throwable $e) {
-            return $live;
+            return $reader;
         }
-
+        $live = $reader;
         $plugins = [];
-
-        return static function (string $path) use ($store, $target, $live, &$plugins) {
+        $reader = static function (string $path) use ($settings, $folder, $live, &$plugins) {
             [$type, $plugin, $key] = explode('.', $path, 3) + ['', '', ''];
             if ($type !== 'plugins' || $plugin === '') {
                 return $live($path);
             }
             if (!isset($plugins[$plugin])) {
-                try {
-                    $plugins[$plugin] = $store->effective('plugins/' . $plugin, $target);
-                } catch (\Throwable $e) {
-                    return $live($path);
-                }
+                $plugins[$plugin] = $settings->pluginConfig($plugin, $folder);
             }
 
             return $key === '' ? $plugins[$plugin] : Utils::getDotNotation($plugins[$plugin], $key);
         };
+
+        return $reader;
     }
 
     /**

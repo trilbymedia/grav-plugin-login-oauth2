@@ -437,6 +437,23 @@ class EnvironmentSettings
         return $this->contextConfigs[$key];
     }
 
+    /** Reads YAML layers without loading a plugin blueprint. */
+    public function pluginConfig(string $plugin, ?string $folder = null): array
+    {
+        $config = array_replace_recursive($this->pluginDefaults($plugin), $this->content($this->configFile($plugin)));
+        if ($folder !== null) {
+            $config = array_replace_recursive($config, $this->content($this->configFile($plugin, $folder)));
+        }
+        $prefix = 'plugins.' . $plugin . '.';
+        foreach ($this->overrideValues as $path => $value) {
+            if (strpos($path, $prefix) === 0) {
+                Utils::setDotNotation($config, substr($path, strlen($prefix)), $value);
+            }
+        }
+
+        return $config;
+    }
+
     /**
      * A setting in one of the configurations of contexts(), by its config path (e.g. "plugins.login.rememberme.enabled"),
      * as Grav merges it: the environment's config file, else the main one, else the plugin's default. With where to
