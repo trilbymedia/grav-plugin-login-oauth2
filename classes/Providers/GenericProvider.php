@@ -18,6 +18,9 @@ class GenericProvider extends BaseProvider
 {
     /** @var string */
     protected $name = 'Generic';
+
+    /** @var bool "Verify Certificate" is off */
+    protected $verifyOff = false;
     /** @var string */
     protected $classname = LeagueGenericProvider::class;
     /** @var string[]|null Group names the provider sent (groups claim), null if it sent none */
@@ -68,7 +71,10 @@ class GenericProvider extends BaseProvider
 
         // "Verify Certificate" off (Security section): no certificate checks of the token and userinfo requests. League
         // passes "verify" to its HTTP client only along with a proxy, hence a new client (keeping timeout and proxy).
-        if (!$this->config->get('providers.generic.verify_peer', true)) {
+        // Off only for an explicit off (a toggle saves false or 0): any other value, e.g. an empty one, keeps the checks.
+        $verify = $this->config->get('providers.generic.verify_peer', true);
+        $this->verifyOff = in_array($verify, [false, 0, '0'], true);
+        if ($this->verifyOff) {
             $client_options = ['verify' => false] + array_intersect_key($options, array_flip(['timeout', 'proxy']));
             $this->provider->setHttpClient(new Client($client_options));
         }
@@ -111,6 +117,10 @@ class GenericProvider extends BaseProvider
 
         if ($pkce_code) {
             $this->provider->setPkceCode($pkce_code);
+        }
+
+        if ($this->verifyOff) {
+            Grav::instance()['log']->warning('Login OAuth2: the Generic provider\'s certificate checks are off ("Verify Certificate"), so its token and userinfo requests are not protected. Turn it back on outside testing.');
         }
 
         return parent::getAccessToken($grant, $options);
