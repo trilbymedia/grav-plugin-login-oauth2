@@ -5,6 +5,7 @@ namespace Grav\Plugin\Login\OAuth2\Providers;
 use Grav\Common\Data\Data;
 use Grav\Common\Grav;
 use Grav\Common\Utils;
+use Grav\Plugin\Login\OAuth2\OAuth2;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -99,7 +100,8 @@ abstract class BaseProvider implements ProviderInterface
     }
 
     /**
-     * @param string $admin
+     * @param string $admin 'auto': the side of the current login; else a non-empty string (e.g. 'admin') for the
+     *                      admin's callback URI, an empty one for the site's
      * @return string
      */
     public static function getCallbackUri(string $admin = 'auto'): string
@@ -113,6 +115,21 @@ abstract class BaseProvider implements ProviderInterface
         $base_url = rtrim(Grav::instance()['uri']->rootUrl(true), '/');
 
         return $base_url . '/' . ltrim($callback_uri, '/');
+    }
+
+    /**
+     * Callback URI of a provider's Admin2 logins: they return to the API's SSO callback of the provider, the same one
+     * the API sends the provider (SsoController::callbackUrl()). Classic admin logins return to the admin route
+     * (getCallbackUri('admin')).
+     *
+     * @param string $provider
+     * @return string
+     */
+    public static function getAdminCallbackUri(string $provider): string
+    {
+        $base_url = rtrim(Grav::instance()['uri']->rootUrl(true), '/');
+
+        return $base_url . OAuth2::apiRoute() . '/auth/sso/' . rawurlencode($provider) . '/callback';
     }
 
     /**

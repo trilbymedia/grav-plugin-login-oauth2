@@ -9,7 +9,7 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 class GithubProvider extends BaseProvider
 {
     /** @var string */
-    protected $name = 'Github';
+    protected $name = 'GitHub';
     /** @var string */
     protected $classname = Github::class;
 
