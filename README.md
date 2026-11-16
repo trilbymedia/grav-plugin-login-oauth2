@@ -11,7 +11,7 @@ Currently the core plugin supports the following providers:
 * **Instagram** - <https://www.instagram.com/developer/authentication/>
 * **LinkedIn** - <https://developer.linkedin.com/docs/oauth2>
 
-It's also possible to extend this plugin an create a new AOauth2 for specific providers.
+It's also possible to extend this plugin an create a new OAuth2 for specific providers.
 
 ## Callback URL
 
@@ -27,13 +27,19 @@ Where `http://yoursite.com` is the URL of your Grav-based site.  If you are usin
 https://yoursite.com/task:callback.oauth2
 ```
 
-If you use the OAuth2 plugin to login to the **admin** side of your Grav site, your callback URL will look like this:
+If you use the OAuth2 plugin to login to the **admin** side of your Grav site with Admin2, your callback URL is the SSO callback of the API plugin, with the name of the provider (e.g. `generic`):
+
+```text
+http://yoursite.com/api/v1/auth/sso/generic/callback
+```
+
+Where `/api` and `v1` are the route and version prefix of the API plugin. With the classic admin plugin, your callback URL will look like this:
 
 ```text
 http://yoursite.com/admin/task:callback.oauth2
 ```
 
-Where `http://yoursite.com/admin` is the URL you use to log into the admin plugin. Again, if you have this under SSL, you would need to use `https://` rather than `http://`.  Some OAuth2 providers allow you to use provide multiple callback URLs, and in this case you can use the same application setup with multiple URLs, to work with the **site** and the **admin** and potentially `http://` and `https://` URLs.  However, some providers only allow a single callback URL, and in these cases you need to create multiple OAuth2 applications to handle each callback URL.
+Where `http://yoursite.com/admin` is the URL you use to log into the admin plugin. The **General** tab of the plugin settings shows the callback URLs, for Admin2 one per provider. Again, if you have this under SSL, you would need to use `https://` rather than `http://`.  Some OAuth2 providers allow you to use provide multiple callback URLs, and in this case you can use the same application setup with multiple URLs, to work with the **site** and the **admin** and potentially `http://` and `https://` URLs.  However, some providers only allow a single callback URL, and in these cases you need to create multiple OAuth2 applications to handle each callback URL.
 
 ## Installation
 
@@ -76,6 +82,7 @@ enabled: true
 
 built_in_css: true
 button_style: row
+enforce_oauth2: false
 require_grav_user: false
 save_grav_user: false
 store_provider_data: true
@@ -95,6 +102,7 @@ providers:
     token_endpoint: ''
     userinfo_endpoint: ''
     enforce_email_verified: true
+    verify_peer: true
     userdata_id: 'sub'
     userdata_login: 'preferred_username'
     userdata_fullname: 'name'
@@ -155,6 +163,7 @@ providers:
 
 admin:
   enabled: false
+  enforce_oauth2: false
   built_in_css: true
   button_style: row
   # require_grav_user: true   # not set: as require_grav_user
@@ -170,6 +179,7 @@ admin:
       token_endpoint: ''
       userinfo_endpoint: ''
       enforce_email_verified: true
+      verify_peer: true
       userdata_id: 'sub'
       userdata_login: 'preferred_username'
       userdata_fullname: 'name'
@@ -234,6 +244,8 @@ admin:
 | enabled                      | Enables the plugin                                                                                                            | [default: `true`] \| `false`                           |
 | built_in_css                 | Enables the plugin-provided CSS to be loaded                                                                                  | [default: `true`] \| `false`                           |
 | button_style                 | If you want to provide your own custom CSS, feel free to disable the CSS provided by the plugin                               | [default: `row`] \| `square`                           |
+| enforce_oauth2               | Only allow OAuth2 logins on the site, see [Enforce OAuth2](#enforce-oauth2)                                                   | `true` \| [default: `false`]                           |
+| admin.enforce_oauth2         | Only allow OAuth2 logins in the admin (while `admin.enabled` is on), see [Enforce OAuth2](#enforce-oauth2)                    | `true` \| [default: `false`]                           |
 | require_grav_user            | Allow oauth login only for existing users (site logins; admin logins: `admin.require_grav_user`)                              | `true` \| [default: `false`]                           |
 | admin.require_grav_user      | Like `require_grav_user`, for admin logins, e.g. so only accounts you created can use the admin login                         | `true` \| `false` \| [default: as `require_grav_user`] |
 | save_grav_user               | Store the grav user account as a local YAML account (site logins; admin logins: `admin.save_grav_user`)                       | `true` \| [default: `false`]                           |
@@ -258,6 +270,7 @@ Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using 
 | token_endpoint          | The token endpoint of the provider                                                                                                                                                                                  | e.g. `https://idp.example.com/token`            |
 | userinfo_endpoint       | The endpoint returning the details of the logged in user (OpenID Connect: userinfo endpoint)                                                                                                                        | e.g. `https://idp.example.com/userinfo`         |
 | enforce_email_verified  | Deny the login unless the provider confirms the email address as verified (`userdata_email_verified`); without it, anyone registering there with someone else's email could log in as the Grav user with that email | [default: `true`] \| `false`                    |
+| verify_peer             | Verify the TLS certificates of the token and userinfo endpoints; disable only for testing, as anyone who can intercept the connection could then read the secrets and log in as any user                            | [default: `true`] \| `false`                    |
 | userdata_id             | The claim with the user's unique ID in the userinfo response                                                                                                                                                        | [default: `sub`] \| `<string>`                  |
 | userdata_login          | The claim with the username in the userinfo response                                                                                                                                                                | [default: `preferred_username`] \| `<string>`   |
 | userdata_fullname       | The claim with the full name in the userinfo response                                                                                                                                                               | [default: `name`] \| `<string>`                 |
@@ -273,6 +286,8 @@ Works with any OAuth2 provider (e.g. an OpenID Connect identity provider) using 
 | scope                   | An array of strings that define the OAuth2 scope. These can enable retrieving more data, but often require more permissions                                                                                         | e.g. `['openid', 'email', 'profile']`           |
 | scope_separator         | The separator of the scopes in the authorization request                                                                                                                                                            | [default: `space`] \| `comma`                   |
 | pkce_method             | The PKCE (Proof Key for Code Exchange) method, `plain` is **not** recommended and should only be used if the provider supports nothing else                                                                         | [default: `S256`] \| `plain` \| `''` (disabled) |
+
+> NOTE: Logins failing with `cURL error 60: SSL certificate problem: self-signed certificate` work with `verify_peer: false`, for testing only.
 
 Besides `login`, `fullname` and `email`, only `email_verified` and, with `avatar_from_picture`, the `avatar_url` are stored under the `generic` key (empty if not available), not the whole resource owner details.
 
@@ -291,6 +306,7 @@ Limits:
 * Changes reach logged-in users at their next login.
 * Admin logins only sync with `admin.save_grav_user` (the new admin reads users from their account file; without it they skip the sync with a warning, and groups synced before stay meanwhile).
 * Without a `group_prefix` the provider can assign any existing Grav group, privileged ones included. Use a `group_filter` or `group_prefix` to limit it.
+* Each `group_filter` entry has to be a group name or pattern. Put it in quotes if YAML would read it as something else, e.g. `yes`, `true` or `2.0`. An invalid entry is ignored with a warning in the log, and the sync goes on with the other entries. If no valid entry is left, the sync is skipped and the user's groups stay as they are until it's fixed.
 * The prefix is part of the slug, so it needs at least one letter or digit. A prefix made only of characters the slug drops (e.g. `!`, `-` or `.`) would disappear and give the provider every Grav group, so the sync is skipped with a warning instead.
 * With `group_autocreate` every new provider group is added to `user/config/groups.yaml` for good, so limit them with `group_filter`.
 * Groups deleted at the provider stay in Grav.
@@ -389,6 +405,42 @@ It is not advised to provide any `admin` access via OAuth2 accounts, but if you 
 
 > NOTE: See the [Groups and Permissions Documentation](https://learn.getgrav.org/advanced/groups-and-permissions?target=_blank) for more information about how Grav permissions work in conjunction with access levels and groups.
 
+#### Enforce OAuth2
+
+With `enforce_oauth2` (site) or `admin.enforce_oauth2` (admin), users can only log in through an OAuth2 provider on that side. Other logins through the Login plugin are denied: passwords, magic links, passkeys, logins after registration, and plugins such as Login LDAP. Plugins that sign users in on their own, such as the older Login OAuth plugin, aren't affected.
+
+It only applies while that side has a provider that is enabled and has its client ID, and for the admin while `admin.enabled` is on. So a missing provider can't lock anyone out. The one exception: if the admin only has providers of another plugin (e.g. login-oauth2-extras) and that plugin fails to load them, Admin2 keeps denying logins without OAuth2, because a failing plugin must not turn it off.
+
+The login pages hide what is denied: the site's password form (Login 3.12.1 or newer), "Login by link" and "Sign in with a passkey", and Admin2's password form (API 1.1.11 and Admin2 2.2.8 or newer) and passkey button. Older versions still show the forms, but refuse the logins.
+
+With `admin.enforce_oauth2`, accounts with admin access (`admin.login`, `admin.super`, `api.access` or `api.super`) can't use a password, magic link or passkey on the site either, because Admin2 accepts their site session. Their password is refused like a wrong one ("Login failed"), so the login form doesn't tell that it was right or that the account has admin access. Admin2 invitations only create the account: the invited user then logs in with OAuth2 and is matched by email.
+
+##### Required settings
+
+Two settings of other plugins let users in without OAuth2 and have to be off:
+
+* Login → "Remember me" (`plugins.login.rememberme.enabled`): its cookie logs users back in without the identity provider, even after their access there was removed.
+* For the admin, API → Session Authentication (`plugins.api.auth.session_enabled`, on unless set to `false`): with it, Admin2 accepts any site session. Turning it off also stops front-end features that call the API as the logged-in visitor.
+
+The plugin never changes them. The settings and `enforce-oauth2 on` refuse to turn "Enforce OAuth2" on while one of them is on (`--force` turns it on anyway). The settings check the configuration of the site you're logged in to. The command checks the main configuration and every environment folder, or with `--env` only that environment, and names the file that turns the setting on.
+
+If one is turned on later, the settings and Admin2's dashboard show a red warning. Below each toggle, the settings list the required settings with their state, and tell you if "Enforce OAuth2" doesn't apply yet. `bin/plugin login-oauth2 status` shows the same.
+
+##### Users who are already logged in
+
+Turning it on doesn't sign anyone out: sessions, "remember me" cookies, Admin2 tokens and API keys keep working. To end them:
+
+* Run `bin/plugin login-oauth2 enforce-oauth2 on --sign-out` (see [CLI Commands](#cli-commands)).
+* Use the Login plugin's sign-out: `bin/plugin login sign-out`, **Sign out everywhere** in Admin2's Users list, or **Sign out all users** in the Login settings.
+* For one account, change its password (Login 3.11.0 or newer) and revoke its API keys in Admin2.
+* By hand: delete `user/data/rememberme` ("remember me" cookies) and `user/config/plugins/api-private.php` (Admin2 tokens), and change `system.session.name` (sessions).
+
+The first two need Login 3.13.0 or newer, and leave API keys working.
+
+##### Locked out
+
+If nobody can log in, e.g. because the identity provider is down or a plugin that adds providers fails, run `bin/plugin login-oauth2 enforce-oauth2 off` in Grav's folder on the server, or set `enforce_oauth2: false` and `admin.enforce_oauth2: false` in `user/config/plugins/login-oauth2.yaml`. Then log in with your password.
+
 ### Admin Notes
 
 New in version `2.0` is the support for OAuth2 providers to be able to login via the admin.  After careful consideration, we decided to provide configuration options for both `Site` and `Admin` as there are some providers that need to have a unique **OAuth2 Application** setup for each unique callback.  This is important because by default, Grav uses a different session for both `Site` and `Admin`.  Therefore you need a unique callback, one that goes to the frontend site, and one to the admin.  This means we have to provide a way to have unique application settings for both `Site` and `Admin`.
@@ -409,6 +461,26 @@ For admin logins to be useful, you need to ensure you set `store_grav_user: true
 ```
 
 Of course adjust this `access.admin:` settings to whatever you need, but **NEVER** set this in the `default_access_levels:` setting for the plugin, or every user will have admin access.  You want to maintain control over who can access and who can't, especially those logging in with OAuth2 providers as there is no control over 'who' can sign in.
+
+### CLI Commands
+
+```text
+bin/plugin login-oauth2 status
+bin/plugin login-oauth2 enforce-oauth2 <on|off|status> [--force] [--sign-out]
+bin/plugin login-oauth2 provider <enable|disable> <name>
+bin/plugin login-oauth2 provider verify-certificate <name> [on|off|status]
+```
+
+`--site` or `--admin` limits a command to that side; without them it covers both. `--env=<environment>` (or `GRAV_ENVIRONMENT`) uses that environment's config file instead of `user/config/plugins/login-oauth2.yaml`.
+
+Changes apply from the next request and are written to the Grav log.
+
+* **`status`** shows, for each side, whether "Enforce OAuth2" is on and in which files, the settings it requires off with the files that turn them on, the providers (active, or why not) and the account settings. It changes nothing. `enforce-oauth2 status` shows only the first two.
+* **`enforce-oauth2 off`** turns it off in the main config file and in every environment that turns it on (with `--env` only there). It works while plugins fail to load, and fails if it's still on afterwards, e.g. because a config file can't be read or a `GRAV_CONFIG__` environment variable turns it on.
+* **`enforce-oauth2 on`** turns it on if the side has an active provider and the [required settings](#required-settings) are off. If not, a side chosen with `--site` or `--admin` is refused; without them, only the side that is ready is turned on. `--force` turns it on anyway, except against a `GRAV_CONFIG__` variable that turns it off.
+* **`enforce-oauth2 on --sign-out`** also signs out the users who may be logged in without OAuth2, even if it was on already: everyone if the site is turned on, else the accounts with admin access (only those with an account file). Their sessions, "remember me" cookies and Admin2 tokens end; API keys keep working. Accounts are shared by all environments, so this also applies with `--env`. It needs Login 3.13.0 or newer.
+* **`provider enable|disable`** enables or disables one of this plugin's providers, e.g. `generic`. Providers of other plugins, e.g. login-oauth2-extras, are set in their own settings.
+* **`provider verify-certificate`** shows or changes "Verify Certificate" of the Generic provider. Turn it off only for testing.
 
 ### Troubleshooting
 

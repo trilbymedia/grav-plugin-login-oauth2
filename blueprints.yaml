@@ -1,7 +1,7 @@
 name: Login OAuth2
 type: login-oauth2
 slug: form
-version: 2.3.0
+version: 2.4.0
 description: OAuth2 Client Plugin to integrate with Grav's Login
 icon: plug
 author:
@@ -33,6 +33,12 @@ form:
       validate:
         type: bool
 
+    # While "Enforce OAuth2" is on with requirements not met (OAuth2::enforceWarning()); without content nothing shows.
+    enforce_oauth2_warning:
+      type: display
+      style: vertical
+      data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceWarning']
+
     oauth2_tabs:
       type: tabs
 
@@ -55,15 +61,15 @@ form:
               copy_to_clipboard: true
               label: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI
               help: PLUGIN_LOGIN_OAUTH2.SITE_CALLBACK_URI_HELP
-              data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', false]
+              data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', '']
 
-            admin_callback_url:
-              type: text
-              disabled: true
-              copy_to_clipboard: true
+            # Admin2 logins return to the API plugin, with one URI per provider: all are listed. Classic admin logins
+            # return to the admin's route, one URI for all (OAuth2::adminCallbackUris()).
+            admin_callback_urls:
+              type: display
               label: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI
               help: PLUGIN_LOGIN_OAUTH2.ADMIN_CALLBACK_URI_HELP
-              data-default@: ['Grav\Plugin\Login\OAuth2\Providers\BaseProvider::getCallbackUri', true]
+              data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::adminCallbackUris']
 
             users_section:
               type: section
@@ -132,6 +138,29 @@ form:
           title: PLUGIN_LOGIN_OAUTH2.SITE
 
           fields:
+
+            site_login_section:
+              type: section
+              title: PLUGIN_LOGIN_OAUTH2.SECTION_USER_LOGIN
+              underline: true
+
+            enforce_oauth2:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2
+              help: PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
+            # The settings it requires off with their state, and whether it applies (OAuth2::enforceConditionsNotice()).
+            enforce_oauth2_conditions:
+              type: display
+              style: vertical
+              data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceConditionsNotice', false]
 
             site_users_section:
               type: section
@@ -211,6 +240,24 @@ form:
                 0: Disabled
               validate:
                 type: bool
+
+            admin.enforce_oauth2:
+              type: toggle
+              label: PLUGIN_LOGIN_OAUTH2.ADMIN_ENFORCE_OAUTH2
+              help: PLUGIN_LOGIN_OAUTH2.ADMIN_ENFORCE_OAUTH2_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+
+            # The settings it requires off with their state, and whether it applies (OAuth2::enforceConditionsNotice()).
+            admin_enforce_oauth2_conditions:
+              type: display
+              style: vertical
+              data-content@: ['Grav\Plugin\Login\OAuth2\OAuth2::enforceConditionsNotice', true]
 
             admin_users_section:
               type: section
@@ -436,6 +483,18 @@ form:
                                 '': Disabled
                                 S256: S256 (recommended)
                                 plain: plain (not recommended)
+
+                            providers.generic.verify_peer:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
 
                         generic_advanced_left:
                           type: fieldset
@@ -679,6 +738,18 @@ form:
                                 '': Disabled
                                 S256: S256 (recommended)
                                 plain: plain (not recommended)
+
+                            admin.providers.generic.verify_peer:
+                              type: toggle
+                              label: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER
+                              highlight: 1
+                              default: 1
+                              help: PLUGIN_LOGIN_OAUTH2.VERIFY_PEER_HELP
+                              options:
+                                1: Enabled
+                                0: Disabled
+                              validate:
+                                type: bool
 
                         generic_advanced_right:
                           type: fieldset

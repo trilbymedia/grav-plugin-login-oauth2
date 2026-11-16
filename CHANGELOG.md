@@ -1,3 +1,22 @@
+# v2.4.0
+## 11/16/2026
+
+1. [](#new)
+    * Enforce OAuth2: new settings for the site and the admin (Admin2 and classic admin) that only allow logins through an OAuth2 provider. Passwords, magic links and passkeys are denied, and the login pages hide them
+    * Enforce OAuth2 needs the Login plugin's "Remember me" off, and in the admin also the API plugin's Session Authentication, because both let users in without OAuth2. The settings and the command refuse to turn it on otherwise, and a warning shows in the settings and on Admin2's dashboard if one is turned on later
+    * New commands: `bin/plugin login-oauth2 status`, `enforce-oauth2 on|off|status` (e.g. to get back in when locked out) and `provider enable|disable|verify-certificate`
+    * `enforce-oauth2 on --sign-out` signs out the users who may be logged in without OAuth2: everyone for the site, accounts with admin access for the admin (Login 3.13.0 or newer)
+    * Generic provider: "Verify Certificate" can be turned off for testing, e.g. with a self-signed certificate. Only an explicit off turns the checks off, and each login logs a warning while they are
+    * With "Enforce OAuth2" on in the admin, accepting an Admin2 invitation creates the account without logging in; the user then logs in with OAuth2 (matched by email)
+1. [](#improved)
+    * The Callback URIs section lists the admin callback URI of each provider, including the enabled providers of other plugins such as login-oauth2-extras
+1. [](#bugfix)
+    * A provider that sends no email address could log in as an existing account whose email is empty, when no account matched the username. The email fallback now only runs with an email
+    * The Admin Callback URI showed the classic admin's URI also for Admin2, whose logins return to the API plugin
+    * A provider in the settings that the plugin doesn't have (e.g. a typo) no longer breaks the login page: it's ignored with a warning in the log
+    * Generic provider: a "Provider Groups to Sync" entry that isn't a group name or pattern (e.g. `yes` or `2.0` without quotes) is ignored with a warning, instead of failing the login or matching other groups. If no valid entry is left, the group sync is skipped
+    * Admin2's login button for GitHub reads "GitHub" instead of "Github"
+
 # v2.3.0
 ## 11/01/2026
 

@@ -7,6 +7,7 @@ use Grav\Common\Grav;
 use Grav\Common\Session;
 use Grav\Common\User\Interfaces\UserInterface;
 use Grav\Common\Utils;
+use GuzzleHttp\Client;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\GenericProvider as LeagueGenericProvider;
 use League\OAuth2\Client\Provider\GenericResourceOwner;
@@ -17,6 +18,9 @@ class GenericProvider extends BaseProvider
 {
     /** @var string */
     protected $name = 'Generic';
+
+    /** @var bool "Verify Certificate" is off */
+    protected $verifyOff = false;
     /** @var string */
     protected $classname = LeagueGenericProvider::class;
     /** @var string[]|null Group names the provider sent (groups claim), null if it sent none */
@@ -64,6 +68,16 @@ class GenericProvider extends BaseProvider
         ];
 
         parent::initProvider($options);
+
+        // "Verify Certificate" off (Security section): no certificate checks of the token and userinfo requests. League
+        // passes "verify" to its HTTP client only along with a proxy, hence a new client (keeping timeout and proxy).
+        // Off only for an explicit off (a toggle saves false or 0): any other value, e.g. an empty one, keeps the checks.
+        $verify = $this->config->get('providers.generic.verify_peer', true);
+        $this->verifyOff = in_array($verify, [false, 0, '0'], true);
+        if ($this->verifyOff) {
+            $client_options = ['verify' => false] + array_intersect_key($options, array_flip(['timeout', 'proxy']));
+            $this->provider->setHttpClient(new Client($client_options));
+        }
     }
 
     /**
@@ -103,6 +117,10 @@ class GenericProvider extends BaseProvider
 
         if ($pkce_code) {
             $this->provider->setPkceCode($pkce_code);
+        }
+
+        if ($this->verifyOff) {
+            Grav::instance()['log']->warning('Login OAuth2: the Generic provider\'s certificate checks are off ("Verify Certificate"), so its token and userinfo requests are not protected. Turn it back on outside testing.');
         }
 
         return parent::getAccessToken($grant, $options);
@@ -267,10 +285,10 @@ class GenericProvider extends BaseProvider
             return;
         }
         $grav = Grav::instance();
-        // Admin logins only with "Save Grav user (admin)": the new admin reads users from their account file, so synced
-        // groups would be gone right after the login.
+        // Admin logins only with the admin's "Save Grav user": the new admin reads users from their account file, so
+        // synced groups would be gone right after the login.
         if ($grav['oauth2']->isAdmin() && !$grav['oauth2']->saveGravUser()) {
-            $this->log('warning', 'group sync skipped for the admin login, "Save Grav user (admin)" is off');
+            $this->log('warning', 'group sync skipped for the admin login, "Save Grav user" (Admin tab) is off');
 
             return;
         }
@@ -279,7 +297,32 @@ class GenericProvider extends BaseProvider
         }
 
         $config = $grav['config'];
-        $filter = array_filter((array)$this->config->get('providers.generic.group_filter'), 'strlen');
+        $patterns = $this->config->get('providers.generic.group_filter');
+        // "group_filter: false" (or "no") instead of a list: no filter, as an empty one.
+        $patterns = $patterns === false ? [] : (array)$patterns;
+        // An entry that is a list or map typed by mistake, or a value YAML doesn't keep as written (2.0, yes, true
+        // without quotes), is no group name or pattern. It's ignored, so the other entries keep working and a group
+        // taken away at the provider is still taken away here; reading it as text would sync other groups (yes
+        // becomes "1").
+        $invalid = array_filter($patterns, static function ($pattern): bool {
+            return $pattern !== null && !is_string($pattern) && !is_int($pattern);
+        });
+        // Patterns as YAML gives them (a whole number stays one), without the empty and the invalid ones.
+        $filter = array_filter(array_diff_key($patterns, $invalid), static function ($pattern): bool {
+            return $pattern !== null && (string)$pattern !== '';
+        });
+        if ($invalid) {
+            $hint = '(put numbers with a decimal point and yes/no/true/false in quotes)';
+            // No valid entry left: the sync is skipped, so the user's groups stay as they are until the setting is
+            // fixed. Without a filter every group would be synced, and a filter that matches nothing would take every
+            // synced group from each user who logs in, also the ones that let them into the admin.
+            if (!$filter) {
+                $this->log('warning', 'group sync skipped, "Provider Groups to Sync" has no entry that is a group name or pattern ' . $hint, array_values($invalid));
+
+                return;
+            }
+            $this->log('warning', 'group sync: ignored the entries of "Provider Groups to Sync" that are no group name or pattern ' . $hint, array_values($invalid));
+        }
         $prefix = (string)$this->config->get('providers.generic.group_prefix');
         // A prefix without letters or digits ("!", "-") would vanish from the slugs, giving the provider every Grav group.
         if ($prefix !== '' && $this->groupName($prefix) === '') {
@@ -374,7 +417,9 @@ class GenericProvider extends BaseProvider
             return [];
         }
 
-        return array_values(array_filter($claim, 'strlen'));
+        return array_values(array_filter($claim, static function (string $group): bool {
+            return $group !== '';
+        }));
     }
 
     /**
