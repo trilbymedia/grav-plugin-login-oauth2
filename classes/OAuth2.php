@@ -4,9 +4,7 @@ namespace Grav\Plugin\Login\OAuth2;
 
 use Grav\Common\Grav;
 use Grav\Common\User\Interfaces\UserInterface;
-use Grav\Common\Utils;
 use Grav\Plugin\Api\PermissionResolver as ApiPermissionResolver;
-use Grav\Plugin\Api\Services\ConfigStore as ApiConfigStore;
 use Grav\Plugin\Login\OAuth2\Providers\BaseProvider;
 use ReflectionClass;
 use ReflectionException;
@@ -72,57 +70,6 @@ class OAuth2
         $site = (bool)($this->config[$key] ?? false);
 
         return $this->admin ? (bool)($this->config['admin'][$key] ?? $site) : $site;
-    }
-
-    /** Reads the form's selected YAML layers once per request, without loading blueprints. */
-    public static function formConfig(): callable
-    {
-        static $reader, $config, $request;
-        $grav = Grav::instance();
-        $currentRequest = $grav['request'] ?? null;
-        if ($reader !== null && $config === $grav['config'] && $request === $currentRequest) {
-            return $reader;
-        }
-        $config = $grav['config'];
-        $request = $currentRequest;
-        $reader = static::liveConfig();
-        if (static::classicAdmin() || !class_exists(ApiConfigStore::class) || !$request) {
-            return $reader;
-        }
-
-        try {
-            $store = new ApiConfigStore($grav);
-            $target = $store->targetFor($request);
-            $folder = $target === null ? null : dirname($store->writeDir($target));
-            $settings = new EnvironmentSettings($grav);
-        } catch (\Throwable $e) {
-            return $reader;
-        }
-        $live = $reader;
-        $plugins = [];
-        $reader = static function (string $path) use ($settings, $folder, $live, &$plugins) {
-            [$type, $plugin, $key] = explode('.', $path, 3) + ['', '', ''];
-            if ($type !== 'plugins' || $plugin === '') {
-                return $live($path);
-            }
-            if (!isset($plugins[$plugin])) {
-                $plugins[$plugin] = $settings->pluginConfig($plugin, $folder);
-            }
-
-            return $key === '' ? $plugins[$plugin] : Utils::getDotNotation($plugins[$plugin], $key);
-        };
-
-        return $reader;
-    }
-
-    /** Reads the configuration of this request. */
-    public static function liveConfig(): callable
-    {
-        $config = Grav::instance()['config'];
-
-        return static function (string $path) use ($config) {
-            return $config->get($path);
-        };
     }
 
     /**
@@ -222,7 +169,8 @@ class OAuth2
     /** Remember me must be off; admin enforcement also requires API session authentication off. */
     public static function enforceRequirements(bool $admin, ?callable $get = null): array
     {
-        $get = $get ?? static::liveConfig();
+        // By default the configuration of this request; the commands read each environment's files instead.
+        $get = $get ?? [Grav::instance()['config'], 'get'];
         $requirements = ['remember_me' => !$get(static::REQUIREMENT_KEYS['remember_me'])];
         if ($admin) {
             // Not set (null) is on: the API's own default (AuthMiddleware), also without the key in its api.yaml.
@@ -233,9 +181,9 @@ class OAuth2
     }
 
     /** Names of requirements that are not met. */
-    public static function enforceUnmet(bool $admin, ?callable $get = null): array
+    public static function enforceUnmet(bool $admin): array
     {
-        return array_keys(array_filter(static::enforceRequirements($admin, $get), static function (bool $met) {
+        return array_keys(array_filter(static::enforceRequirements($admin), static function (bool $met) {
             return !$met;
         }));
     }
@@ -296,24 +244,15 @@ class OAuth2
             $grav = Grav::instance();
             $admin = (bool)$admin;
             $language = $grav['language'];
-            static $reader, $notices = [];
-            $get = static::formConfig();
-            if ($reader !== $get) {
-                $reader = $get;
-                $notices = [];
-            }
-            if (isset($notices[(int)$admin])) {
-                return $notices[(int)$admin];
-            }
-            $config = (array)($get('plugins.login-oauth2') ?? []);
-            $requirements = static::enforceRequirements($admin, $get);
+            $config = (array)$grav['config']->get('plugins.login-oauth2');
+            $requirements = static::enforceRequirements($admin);
             $unmet = in_array(false, $requirements, true);
             $on = !empty($admin ? ($config['admin']['enforce_oauth2'] ?? false) : ($config['enforce_oauth2'] ?? false));
-            $notApplying = static::enforceNotApplying($admin, $config, static::noticeProviders($admin, $config, $failed));
-            // Only Admin2's logins ask the satellite plugins on the spot, and only for a side without an active
-            // provider of this plugin: there it stays in effect if they fail.
-            if ($notApplying !== 'no_provider' || !$admin || static::classicAdmin()) {
-                $failed = null;
+            try {
+                $notApplying = static::enforceNotApplying($admin, $config, static::registeredFor($admin));
+            } catch (\Throwable $e) {
+                // A failing plugin of other providers: unknown, and Admin2 keeps enforcing meanwhile.
+                $notApplying = null;
             }
 
             $url = static::adminUrl();
@@ -321,15 +260,7 @@ class OAuth2
                 'remember_me' => $url . '/plugins/login#options',
                 'session_passthrough' => $url . '/plugins/api#tab_authentication',
             ];
-            // Arguments of each requirement's explanation (ENFORCE_REQUIREMENT_<NAME>_WHY).
-            $why = [
-                'remember_me' => [
-                    static::duration((int)($get('plugins.login.rememberme.timeout') ?? 604800)),
-                    static::duration((int)$grav['config']->get('system.session.timeout', 1800)),
-                    htmlspecialchars($url . '/config/system#session', ENT_QUOTES),
-                ],
-                'session_passthrough' => [],
-            ];
+            $session = htmlspecialchars($url . '/config/system#session', ENT_QUOTES);
 
             $items = '';
             foreach ($requirements as $requirement => $met) {
@@ -346,13 +277,13 @@ class OAuth2
                     $met ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
                     $met ? '✓' : '✗',
                     $language->translate(['PLUGIN_LOGIN_OAUTH2.' . ($met ? 'ENFORCE_REQUIREMENT_IS_OFF' : 'ENFORCE_REQUIREMENT_IS_ON'), $setting]),
-                    $language->translate(array_merge([$key . '_WHY'], $why[$requirement]))
+                    $language->translate([$key . '_WHY', $session])
                 );
             }
 
             if (!$on) {
                 $style = 'border-border bg-muted/50';
-            } elseif ($unmet || $failed !== null) {
+            } elseif ($unmet) {
                 $style = 'border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-300';
             } elseif ($notApplying) {
                 $style = 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300';
@@ -365,13 +296,11 @@ class OAuth2
                 $language->translate('PLUGIN_LOGIN_OAUTH2.' . ($unmet ? ($on ? 'ENFORCE_REQUIREMENTS_UNMET_ON' : 'ENFORCE_REQUIREMENTS_UNMET') : 'ENFORCE_REQUIREMENTS_MET')),
                 $items
             );
-            if ($failed !== null) {
-                $html .= '<p class="mt-2">' . $language->translate(['PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_PROVIDERS_FAILED', htmlspecialchars($failed, ENT_QUOTES)]) . '</p>';
-            } elseif ($notApplying) {
+            if ($notApplying) {
                 $html .= '<p class="mt-2">' . $language->translate(['PLUGIN_LOGIN_OAUTH2.ENFORCE_OAUTH2_NOT_APPLYING_YET', static::notApplyingReason($admin, $notApplying)]) . '</p>';
             }
 
-            return $notices[(int)$admin] = $html . '</div>';
+            return $html . '</div>';
         } catch (\Throwable $e) {
             return '';
         }
@@ -380,22 +309,15 @@ class OAuth2
     /** Red settings warning when enforcement has unmet requirements. */
     public static function enforceWarning(): string
     {
-        static $reader, $html = '';
-        $get = static::formConfig();
-        if ($reader === $get) {
-            return $html;
-        }
-        $reader = $get;
-        $html = '';
         try {
-            $lines = static::enforceWarningLines($get);
+            $lines = static::enforceWarningLines();
             if (!$lines) {
                 return '';
             }
 
             $language = Grav::instance()['language'];
 
-            return $html = sprintf(
+            return sprintf(
                 '<div class="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300"><strong>%s</strong><ul class="mt-1 space-y-1">%s</ul><p class="mt-2">%s</p></div>',
                 $language->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_WARNING'),
                 implode('', array_map(static function (string $line) {
@@ -409,14 +331,14 @@ class OAuth2
     }
 
     /** One translated warning per enforced side with unmet requirements. */
-    public static function enforceWarningLines(?callable $get = null): array
+    public static function enforceWarningLines(): array
     {
-        $get = $get ?? static::formConfig();
-        $language = Grav::instance()['language'];
+        $grav = Grav::instance();
+        $language = $grav['language'];
         $lines = [];
         foreach (['site' => false, 'admin' => true] as $side => $admin) {
-            $on = $get('plugins.login-oauth2.' . ($admin ? 'admin.' : '') . 'enforce_oauth2');
-            $unmet = $on ? static::enforceUnmet($admin, $get) : [];
+            $on = $grav['config']->get('plugins.login-oauth2.' . ($admin ? 'admin.' : '') . 'enforce_oauth2');
+            $unmet = $on ? static::enforceUnmet($admin) : [];
             if ($unmet) {
                 $lines[] = $language->translate([
                     'PLUGIN_LOGIN_OAUTH2.ENFORCE_WARNING_' . strtoupper($side) . (count($unmet) > 1 ? '_PLURAL' : ''),
@@ -428,10 +350,10 @@ class OAuth2
         return $lines;
     }
 
-    /** Dashboard warning for the live environment, independent of the form selector. */
+    /** The same warning for Admin2's dashboard. */
     public static function enforceDashboardNotice(): ?string
     {
-        $lines = static::enforceWarningLines(static::liveConfig());
+        $lines = static::enforceWarningLines();
         if (!$lines) {
             return null;
         }
@@ -475,21 +397,6 @@ class OAuth2
         return rtrim($grav['uri']->rootUrl(false), '/') . '/' . trim((string)($route ?: 'admin'), '/');
     }
 
-    /** Format a duration using Grav's translated time units. */
-    protected static function duration(int $seconds): string
-    {
-        $language = Grav::instance()['language'];
-        foreach (['WEEK' => 604800, 'DAY' => 86400, 'HOUR' => 3600, 'MINUTE' => 60, 'SECOND' => 1] as $unit => $length) {
-            if ($seconds >= $length && $seconds % $length === 0) {
-                $count = intdiv($seconds, $length);
-
-                return $count . ' ' . $language->translate('GRAV.NICETIME.' . $unit . ($count === 1 ? '' : '_PLURAL'));
-            }
-        }
-
-        return $seconds . ' ' . $language->translate('GRAV.NICETIME.SECOND_PLURAL');
-    }
-
     /** Facebook uses app_id; other providers use client_id. */
     public static function isConfigured($options): bool
     {
@@ -500,22 +407,6 @@ class OAuth2
     public static function registered(bool $admin): self
     {
         return (new self($admin))->registerProviders();
-    }
-
-    /** Use the form's own providers and this request's satellite providers. */
-    protected static function noticeProviders(bool $admin, array $config, ?string &$failed = null): array
-    {
-        $own = (array)($config['providers'] ?? []) + (array)($config['admin']['providers'] ?? []);
-        $failed = null;
-        try {
-            $others = static::registeredFor($admin);
-        } catch (\Throwable $e) {
-            $failed = $e->getMessage();
-            $grav = Grav::instance();
-            $others = isset($grav['oauth2']) && $grav['oauth2']->isAdmin() === $admin ? $grav['oauth2']->getProviders() : [];
-        }
-
-        return static::enabledProviders($admin, $config) + array_diff_key($others, $own);
     }
 
     /** Site providers come from the request's service; admin providers use the registration event. */

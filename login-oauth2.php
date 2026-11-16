@@ -15,7 +15,6 @@ use Grav\Plugin\Api\Exceptions\ForbiddenException as ApiForbiddenException;
 use Grav\Plugin\Api\Exceptions\ValidationException as ApiValidationException;
 use Grav\Plugin\Login\Events\UserLoginEvent;
 use Grav\Plugin\Login\Login;
-use Grav\Plugin\Login\OAuth2\EnvironmentSettings;
 use Grav\Plugin\Login\OAuth2\OAuth2;
 use Grav\Plugin\Login\OAuth2\ProviderFactory;
 use RocketTheme\Toolbox\Event\Event;
@@ -98,7 +97,7 @@ class LoginOauth2Plugin extends Plugin
         }
     }
 
-    /** Refuse newly enabled enforcement with unmet requirements; check inherited environments for main saves. */
+    /** Refuse a save that turns enforcement on while a setting it requires off is on for this request. */
     public function onAdminSave(Event $event): void
     {
         $object = $event['object'] ?? null;
@@ -106,22 +105,13 @@ class LoginOauth2Plugin extends Plugin
             return;
         }
 
-        $saved = OAuth2::formConfig();
-        $settings = null;
         $refused = [];
         foreach (['enforce_oauth2' => false, 'admin.enforce_oauth2' => true] as $key => $admin) {
-            if (!$object->get($key) || $saved('plugins.login-oauth2.' . $key)) {
-                continue;
-            }
-            if ($unmet = OAuth2::enforceUnmet($admin, $saved)) {
+            if ($object->get($key) && !$this->config->get('plugins.login-oauth2.' . $key) && ($unmet = OAuth2::enforceUnmet($admin))) {
                 $refused[$key] = $this->translate(
                     'PLUGIN_LOGIN_OAUTH2.ENFORCE_REQUIREMENTS_REFUSED' . (count($unmet) > 1 ? '_PLURAL' : ''),
                     OAuth2::requirementNames($unmet)
                 );
-                continue;
-            }
-            if ($unmet = $this->unmetInEnvironments($object, $admin, $settings)) {
-                $refused[$key] = $this->translate('PLUGIN_LOGIN_OAUTH2.ENFORCE_REQUIREMENTS_REFUSED_ENVIRONMENTS', $unmet);
             }
         }
         if (!$refused) {
@@ -143,24 +133,6 @@ class LoginOauth2Plugin extends Plugin
             if ($admin) {
                 $admin->setMessage($message, 'error');
             }
-        }
-    }
-
-    /** Check inherited environments once the pending main configuration is available. */
-    protected function unmetInEnvironments(Data $object, bool $admin, &$settings): ?string
-    {
-        try {
-            if ($settings === null) {
-                $file = $object->file();
-                $settings = $file ? EnvironmentSettings::ofSave($this->grav, (string)$file->filename(), $object->toArray()) : null;
-                $settings = $settings ?? false;
-            }
-
-            return $settings ? $settings->inspect($admin ? 'admin' : 'site')['unmet'] : null;
-        } catch (\Throwable $e) {
-            $this->grav['log']->warning('Login OAuth2: the environments could not be checked for a save of Enforce OAuth2: ' . $e->getMessage());
-
-            return null;
         }
     }
 

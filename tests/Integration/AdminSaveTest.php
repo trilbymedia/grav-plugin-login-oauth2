@@ -123,18 +123,6 @@ final class AdminSaveTest extends SiteTestCase
         $this->assertArrayNotHasKey('thrown', $result);
     }
 
-    public function testSavingTheMainFileChecksTheEnvironmentsToo(): void
-    {
-        $this->ready();
-        static::$site->write('user/env/example.com/config/plugins/login.yaml', ['rememberme' => ['enabled' => true]]);
-
-        $result = $this->save($this->form());
-
-        $this->assertSame(self::VALIDATION, $result['thrown']);
-        $this->assertStringContainsString('this would also apply in environments where users can still log in without OAuth2', $result['message']);
-        $this->assertStringContainsString('user/env/example.com/config/plugins/login.yaml', $result['message']);
-    }
-
     public function testRefusalDoesNotDependOnAnotherSideBeingOn(): void
     {
         // Remember me is on, only the admin is turned on: refused for the admin field alone.
