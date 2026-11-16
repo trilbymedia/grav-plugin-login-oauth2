@@ -1,5 +1,5 @@
 # v2.4.0
-## 11/03/2026
+## 11/16/2026
 
 1. [](#new)
     * Enforce OAuth2: new settings for the site and the admin (Admin2 and classic admin) that only allow logins through an OAuth2 provider. Passwords, magic links and passkeys are denied, and the login pages hide them
